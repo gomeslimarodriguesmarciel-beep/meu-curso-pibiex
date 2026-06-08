@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 - Meus Trabalhos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root { --brand-900: #0b1b4a; --brand-700: #1e3a8a; --brand-500: #3b82f6; }
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+
+        .gradient-bg {
+            background:
+                radial-gradient(circle at 15% 20%, rgba(163, 230, 53, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.35) 0%, transparent 50%),
+                linear-gradient(135deg, #0b1b4a 0%, #1e3a8a 50%, #1e40af 100%);
+        }
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 100%);
+        }
+        .nav-link { position: relative; transition: color 0.2s ease; }
+        .nav-link::after {
+            content: ''; position: absolute; bottom: -6px; left: 50%;
+            width: 0; height: 3px;
+            background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+            transform: translateX(-50%); border-radius: 2px; transition: width 0.25s ease;
+        }
+        .nav-link:hover::after, .nav-link.active::after { width: 100%; }
+        .nav-link.active { color: #1e3a8a; }
+
+        .btn-cta { background:#fff; color:#1e3a8a; box-shadow:0 10px 30px -5px rgba(0,0,0,0.35); transition:all 0.25s ease; }
+        .btn-cta:hover { transform:translateY(-3px); box-shadow:0 16px 40px -8px rgba(0,0,0,0.45); }
+        .btn-ghost { background:rgba(255,255,255,0.1); border:1.5px solid rgba(255,255,255,0.25); backdrop-filter:blur(10px); transition:all 0.25s ease; }
+        .btn-ghost:hover { background:rgba(255,255,255,0.18); transform:translateY(-2px); }
+
+        .logo-glow { position: relative; }
+        .logo-glow::before {
+            content: ''; position: absolute; inset: -20px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(163,230,53,0.25) 0%, transparent 70%);
+            filter: blur(20px); animation: pulseGlow 3s ease-in-out infinite;
+        }
+        @keyframes pulseGlow { 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:.9;transform:scale(1.05)} }
+        .float { animation: floatY 5s ease-in-out infinite; }
+        @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+        .pulse-dot { width:8px;height:8px;border-radius:50%;background:#a3e635;box-shadow:0 0 0 0 rgba(163,230,53,.7);animation:pulse 2s infinite; }
+        @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(163,230,53,.7)} 70%{box-shadow:0 0 0 10px rgba(163,230,53,0)} 100%{box-shadow:0 0 0 0 rgba(163,230,53,0)} }
+
+        .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+        .fade-in-up.d1 { animation-delay:.1s } .fade-in-up.d2 { animation-delay:.2s } .fade-in-up.d3 { animation-delay:.3s }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+        .card-hover { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
+        .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+
+        .loader { border:4px solid #e5e7eb; border-top:4px solid #3b82f6; border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite; }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+        /* Abas da área do professor */
+        .materia-tab { transition: all 0.2s ease; border-bottom: 3px solid transparent; }
+        .materia-tab.ativa { border-bottom: 3px solid #1e3a8a; color: #1e3a8a; font-weight: 800; background: #eff6ff; border-radius: 8px 8px 0 0; }
+        .materia-tab:not(.ativa) { color: #6b7280; font-weight: 600; }
+        .materia-tab:not(.ativa):hover { color: #1e3a8a; }
+    </style>
+
+    <script>
+        if (sessionStorage.getItem('aluno_logado') !== 'true') {
+            window.location.replace('index.html');
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+
+    <nav class="bg-white/95 backdrop-blur-md py-3 px-6 md:px-10 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200 shadow-sm z-40 relative sticky top-0 w-full">
+        <div class="mb-2 sm:mb-0">
+            <span class="text-blue-900 text-sm md:text-base font-black tracking-wide uppercase">PIBIEX 2026</span>
+        </div>
+        <div class="flex gap-4 md:gap-8 items-center flex-wrap justify-center mt-2 sm:mt-0">
+            <button onclick="sessionStorage.clear(); window.location.href='index.html'" class="text-red-500 font-bold hover:text-red-700 transition mr-2 md:mr-4 text-sm">Sair 🚪</button>
+            <a href="inicio.html" class="nav-link text-gray-600 hover:text-blue-700 font-bold text-sm md:text-base transition pb-1">Início</a>
+            <a href="grade.html" class="nav-link text-gray-600 hover:text-blue-700 font-bold text-sm md:text-base transition pb-1">Grade de Horários</a>
+            <a href="conteudos.html" class="nav-link text-gray-600 hover:text-blue-700 font-bold text-sm md:text-base transition pb-1">Conteúdos</a>
+            <a href="meus_trabalhos.html" class="nav-link active text-blue-700 font-black text-sm md:text-base pb-1">Meus Trabalhos</a>
+            <a href="recursos.html" class="nav-link text-gray-600 hover:text-blue-700 font-bold text-sm md:text-base transition pb-1">Recursos</a>
+        </div>
+    </nav>
+
+    <section class="gradient-bg text-white py-12 md:py-16 px-6 shadow-xl relative overflow-hidden w-full">
+        <div class="absolute inset-0 grid-pattern pointer-events-none"></div>
+
+        <div class="absolute top-4 left-4 md:top-0 md:left-10 z-20 pointer-events-none">
+            <img src="logo unitins branca.png" alt="Logo Unitins" class="h-24 md:h-64 object-contain opacity-90 float" onerror="this.style.display='none'">
+        </div>
+
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div class="flex-1 text-center md:text-left md:pl-16">
+
+                <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 mb-6 fade-in-up">
+                    <span class="pulse-dot"></span>
+                    <span class="text-white/90 text-xs font-black tracking-widest uppercase">Turma 2026 · Ativa</span>
+                </div>
+
+                <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tight leading-tight drop-shadow-2xl fade-in-up d1 mt-8 md:mt-0">
+                    Meus
+                    <span class="block bg-gradient-to-r from-lime-300 via-sky-200 to-white bg-clip-text text-transparent">Trabalhos</span>
+                </h1>
+
+                <p class="text-lg md:text-xl text-blue-100/90 mb-8 font-medium leading-relaxed max-w-xl fade-in-up d2" id="header-desc">
+                    Guarde seus arquivos em <strong class="text-white">Word, PowerPoint, Excel ou PDF</strong>.<br>
+                    <span class="opacity-80 text-base font-normal">Continue depois ou envie para avaliação do professor.</span>
+                </p>
+
+                <div class="flex flex-wrap gap-3 justify-center md:justify-start fade-in-up d3" id="area-botoes-topo">
+                    <button onclick="window.abrirModalUpload()" class="btn-cta font-bold py-3 px-7 rounded-xl text-base flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        Guardar Novo Trabalho
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 fade-in-up d2">
+                <div class="logo-glow relative w-36 h-36 md:w-52 md:h-52 bg-white/5 rounded-full p-4 shadow-2xl flex items-center justify-center backdrop-blur-sm border border-white/20 float">
+                    <div class="bg-white rounded-full w-full h-full flex items-center justify-center shadow-inner p-5">
+                        <img src="logo pibiex.png" alt="Logo PIBIEX" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="admin-area" class="hidden max-w-7xl mx-auto px-6 mt-8 w-full">
+        <!-- Cabeçalho da área admin -->
+        <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
+                <h2 class="text-xl font-black text-indigo-900 flex items-center gap-2">
+                    <span class="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center text-lg">👨‍🏫</span>
+                    Área do Professor — Trabalhos Recebidos
+                </h2>
+                <!-- Filtro de busca -->
+                <div class="w-full md:w-auto flex gap-2">
+                    <div class="relative flex-1 md:w-72">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input type="text" id="filtro-busca" placeholder="Buscar por aluno ou título..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 shadow-sm text-sm focus:border-indigo-400 focus:ring-indigo-400 outline-none">
+                    </div>
+                    <button onclick="window.limparFiltro()" class="bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200 font-bold py-2 px-4 rounded-xl transition text-sm shadow-sm">
+                        Limpar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Abas por matéria -->
+            <div class="flex overflow-x-auto gap-1 border-b border-gray-200" id="abas-materia">
+                <button onclick="window.mudarMateria('Todos')" id="aba-Todos" class="materia-tab ativa px-4 py-2 whitespace-nowrap text-sm rounded-t-lg">📋 Todos</button>
+                <button onclick="window.mudarMateria('Word')" id="aba-Word" class="materia-tab px-4 py-2 whitespace-nowrap text-sm rounded-t-lg">📝 Word</button>
+                <button onclick="window.mudarMateria('PowerPoint')" id="aba-PowerPoint" class="materia-tab px-4 py-2 whitespace-nowrap text-sm rounded-t-lg">🎨 PowerPoint</button>
+                <button onclick="window.mudarMateria('Excel')" id="aba-Excel" class="materia-tab px-4 py-2 whitespace-nowrap text-sm rounded-t-lg">📊 Excel</button>
+                <button onclick="window.mudarMateria('PDF')" id="aba-PDF" class="materia-tab px-4 py-2 whitespace-nowrap text-sm rounded-t-lg">📕 PDF</button>
+                <button onclick="window.mudarMateria('Digitação')" id="aba-Digitação" class="materia-tab px-4 py-2 whitespace-nowrap text-sm rounded-t-lg">⌨️ Digitação</button>
+            </div>
+        </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full">
+        <div id="loading" class="flex justify-center items-center py-10">
+            <div class="loader"></div>
+            <span class="ml-3 text-gray-500 font-semibold">Carregando trabalhos...</span>
+        </div>
+        
+        <div id="trabalhos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+        </div>
+    </main>
+
+    <div id="modal-nome" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-6">
+                <span class="text-4xl">👋</span>
+                <h3 class="text-2xl font-bold text-blue-900 mt-2">Bem-vindo(a)!</h3>
+                <p class="text-gray-600 text-sm mt-1">Para organizar seus envios, precisamos do seu nome completo.</p>
+            </div>
+            <form id="form-nome" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nome Completo</label>
+                    <input type="text" id="input-nome-completo" required placeholder="Ex: Rafael Lima Rodrigues" class="w-full rounded-md border-gray-300 shadow-sm border p-3 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <button type="submit" id="btn-salvar-nome" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition">Salvar e Continuar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-upload" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg relative">
+            <button type="button" onclick="window.fecharModalUpload()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 font-bold text-xl">✖</button>
+            <h3 class="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2"><span>📂</span> Guardar Arquivo</h3>
+            <form id="form-upload" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Título do Trabalho</label>
+                    <input type="text" id="upload-titulo" required placeholder="Ex: Atividade de Formatação" class="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Pequena Observação</label>
+                    <textarea id="upload-descricao" rows="2" class="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-blue-500 outline-none" placeholder="Ex: Parei na página 2, continuar depois..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Formato</label>
+                    <select id="upload-tipo" class="w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 outline-none">
+                        <option value="Word">Documento Word (.doc, .docx)</option>
+                        <option value="PowerPoint">Apresentação (.ppt, .pptx)</option>
+                        <option value="Excel">Planilha Excel (.xls, .xlsx)</option>
+                        <option value="PDF">Documento PDF (.pdf)</option>
+                        <option value="Digitação">Exercício de Digitação</option>
+                    </select>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <label class="block text-sm font-bold text-blue-900 mb-2">Selecione o Arquivo do seu PC</label>
+                    <input type="file" id="upload-arquivo" required accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="window.fecharModalUpload()" class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                    <button type="submit" id="btn-enviar-upload" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition shadow-md">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://lchywbwfxqdldczdivuf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjaHl3YndmeHFkbGRjemRpdnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MTg3NzUsImV4cCI6MjA4NzA5NDc3NX0.Ylibg2_emHohvg_354UsFtjpQ_6D9zwPGWJAFbcus5A';
+
+        if (typeof window.supabase === 'undefined') {
+            document.getElementById('loading').innerHTML = '<div class="text-red-500 font-bold bg-red-50 p-4 rounded-lg border border-red-200">Erro: O sistema do banco de dados foi bloqueado. Tente recarregar a página (Ctrl + F5).</div>';
+        } else {
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            let currentUser = null;
+            let isAdmin = false;
+            let listaTrabalhos = [];
+            let materiaAtual = 'Todos';
+
+            window.abrirModalUpload = function() { document.getElementById('modal-upload').classList.remove('hidden'); };
+            window.fecharModalUpload = function() { document.getElementById('modal-upload').classList.add('hidden'); document.getElementById('form-upload').reset(); };
+            
+            // LIMPAR FILTRO
+            window.limparFiltro = function() {
+                document.getElementById('filtro-busca').value = '';
+                aplicarFiltros();
+            };
+
+            // MUDAR ABA DE MATÉRIA
+            window.mudarMateria = function(materia) {
+                materiaAtual = materia;
+                const abas = ['Todos','Word','PowerPoint','Excel','PDF','Digitação'];
+                abas.forEach(a => {
+                    const el = document.getElementById('aba-' + a);
+                    if(el) el.className = 'materia-tab px-4 py-2 whitespace-nowrap text-sm rounded-t-lg' + (a === materia ? ' ativa' : '');
+                });
+                aplicarFiltros();
+            };
+
+            // APLICAR FILTROS (matéria + busca por texto)
+            function aplicarFiltros() {
+                const termo = (document.getElementById('filtro-busca')?.value || '').toLowerCase();
+                const filtrados = listaTrabalhos.filter(t => {
+                    const matchMateria = materiaAtual === 'Todos' || t.tipo_arquivo === materiaAtual;
+                    const nomeAluno = (t.alunos_acesso?.nome_completo || t.alunos_acesso?.usuario || '').toLowerCase();
+                    const titulo = (t.titulo || '').toLowerCase();
+                    const matchBusca = !termo || nomeAluno.includes(termo) || titulo.includes(termo);
+                    return matchMateria && matchBusca;
+                });
+                renderizarGrid(filtrados);
+            }
+
+            function mostrarLoading(show) {
+                const loader = document.getElementById('loading');
+                const grid = document.getElementById('trabalhos-grid');
+                if(loader) loader.classList.toggle('hidden', !show);
+                if(grid && show) grid.classList.add('hidden');
+            }
+
+            function mostrarErro(mensagem) {
+                mostrarLoading(false);
+                const grid = document.getElementById('trabalhos-grid');
+                grid.innerHTML = `<div class="col-span-full bg-red-50 text-red-600 p-6 rounded-xl border border-red-200 text-center font-bold">⚠️ ${mensagem}</div>`;
+                grid.classList.remove('hidden');
+            }
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                try {
+                    const emailLogado = sessionStorage.getItem('nome_aluno'); 
+                    
+                    if (!emailLogado) {
+                        window.location.replace('index.html');
+                        return;
+                    }
+
+                    const { data, error } = await supabase.from('alunos_acesso').select('*').eq('usuario', emailLogado).single();
+
+                    if (error || !data) {
+                        mostrarErro("Conta não localizada no sistema.");
+                        return;
+                    }
+
+                    currentUser = data;
+
+                    if (currentUser.usuario === 'marcielgomes@adm.com') {
+                        isAdmin = true;
+                        configurarInterfaceAdmin();
+                        carregarTrabalhosAdmin();
+                    } else {
+                        // SISTEMA ANTI-CHATICE: Verifica a memória do navegador além do banco
+                        let nomeSalvoLocal = localStorage.getItem('nome_completo_' + currentUser.id);
+
+                        if (!currentUser.nome_completo && !nomeSalvoLocal) {
+                            mostrarLoading(false); 
+                            document.getElementById('modal-nome').classList.remove('hidden');
+                        } else {
+                            // Se tem nome no PC dele, mas não no banco, salva no banco escondido para garantir
+                            if (!currentUser.nome_completo && nomeSalvoLocal) {
+                                currentUser.nome_completo = nomeSalvoLocal;
+                                supabase.from('alunos_acesso').update({ nome_completo: nomeSalvoLocal }).eq('id', currentUser.id).then();
+                            }
+                            carregarTrabalhosAluno();
+                        }
+                    }
+                } catch (err) {
+                    mostrarErro("Falha crítica no sistema: " + err.message);
+                }
+            });
+
+            document.getElementById('form-nome').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btn-salvar-nome');
+                const nomeInput = document.getElementById('input-nome-completo').value;
+                
+                btn.innerText = "Salvando...";
+                btn.disabled = true;
+
+                // Tenta salvar no banco
+                await supabase.from('alunos_acesso').update({ nome_completo: nomeInput }).eq('id', currentUser.id);
+
+                // Salva LOCALMENTE para nunca mais encher o saco do aluno
+                localStorage.setItem('nome_completo_' + currentUser.id, nomeInput);
+                currentUser.nome_completo = nomeInput;
+                
+                document.getElementById('modal-nome').classList.add('hidden');
+                carregarTrabalhosAluno();
+            });
+
+            function configurarInterfaceAdmin() {
+                document.getElementById('area-botoes-topo').classList.add('hidden'); 
+                document.getElementById('header-desc').innerHTML = "Área de avaliação.<br><span class='opacity-80 text-base font-normal'>Visualize os trabalhos enviados, organizados por matéria.</span>";
+                document.getElementById('admin-area').classList.remove('hidden'); 
+
+                document.getElementById('filtro-busca').addEventListener('input', () => aplicarFiltros());
+            }
+
+            async function carregarTrabalhosAluno() {
+                mostrarLoading(true);
+                const { data, error } = await supabase.from('trabalhos').select('*').eq('aluno_id', currentUser.id).order('id', { ascending: false });
+
+                if (error) {
+                    mostrarErro("Não foi possível carregar: " + error.message);
+                    return;
+                }
+                
+                mostrarLoading(false);
+                listaTrabalhos = data;
+                renderizarGrid(listaTrabalhos);
+            }
+
+            async function carregarTrabalhosAdmin() {
+                mostrarLoading(true);
+                const { data, error } = await supabase.from('trabalhos').select(`*, alunos_acesso ( nome_completo, usuario )`).eq('enviado_professor', true).order('id', { ascending: false });
+
+                if (error) {
+                    mostrarErro("Erro na consulta Admin: " + error.message);
+                    return;
+                }
+
+                mostrarLoading(false);
+                listaTrabalhos = data;
+                aplicarFiltros();
+            }
+
+            function renderizarGrid(trabalhos) {
+                const grid = document.getElementById('trabalhos-grid');
+                grid.innerHTML = '';
+                grid.classList.remove('hidden');
+
+                if (trabalhos.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10 border-2 border-dashed border-gray-300 rounded-xl">Nenhum trabalho encontrado.</div>`;
+                    return;
+                }
+
+                trabalhos.forEach(item => {
+                    let icon = '📄'; let color = 'blue'; let gradFrom = 'from-blue-500'; let gradTo = 'to-indigo-600';
+                    if(item.tipo_arquivo === 'Word')       { icon = '📝'; color = 'blue';   gradFrom = 'from-blue-500';   gradTo = 'to-indigo-600'; }
+                    if(item.tipo_arquivo === 'PowerPoint') { icon = '🎨'; color = 'orange'; gradFrom = 'from-orange-500'; gradTo = 'to-red-500'; }
+                    if(item.tipo_arquivo === 'PDF')        { icon = '📕'; color = 'red';    gradFrom = 'from-red-500';    gradTo = 'to-rose-600'; }
+                    if(item.tipo_arquivo === 'Excel')      { icon = '📊'; color = 'green';  gradFrom = 'from-green-500';  gradTo = 'to-emerald-600'; }
+                    if(item.tipo_arquivo === 'Digitação')  { icon = '⌨️'; color = 'purple'; gradFrom = 'from-purple-500'; gradTo = 'to-fuchsia-600'; }
+
+                    let badgeStatus = ''; let acoesHtml = ''; let infoAluno = '';
+
+                    if (isAdmin) {
+                        // RESOLVENDO O PROBLEMA DO "NULL" (Se o banco falhar, mostra o e-mail/usuário do aluno como quebra-galho)
+                        let nomeAluno = 'Nome não registrado';
+                        if (item.alunos_acesso && item.alunos_acesso.nome_completo) {
+                            nomeAluno = item.alunos_acesso.nome_completo;
+                        } else if (item.alunos_acesso && item.alunos_acesso.usuario) {
+                            nomeAluno = item.alunos_acesso.usuario;
+                        }
+
+                        infoAluno = `<p class="text-xs font-bold text-indigo-600 mb-2">👤 Aluno(a): <span class="text-indigo-900">${nomeAluno}</span></p>`;
+                        acoesHtml = `<a href="${item.url_arquivo}" target="_blank" download class="w-full text-center bg-indigo-600 text-white font-bold py-2 rounded-lg hover:bg-indigo-700 transition text-sm">⬇️ Baixar para Avaliar</a>`;
+                    } else {
+                        if (item.enviado_professor) {
+                            badgeStatus = `<span class="absolute top-4 right-4 bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">✅ Enviado</span>`;
+                            acoesHtml = `<a href="${item.url_arquivo}" target="_blank" download class="w-full text-center bg-gray-100 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-200 transition text-sm">⬇️ Baixar Arquivo</a>`;
+                        } else {
+                            badgeStatus = `<span class="absolute top-4 right-4 bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">✍️ Rascunho</span>`;
+                            acoesHtml = `
+                                <div class="flex gap-2 w-full">
+                                    <a href="${item.url_arquivo}" target="_blank" download class="flex-1 text-center bg-gray-100 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-200 transition text-sm">⬇️ Baixar</a>
+                                    <button onclick="window.enviarParaProfessor(${item.id})" class="flex-1 text-center bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition text-sm">🚀 Enviar</button>
+                                </div>
+                                <button onclick="window.excluirTrabalho(${item.id}, '${item.url_arquivo}')" class="mt-2 w-full text-center text-red-500 hover:text-red-700 font-bold py-1 text-sm transition">🗑️ Excluir</button>
+                            `;
+                        }
+                    }
+
+                    grid.innerHTML += `
+                        <div class="bg-white p-6 rounded-2xl shadow-sm card-hover border border-gray-100 hover:border-${color}-200 border-t-4 border-t-${color}-500 flex flex-col relative">
+                            ${badgeStatus}
+                            <div class="w-12 h-12 bg-gradient-to-br ${gradFrom} ${gradTo} rounded-xl flex items-center justify-center mb-4 text-xl shadow-md">${icon}</div>
+                            <h3 class="text-lg font-black text-gray-900 mb-1">${item.titulo}</h3>
+                            ${infoAluno}
+                            <p class="text-gray-500 text-sm mb-6 flex-grow">${item.descricao || 'Sem observações.'}</p>
+                            <div class="flex flex-col items-center w-full">${acoesHtml}</div>
+                        </div>`;
+                });
+            }
+
+            window.enviarParaProfessor = async function(idTrabalho) {
+                if(!confirm("Ao enviar, você não poderá mais excluir este arquivo. Deseja continuar?")) return;
+                const { error } = await supabase.from('trabalhos').update({ enviado_professor: true }).eq('id', idTrabalho);
+                if (error) alert("Erro ao enviar: " + error.message);
+                else { alert("🎉 Trabalho enviado com sucesso!"); carregarTrabalhosAluno(); }
+            }
+
+            window.excluirTrabalho = async function(id, url_arquivo) {
+                if(!confirm("⚠️ Deseja realmente excluir este trabalho?")) return;
+                const { error: dbError } = await supabase.from('trabalhos').delete().eq('id', id);
+                if (dbError) { alert("Erro ao excluir: " + dbError.message); return; }
+                try {
+                    const fileName = url_arquivo.split('/').pop();
+                    await supabase.storage.from('trabalhos_alunos').remove([`${currentUser.id}/${fileName}`]);
+                } catch (e) { console.log(e); }
+                carregarTrabalhosAluno();
+            }
+
+            document.getElementById('form-upload').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btn-enviar-upload');
+                btn.innerText = 'Guardando...'; btn.disabled = true;
+
+                try {
+                    const titulo = document.getElementById('upload-titulo').value;
+                    const descricao = document.getElementById('upload-descricao').value;
+                    const tipo = document.getElementById('upload-tipo').value;
+                    const arquivoInput = document.getElementById('upload-arquivo');
+                    const file = arquivoInput.files[0];
+
+                    if (!file) throw new Error("Selecione um arquivo!");
+
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+                    const { error: uploadError } = await supabase.storage.from('trabalhos_alunos').upload(fileName, file);
+                    if (uploadError) throw uploadError;
+
+                    const { data: publicUrlData } = supabase.storage.from('trabalhos_alunos').getPublicUrl(fileName);
+                    
+                    const { error: dbError } = await supabase.from('trabalhos').insert([{ 
+                        aluno_id: currentUser.id, titulo: titulo, descricao: descricao, tipo_arquivo: tipo, url_arquivo: publicUrlData.publicUrl 
+                    }]);
+
+                    if (dbError) throw dbError;
+
+                    alert("Trabalho guardado com sucesso!");
+                    window.fecharModalUpload();
+                    carregarTrabalhosAluno();
+
+                } catch (err) { alert("Erro: " + err.message); } 
+                finally { btn.innerText = 'Salvar'; btn.disabled = false; }
+            });
+        }
+    </script>
+    <!-- FOOTER -->
+    <footer class="bg-gray-900 text-white py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-sm opacity-70">© 2026 PIBIEX · Curso de Informática Básica</p>
+            <div class="flex gap-4 items-center">
+                <img src="logo unitins.png" alt="Logo Unitins" class="h-8 opacity-50 hover:opacity-100 transition mix-blend-screen">
+                <img src="logo pibiex.png" alt="Logo PIBIEX" class="h-8 opacity-50 hover:opacity-100 transition">
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
