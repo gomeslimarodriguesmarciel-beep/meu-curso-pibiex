@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Início</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-5xl mx-auto">
+            <div class="bg-gradient-to-br from-blue-700 to-blue-500 rounded-2xl p-8 text-white mb-8 shadow-lg">
+                <h1 class="text-2xl font-black">Curso de Inteligência Artificial</h1>
+                <p class="text-blue-100 mt-1">Acompanhe os avisos e as próximas aulas por aqui.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <section>
+                    <h2 class="text-lg font-black text-gray-800 mb-3">📢 Avisos</h2>
+                    <div id="lista-avisos" class="space-y-3">
+                        <p class="text-gray-400 text-sm">Carregando avisos...</p>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="text-lg font-black text-gray-800 mb-3">📅 Próximas aulas</h2>
+                    <div id="lista-aulas" class="space-y-3">
+                        <p class="text-gray-400 text-sm">Carregando aulas...</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        function formatarData(dataIso) {
+            if (!dataIso) return '';
+            const [ano, mes, dia] = dataIso.split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        function renderizarAvisos(avisos) {
+            const container = document.getElementById('lista-avisos');
+            if (!avisos || avisos.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-4 border border-gray-100">Nenhum aviso publicado ainda.</p>';
+                return;
+            }
+            container.innerHTML = avisos.map(a => `
+                <div class="bg-white rounded-xl p-4 border ${a.fixado ? 'border-blue-200 ring-1 ring-blue-100' : 'border-gray-100'} shadow-sm">
+                    <div class="flex items-center gap-2 mb-1">
+                        ${a.fixado ? '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Fixado</span>' : ''}
+                        <p class="font-bold text-gray-800">${a.titulo}</p>
+                    </div>
+                    <p class="text-gray-600 text-sm">${a.mensagem}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderizarAulas(aulas) {
+            const container = document.getElementById('lista-aulas');
+            if (!aulas || aulas.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-4 border border-gray-100">Nenhuma aula agendada no momento.</p>';
+                return;
+            }
+            container.innerHTML = aulas.map(aula => `
+                <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div class="bg-blue-50 text-blue-700 font-black rounded-lg px-3 py-2 text-center shrink-0 text-sm">
+                        ${formatarData(aula.data_aula)}
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-800">${aula.titulo}</p>
+                        <p class="text-gray-500 text-xs">${aula.modulos ? aula.modulos.titulo : ''}${aula.horario_inicio ? ' · ' + aula.horario_inicio.slice(0,5) : ''}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function carregarConteudo(dadosAluno) {
+            const { data: avisos } = await window.supabaseClient
+                .from('avisos')
+                .select('*')
+                .eq('turma_id', dadosAluno.turmaId)
+                .order('fixado', { ascending: false })
+                .order('criado_em', { ascending: false })
+                .limit(10);
+            renderizarAvisos(avisos);
+
+            const hoje = new Date().toISOString().slice(0, 10);
+            const { data: aulas } = await window.supabaseClient
+                .from('aulas')
+                .select('id, titulo, data_aula, horario_inicio, modulos(titulo, turma_id)')
+                .gte('data_aula', hoje)
+                .order('data_aula', { ascending: true })
+                .limit(20);
+
+            const proximasAulas = (aulas || [])
+                .filter(a => a.modulos && a.modulos.turma_id === dadosAluno.turmaId)
+                .slice(0, 5);
+            renderizarAulas(proximasAulas);
+        }
+
+        iniciarShellAluno('inicio').then((dados) => {
+            if (dados) carregarConteudo(dados);
+        });
+    </script>
+</body>
+</html>
