@@ -211,6 +211,22 @@
             else btn.classList.add('btn-desabilitado');
         }
 
+        // Quando uma Edge Function responde com status de erro (400/401/etc.), o
+        // supabase-js NÃO coloca o corpo da resposta em "data" — ele vai parar em
+        // "error.context" (a Response bruta). Por isso, sem isso aqui, toda mensagem
+        // de erro específica (ex: "Usuário ou senha incorretos") virava um genérico
+        // "Não foi possível entrar".
+        async function extrairMensagemErro(error, data, mensagemPadrao) {
+            if (data && data.erro) return data.erro;
+            if (error && error.context) {
+                try {
+                    const corpo = await error.context.json();
+                    if (corpo && corpo.erro) return corpo.erro;
+                } catch (e) { /* corpo não era JSON, usa a mensagem padrão */ }
+            }
+            return mensagemPadrao;
+        }
+
         // ============================================================
         // Alternar visibilidade de senha
         // ============================================================
@@ -244,7 +260,7 @@
             });
 
             if (error || !data || data.erro) {
-                erroBox.innerText = (data && data.erro) ? data.erro : 'Não foi possível entrar. Tente novamente.';
+                erroBox.innerText = await extrairMensagemErro(error, data, 'Não foi possível entrar. Tente novamente.');
                 erroBox.classList.remove('hidden');
                 grecaptcha.reset(widgetLogin);
                 tokenLogin = null;
@@ -293,7 +309,7 @@
             });
 
             if (error || !data || data.erro) {
-                erroAdmin.innerText = (data && data.erro) ? data.erro : 'Não foi possível entrar.';
+                erroAdmin.innerText = await extrairMensagemErro(error, data, 'Não foi possível entrar.');
                 erroAdmin.classList.remove('hidden');
                 grecaptcha.reset(widgetAdmin);
                 tokenAdmin = null;
@@ -354,7 +370,7 @@
             btn.innerText = 'Buscar minha conta';
 
             if (error || !data) {
-                msg.innerText = 'Erro ao buscar. Tente novamente.';
+                msg.innerText = await extrairMensagemErro(error, data, 'Erro ao buscar. Tente novamente.');
                 msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
                 msg.classList.remove('hidden');
                 return;
@@ -384,7 +400,7 @@
             });
 
             if (error || !data || data.erro) {
-                alert((data && data.erro) ? data.erro : 'Erro ao enviar. Tente pedir a recuperação novamente.');
+                alert(await extrairMensagemErro(error, data, 'Erro ao enviar. Tente pedir a recuperação novamente.'));
                 btn.innerText = 'Confirmar e enviar nova senha';
                 btn.disabled = false;
                 return;
