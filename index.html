@@ -95,8 +95,8 @@
 
             <form id="form-admin" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700">E-mail</label>
-                    <input type="email" id="admin-email" required autocomplete="username"
+                    <label class="block text-sm font-bold text-gray-700">Usuário</label>
+                    <input type="text" id="admin-email" required autocomplete="username"
                            class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
                 </div>
                 <div>
@@ -285,13 +285,15 @@
             btn.innerText = 'Verificando...';
             atualizarBotao('btn-admin', false);
 
-            const email = document.getElementById('admin-email').value;
-            const password = document.getElementById('admin-senha').value;
+            const usuario = document.getElementById('admin-email').value.trim();
+            const senha = document.getElementById('admin-senha').value;
 
-            const { data: sessao, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            const { data, error } = await supabaseClient.functions.invoke('login-equipe', {
+                body: { usuario, senha, recaptchaToken: tokenAdmin },
+            });
 
-            if (error) {
-                erroAdmin.innerText = 'Credenciais inválidas.';
+            if (error || !data || data.erro) {
+                erroAdmin.innerText = (data && data.erro) ? data.erro : 'Não foi possível entrar.';
                 erroAdmin.classList.remove('hidden');
                 grecaptcha.reset(widgetAdmin);
                 tokenAdmin = null;
@@ -299,22 +301,8 @@
                 return;
             }
 
-            // Confirma que esse usuário está mesmo na tabela "equipe" (admin/professor)
-            const { data: perfil, error: erroPerfil } = await supabaseClient
-                .from('equipe')
-                .select('id, nome_completo, cargo, ativo')
-                .eq('id', sessao.user.id)
-                .maybeSingle();
-
-            if (erroPerfil || !perfil || !perfil.ativo) {
-                await supabaseClient.auth.signOut();
-                erroAdmin.innerText = 'Este usuário não tem acesso de administrador/professor.';
-                erroAdmin.classList.remove('hidden');
-                grecaptcha.reset(widgetAdmin);
-                tokenAdmin = null;
-                btn.innerText = 'Verificar Acesso';
-                return;
-            }
+            localStorage.setItem('pibiex_equipe_token', data.token);
+            localStorage.setItem('pibiex_equipe_dados', JSON.stringify(data.equipe));
 
             window.location.href = 'painel.html';
         });
