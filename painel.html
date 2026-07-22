@@ -43,38 +43,38 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabaseClient.co';
+        const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbGNzZ3F2dW51dGJ2cGF6Z3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1Njc5MTQsImV4cCI6MjEwMDE0MzkxNH0.T87bJPVYiYO9vyJtaB6_n9CREO6fmNGumGK0phtaYk';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         window.sair = async () => {
-            await supabaseClient.auth.signOut();
+            const token = localStorage.getItem('pibiex_equipe_token');
+            if (token) {
+                try { await supabaseClient.functions.invoke('logout-equipe', { body: { token } }); }
+                catch (e) { /* mesmo se falhar, ainda limpamos a sessão local */ }
+            }
+            localStorage.removeItem('pibiex_equipe_token');
+            localStorage.removeItem('pibiex_equipe_dados');
             window.location.href = 'index.html';
         };
 
-        (async function protegerPagina() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
+        (function protegerPagina() {
+            const token = localStorage.getItem('pibiex_equipe_token');
+            const dadosBrutos = localStorage.getItem('pibiex_equipe_dados');
 
-            if (!session) {
+            if (!token || !dadosBrutos) {
                 window.location.href = 'index.html';
                 return;
             }
 
-            const { data: perfil, error } = await supabaseClient
-                .from('equipe')
-                .select('nome_completo, cargo, ativo')
-                .eq('id', session.user.id)
-                .maybeSingle();
-
-            if (error || !perfil || !perfil.ativo) {
-                await supabaseClient.auth.signOut();
-                window.location.href = 'index.html';
-                return;
-            }
-
-            document.getElementById('nome-usuario').innerText = `${perfil.nome_completo} · ${perfil.cargo}`;
+            const dados = JSON.parse(dadosBrutos);
+            document.getElementById('nome-usuario').innerText = `${dados.nomeCompleto} · ${dados.cargo}`;
             document.getElementById('carregando').classList.add('hidden');
             document.getElementById('conteudo').classList.remove('hidden');
+
+            // Nota: esta é uma checagem simples baseada no que foi salvo no login.
+            // As próximas Edge Functions do painel (cadastrar aluno, postar aviso etc.)
+            // vão validar o token de verdade no servidor a cada ação sensível.
         })();
     </script>
 </body>
