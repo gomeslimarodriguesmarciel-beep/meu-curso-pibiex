@@ -256,7 +256,7 @@
             localStorage.setItem('pibiex_aluno_token', data.token);
             localStorage.setItem('pibiex_aluno_dados', JSON.stringify(data.aluno));
 
-            window.location.href = 'inicio.html';
+            window.location.href = data.aluno.precisaTrocarSenha ? 'trocar-senha.html' : 'inicio.html';
         });
 
         // ============================================================
