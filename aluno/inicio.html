@@ -5,35 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PIBIEX 2026 · Início</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
-<body class="flex min-h-screen bg-gray-50">
+<body class="flex min-h-screen">
 
     <div id="sidebar-container"></div>
 
     <div class="flex-1 min-w-0">
         <div id="topo-pagina"></div>
 
-        <main class="p-8 max-w-5xl mx-auto">
-            <div class="bg-gradient-to-br from-blue-700 to-blue-500 rounded-2xl p-8 text-white mb-8 shadow-lg">
-                <h1 class="text-2xl font-black">Curso de Inteligência Artificial</h1>
-                <p class="text-blue-100 mt-1">Acompanhe os avisos e as próximas aulas por aqui.</p>
+        <main class="p-9 max-w-5xl mx-auto">
+
+            <!-- Cabeçalho institucional -->
+            <div class="rounded-lg overflow-hidden mb-9" style="background: var(--pibiex-tinta);">
+                <div class="px-8 py-7">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.16em]" style="color: var(--pibiex-dourado);">Curso de Extensão · 2026</p>
+                    <h1 class="fonte-display text-white text-3xl font-semibold mt-1">Inteligência Artificial</h1>
+                    <p class="text-slate-400 text-sm mt-2 max-w-lg">Acompanhe avisos, prazos e o andamento do curso pelo seu painel.</p>
+                </div>
+                <div class="h-[3px]" style="background: var(--pibiex-dourado);"></div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Atalhos rápidos -->
+            <div class="mb-10">
+                <p class="text-[11px] font-bold uppercase tracking-[0.14em] mb-3" style="color: var(--pibiex-texto-suave);">Acesso rápido</p>
+                <div id="grade-atalhos" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <section>
-                    <h2 class="text-lg font-black text-gray-800 mb-3">📢 Avisos</h2>
+                    <h2 class="flex items-center gap-2 text-[15px] font-bold mb-3" style="color: var(--pibiex-texto);">
+                        <span class="w-[18px] h-[18px]" style="color: var(--pibiex-dourado);" id="icone-avisos"></span>
+                        Avisos
+                    </h2>
                     <div id="lista-avisos" class="space-y-3">
-                        <p class="text-gray-400 text-sm">Carregando avisos...</p>
+                        <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando avisos...</p>
                     </div>
                 </section>
 
                 <section>
-                    <h2 class="text-lg font-black text-gray-800 mb-3">📅 Próximas aulas</h2>
+                    <h2 class="flex items-center gap-2 text-[15px] font-bold mb-3" style="color: var(--pibiex-texto);">
+                        <span class="w-[18px] h-[18px]" style="color: var(--pibiex-dourado);" id="icone-cronograma"></span>
+                        Próximas aulas
+                    </h2>
                     <div id="lista-aulas" class="space-y-3">
-                        <p class="text-gray-400 text-sm">Carregando aulas...</p>
+                        <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando aulas...</p>
                     </div>
                 </section>
             </div>
@@ -44,6 +62,23 @@
 
     <script src="shell.js"></script>
     <script>
+        const ATALHOS = [
+            { id: 'cronograma',     label: 'Cronograma',        href: 'cronograma.html' },
+            { id: 'trabalhos',      label: 'Meus Trabalhos',    href: 'trabalhos.html' },
+            { id: 'chat',           label: 'Chat da Turma',     href: 'chat.html' },
+            { id: 'ferramentas-ia', label: 'Ferramentas de IA', href: 'ferramentas-ia.html' },
+        ];
+
+        function montarAtalhos() {
+            document.getElementById('grade-atalhos').innerHTML = ATALHOS.map(a => `
+                <a href="${a.href}" class="bg-white border rounded-lg px-4 py-4 flex flex-col gap-3 hover:shadow-sm transition group"
+                   style="border-color: var(--pibiex-borda);">
+                    <span class="w-6 h-6" style="color: var(--pibiex-tinta);">${ICONES[a.id]}</span>
+                    <span class="text-[13.5px] font-semibold" style="color: var(--pibiex-texto);">${a.label}</span>
+                </a>
+            `).join('');
+        }
+
         function formatarData(dataIso) {
             if (!dataIso) return '';
             const [ano, mes, dia] = dataIso.split('-');
@@ -53,16 +88,16 @@
         function renderizarAvisos(avisos) {
             const container = document.getElementById('lista-avisos');
             if (!avisos || avisos.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-4 border border-gray-100">Nenhum aviso publicado ainda.</p>';
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-4 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum aviso publicado ainda.</p>`;
                 return;
             }
             container.innerHTML = avisos.map(a => `
-                <div class="bg-white rounded-xl p-4 border ${a.fixado ? 'border-blue-200 ring-1 ring-blue-100' : 'border-gray-100'} shadow-sm">
+                <div class="bg-white rounded-lg p-4 border" style="border-color: var(--pibiex-borda); ${a.fixado ? 'border-left: 3px solid var(--pibiex-dourado);' : ''}">
                     <div class="flex items-center gap-2 mb-1">
-                        ${a.fixado ? '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Fixado</span>' : ''}
-                        <p class="font-bold text-gray-800">${a.titulo}</p>
+                        ${a.fixado ? `<span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style="color: var(--pibiex-tinta); background: var(--pibiex-papel);">Fixado</span>` : ''}
+                        <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${a.titulo}</p>
                     </div>
-                    <p class="text-gray-600 text-sm">${a.mensagem}</p>
+                    <p class="text-sm" style="color: var(--pibiex-texto-suave);">${a.mensagem}</p>
                 </div>
             `).join('');
         }
@@ -70,17 +105,18 @@
         function renderizarAulas(aulas) {
             const container = document.getElementById('lista-aulas');
             if (!aulas || aulas.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-4 border border-gray-100">Nenhuma aula agendada no momento.</p>';
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-4 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhuma aula agendada no momento.</p>`;
                 return;
             }
             container.innerHTML = aulas.map(aula => `
-                <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div class="bg-blue-50 text-blue-700 font-black rounded-lg px-3 py-2 text-center shrink-0 text-sm">
+                <div class="bg-white rounded-lg p-4 border flex items-center gap-4" style="border-color: var(--pibiex-borda);">
+                    <div class="font-bold rounded-md px-3 py-2 text-center shrink-0 text-xs"
+                         style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">
                         ${formatarData(aula.data_aula)}
                     </div>
                     <div>
-                        <p class="font-bold text-gray-800">${aula.titulo}</p>
-                        <p class="text-gray-500 text-xs">${aula.modulos ? aula.modulos.titulo : ''}${aula.horario_inicio ? ' · ' + aula.horario_inicio.slice(0,5) : ''}</p>
+                        <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${aula.titulo}</p>
+                        <p class="text-xs" style="color: var(--pibiex-texto-suave);">${aula.modulos ? aula.modulos.titulo : ''}${aula.horario_inicio ? ' · ' + aula.horario_inicio.slice(0,5) : ''}</p>
                     </div>
                 </div>
             `).join('');
@@ -111,7 +147,11 @@
         }
 
         iniciarShellAluno('inicio').then((dados) => {
-            if (dados) carregarConteudo(dados);
+            if (!dados) return;
+            montarAtalhos();
+            document.getElementById('icone-avisos').innerHTML = ICONES.avisos;
+            document.getElementById('icone-cronograma').innerHTML = ICONES.cronograma;
+            carregarConteudo(dados);
         });
     </script>
 </body>
