@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Conteúdo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">📚 Conteúdo dos módulos</h1>
+            <p class="text-gray-500 mb-6">Slides, PDFs, vídeos e links de cada módulo do curso.</p>
+
+            <div id="lista-modulos" class="space-y-6">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        const ICONE_POR_TIPO = {
+            pdf: '📄', slide: '📊', video: '🎬', link: '🔗', documento: '📁',
+        };
+
+        function renderizarConteudo(modulos) {
+            const container = document.getElementById('lista-modulos');
+
+            if (!modulos || modulos.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum módulo cadastrado ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = modulos.map((modulo) => {
+                const itensHtml = (modulo.conteudos || []).length === 0
+                    ? '<p class="text-gray-400 text-sm px-5 pb-4">Nenhum conteúdo neste módulo ainda.</p>'
+                    : modulo.conteudos.map(item => `
+                        <a href="${item.url}" target="_blank" rel="noopener"
+                           class="flex items-center gap-4 px-5 py-3 border-t border-gray-100 hover:bg-blue-50/50 transition group">
+                            <div class="text-2xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-bold text-gray-800 text-sm group-hover:text-blue-700">${item.titulo}</p>
+                                ${item.descricao ? `<p class="text-gray-500 text-xs truncate">${item.descricao}</p>` : ''}
+                            </div>
+                            <span class="text-gray-300 group-hover:text-blue-500 text-sm shrink-0">Abrir →</span>
+                        </a>
+                    `).join('');
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-4 bg-blue-950">
+                            <p class="text-white font-black">${modulo.titulo}</p>
+                            ${modulo.descricao ? `<p class="text-blue-200 text-xs mt-0.5">${modulo.descricao}</p>` : ''}
+                        </div>
+                        ${itensHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function carregarConteudo(dadosAluno) {
+            const { data: modulos, error } = await window.supabaseClient
+                .from('modulos')
+                .select('id, titulo, descricao, ordem, conteudos(id, titulo, tipo, url, descricao, ordem)')
+                .eq('turma_id', dadosAluno.turmaId)
+                .order('ordem', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-modulos').innerHTML =
+                    '<p class="text-red-500 text-sm bg-white rounded-xl p-6 border border-red-100">Não foi possível carregar o conteúdo. Tente recarregar a página.</p>';
+                console.error(error);
+                return;
+            }
+
+            (modulos || []).forEach(m => (m.conteudos || []).sort((a, b) => a.ordem - b.ordem));
+            renderizarConteudo(modulos);
+        }
+
+        iniciarShellAluno('conteudo').then((dados) => {
+            if (dados) carregarConteudo(dados);
+        });
+    </script>
+</body>
+</html>
