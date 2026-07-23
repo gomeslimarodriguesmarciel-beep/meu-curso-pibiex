@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIBIEX 2026 Â· Chat da Turma</title>
+    <title>PIBIEX 2026 · Chat da Turma</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,7 +18,7 @@
 
         <main class="flex-1 flex flex-col p-9 max-w-3xl mx-auto w-full min-h-0">
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Chat da Turma</h1>
-            <p class="text-sm mb-5" style="color: var(--pibiex-texto-suave);">Tire dÃºvidas, compartilhe prompts e converse com a turma.</p>
+            <p class="text-sm mb-5" style="color: var(--pibiex-texto-suave);">Tire dúvidas, compartilhe prompts e converse com a turma.</p>
 
             <div id="lista-mensagens" class="flex-1 min-h-0 overflow-y-auto space-y-3 bg-white rounded-lg border p-4 mb-4" style="border-color: var(--pibiex-borda);">
                 <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
@@ -62,7 +62,7 @@
                 return `
                     <div class="max-w-[75%] w-fit ${alinhamento}">
                         <p class="text-[10px] font-bold uppercase tracking-wide mb-0.5 px-1" style="color: var(--pibiex-texto-suave);">
-                            ${m.autorNome || (deEquipe ? 'Equipe' : 'Aluno')} Â· ${formatarHora(m.criado_em)}
+                            ${m.autorNome || (deEquipe ? 'Equipe' : 'Aluno')} · ${formatarHora(m.criado_em)}
                         </p>
                         <div class="rounded-lg px-3.5 py-2 text-sm" style="${cor}">${m.mensagem}</div>
                     </div>
@@ -77,7 +77,7 @@
             });
             if (error || !data || data.erro) {
                 document.getElementById('lista-mensagens').innerHTML =
-                    `<p class="text-sm text-red-600">NÃ£o foi possÃ­vel carregar o chat.</p>`;
+                    `<p class="text-sm text-red-600">Não foi possível carregar o chat.</p>`;
                 return;
             }
             renderizarMensagens(data.mensagens);
