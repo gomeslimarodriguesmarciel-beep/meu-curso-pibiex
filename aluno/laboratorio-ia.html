@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIBIEX 2026 Â· LaboratÃ³rio de IA</title>
+    <title>PIBIEX 2026 · Laboratório de IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,8 +17,8 @@
         <div id="topo-pagina"></div>
 
         <main class="p-9 max-w-4xl mx-auto">
-            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">LaboratÃ³rio de IA</h1>
-            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Problemas prÃ¡ticos para resolver usando ferramentas de IA. Envie um texto e/ou um link com sua soluÃ§Ã£o.</p>
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Laboratório de IA</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Problemas práticos para resolver usando ferramentas de IA. Envie um texto e/ou um link com sua solução.</p>
 
             <div id="lista-laboratorio" class="space-y-4">
                 <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
@@ -32,7 +32,7 @@
     <script>
         let TOKEN_ALUNO = null;
 
-        const ROTULO_DIFICULDADE = { facil: 'FÃ¡cil', medio: 'MÃ©dio', dificil: 'DifÃ­cil' };
+        const ROTULO_DIFICULDADE = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' };
         const COR_DIFICULDADE = { facil: '#15803D', medio: '#8A6D1E', dificil: '#B91C1C' };
 
         function renderizar(labs, enviosPorLab) {
@@ -58,13 +58,13 @@
 
                         ${envio ? `
                             <div class="rounded-md p-3 mb-3 text-xs" style="background: var(--pibiex-papel); color: var(--pibiex-texto-suave);">
-                                VocÃª jÃ¡ enviou uma resposta para este laboratÃ³rio.
+                                Você já enviou uma resposta para este laboratório.
                                 ${envio.arquivo_url ? `<a href="${envio.arquivo_url}" target="_blank" rel="noopener" class="underline font-semibold ml-1" style="color: var(--pibiex-tinta);">abrir link</a>` : ''}
                             </div>
                         ` : ''}
 
                         <div class="space-y-2 pt-3 border-t" style="border-color: var(--pibiex-borda);">
-                            <textarea id="texto-${lab.id}" rows="3" placeholder="Descreva sua soluÃ§Ã£o (opcional se for enviar sÃ³ um link)..."
+                            <textarea id="texto-${lab.id}" rows="3" placeholder="Descreva sua solução (opcional se for enviar só um link)..."
                                       class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">${envio ? (envio.resposta_texto || '') : ''}</textarea>
                             <div class="flex flex-wrap items-end gap-2">
                                 <input type="url" id="link-${lab.id}" placeholder="Link (opcional)" value="${envio ? (envio.arquivo_url || '') : ''}"
