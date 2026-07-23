@@ -1,2 +1,131 @@
-mkdir C:\Users\assin\pibiex-plataforma\supabase\functions\enviar-desafio
-notepad C:\Users\assin\pibiex-plataforma\supabase\functions\enviar-desafio\index.ts
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Desafios Semanais</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-4xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Desafios Semanais</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Desafios práticos para aplicar IA no seu dia a dia. Envie um link (Drive, documento público, etc.) com sua resposta.</p>
+
+            <div id="lista-desafios" class="space-y-4">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_ALUNO = null;
+
+        function renderizar(desafios, enviosPorDesafio) {
+            const container = document.getElementById('lista-desafios');
+
+            if (!desafios || desafios.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum desafio publicado ainda.</p>`;
+                return;
+            }
+
+            container.innerHTML = desafios.map((d) => {
+                const envio = enviosPorDesafio[d.id];
+                return `
+                    <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${d.titulo}</p>
+                            ${d.semana ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">Semana ${d.semana}</span>` : ''}
+                        </div>
+                        <p class="text-sm mb-4" style="color: var(--pibiex-texto-suave);">${d.descricao}</p>
+
+                        ${envio ? `
+                            <p class="text-xs mb-3" style="color: var(--pibiex-texto-suave);">
+                                Você já enviou: <a href="${envio.link_ou_arquivo}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir link</a>
+                            </p>
+                        ` : ''}
+
+                        <div class="flex flex-wrap items-end gap-2 pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">${envio ? 'Substituir link' : 'Link da sua resposta'}</label>
+                                <input type="url" id="link-${d.id}" placeholder="https://..." class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                            </div>
+                            <button onclick="enviarResposta('${d.id}')" id="btn-${d.id}"
+                                    class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
+                                Enviar
+                            </button>
+                        </div>
+                        <p id="msg-${d.id}" class="text-xs mt-2 hidden"></p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.enviarResposta = async (desafioId) => {
+            const input = document.getElementById(`link-${desafioId}`);
+            const btn = document.getElementById(`btn-${desafioId}`);
+            const msg = document.getElementById(`msg-${desafioId}`);
+
+            const link = input.value.trim();
+            if (!link) {
+                msg.innerText = 'Cole um link antes de enviar.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            btn.innerText = 'Enviando...';
+            btn.disabled = true;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('enviar-desafio', {
+                body: { token: TOKEN_ALUNO, acao: 'enviar', desafioId, linkOuArquivo: link },
+            });
+
+            if (error || !data || data.erro) {
+                msg.innerText = (data && data.erro) || 'Erro ao enviar. Tente novamente.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                msg.classList.remove('hidden');
+                btn.innerText = 'Enviar';
+                btn.disabled = false;
+                return;
+            }
+
+            await carregarTudo();
+        };
+
+        async function carregarTudo() {
+            const { data: desafios } = await window.supabaseClient
+                .from('desafios_semanais')
+                .select('id, titulo, descricao, semana, data_inicio, data_fim')
+                .eq('ativo', true)
+                .order('semana', { ascending: true });
+
+            const { data: resultado } = await window.supabaseClient.functions.invoke('enviar-desafio', {
+                body: { token: TOKEN_ALUNO, acao: 'listar' },
+            });
+
+            const enviosPorDesafio = {};
+            (resultado && resultado.envios ? resultado.envios : []).forEach(e => { enviosPorDesafio[e.desafio_id] = e; });
+
+            renderizar(desafios, enviosPorDesafio);
+        }
+
+        iniciarShellAluno('desafios').then((dados) => {
+            if (!dados) return;
+            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            carregarTudo();
+        });
+    </script>
+</body>
+</html>
