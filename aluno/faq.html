@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 Â· FAQ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-3xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Perguntas Frequentes</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Respostas rÃ¡pidas para as dÃºvidas mais comuns sobre IA.</p>
+
+            <div id="lista-faq" class="space-y-3">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        function renderizar(faqs) {
+            const container = document.getElementById('lista-faq');
+
+            if (!faqs || faqs.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhuma pergunta cadastrada ainda.</p>`;
+                return;
+            }
+
+            container.innerHTML = faqs.map((item, i) => `
+                <details class="bg-white rounded-lg border group" style="border-color: var(--pibiex-borda);">
+                    <summary class="px-5 py-4 font-semibold text-[14.5px] cursor-pointer list-none flex items-center justify-between" style="color: var(--pibiex-texto);">
+                        ${item.pergunta}
+                        <span class="text-lg group-open:rotate-45 transition" style="color: var(--pibiex-dourado);">+</span>
+                    </summary>
+                    <p class="px-5 pb-4 text-sm" style="color: var(--pibiex-texto-suave);">${item.resposta}</p>
+                </details>
+            `).join('');
+        }
+
+        async function carregar() {
+            const { data, error } = await window.supabaseClient
+                .from('faq')
+                .select('pergunta, resposta, categoria, ordem')
+                .eq('ativo', true)
+                .order('ordem', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-faq').innerHTML =
+                    `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">NÃ£o foi possÃ­vel carregar o FAQ.</p>`;
+                console.error(error);
+                return;
+            }
+            renderizar(data);
+        }
+
+        iniciarShellAluno('faq').then((dados) => {
+            if (dados) carregar();
+        });
+    </script>
+</body>
+</html>
