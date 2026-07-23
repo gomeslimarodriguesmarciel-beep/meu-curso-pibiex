@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIBIEX 2026 Â· Meus Trabalhos</title>
+    <title>PIBIEX 2026 · Meus Trabalhos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,7 +18,7 @@
 
         <main class="p-9 max-w-4xl mx-auto">
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Meus Trabalhos</h1>
-            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Envie seus arquivos e acompanhe notas e comentÃ¡rios do professor.</p>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Envie seus arquivos e acompanhe notas e comentários do professor.</p>
 
             <div id="lista-trabalhos" class="space-y-4">
                 <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
@@ -33,8 +33,8 @@
         let TOKEN_ALUNO = null;
 
         const ROTULO_STATUS = {
-            pendente: { texto: 'NÃ£o enviado', cor: '#6B7280', fundo: '#F3F4F6' },
-            enviado:  { texto: 'Enviado Â· aguardando correÃ§Ã£o', cor: '#8A6D1E', fundo: '#FBF3DC' },
+            pendente: { texto: 'Não enviado', cor: '#6B7280', fundo: '#F3F4F6' },
+            enviado:  { texto: 'Enviado · aguardando correção', cor: '#8A6D1E', fundo: '#FBF3DC' },
             avaliado: { texto: 'Corrigido', cor: '#15803D', fundo: '#E9F7EE' },
         };
 
@@ -75,7 +75,7 @@
 
                         ${status === 'avaliado' ? `
                             <div class="rounded-md p-3 mb-3" style="background: var(--pibiex-papel);">
-                                <p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Nota: ${trabalho.nota ?? 'â'}</p>
+                                <p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Nota: ${trabalho.nota ?? '—'}</p>
                                 ${trabalho.feedback_professor ? `<p class="text-xs" style="color: var(--pibiex-texto-suave);">${trabalho.feedback_professor}</p>` : ''}
                             </div>
                         ` : ''}
@@ -88,7 +88,7 @@
                                 <input type="file" id="arquivo-${atv.id}" class="text-xs w-full">
                             </div>
                             <div class="flex-1 min-w-[180px]">
-                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">ComentÃ¡rio (opcional)</label>
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Comentário (opcional)</label>
                                 <input type="text" id="comentario-${atv.id}" class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                             </div>
                             <button onclick="enviarArquivo('${atv.id}')" id="btn-enviar-${atv.id}"
@@ -132,7 +132,7 @@
                     .uploadToSignedUrl(urlDados.caminho, urlDados.token, arquivo);
                 if (erroUpload) throw new Error('Erro ao enviar o arquivo.');
 
-                // 3) Pega o link pÃºblico e registra o envio
+                // 3) Pega o link público e registra o envio
                 const { data: urlPublica } = window.supabaseClient.storage.from('arquivos').getPublicUrl(urlDados.caminho);
 
                 const { data: registro, error: erroRegistro } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
