@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 Â· Galeria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-3xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Galeria dos Alunos</h1>
+            <p class="text-sm mb-6" style="color: var(--pibiex-texto-suave);">Compartilhe o que vocÃª produziu com IA. Curta e comente os projetos dos colegas.</p>
+
+            <form id="form-postar" class="bg-white rounded-lg p-4 border mb-8 space-y-2" style="border-color: var(--pibiex-borda);">
+                <p class="text-[11px] font-bold uppercase tracking-wide mb-1" style="color: var(--pibiex-texto-suave);">Publicar novo projeto</p>
+                <input id="novo-titulo" placeholder="TÃ­tulo do projeto" required class="w-full border rounded-md px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);">
+                <textarea id="novo-descricao" placeholder="Descreva seu projeto (opcional)" rows="2" class="w-full border rounded-md px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);"></textarea>
+                <input id="novo-link" type="url" placeholder="Link da imagem/arquivo (opcional)" class="w-full border rounded-md px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);">
+                <button type="submit" class="text-white text-xs font-semibold px-4 py-2 rounded-md" style="background: var(--pibiex-tinta);">Publicar</button>
+            </form>
+
+            <div id="lista-galeria" class="space-y-5">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_ALUNO = null;
+
+        function formatarData(dataIso) {
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function renderizar(projetos) {
+            const container = document.getElementById('lista-galeria');
+
+            if (!projetos || projetos.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum projeto publicado ainda. Seja o primeiro!</p>`;
+                return;
+            }
+
+            container.innerHTML = projetos.map(p => `
+                <div class="bg-white rounded-lg border overflow-hidden" style="border-color: var(--pibiex-borda);">
+                    ${p.arquivo_url ? `<img src="${p.arquivo_url}" class="w-full max-h-80 object-cover" onerror="this.style.display='none'">` : ''}
+                    <div class="p-4">
+                        <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${p.titulo}</p>
+                        <p class="text-[11px] mb-2" style="color: var(--pibiex-texto-suave);">${p.autorNome} Â· ${formatarData(p.criado_em)}</p>
+                        ${p.descricao ? `<p class="text-sm mb-3" style="color: var(--pibiex-texto-suave);">${p.descricao}</p>` : ''}
+
+                        <button onclick="alternarCurtida('${p.id}', ${p.euCurti})"
+                                class="text-xs font-semibold px-3 py-1 rounded-full mb-3"
+                                style="${p.euCurti ? 'background: var(--pibiex-tinta); color: white;' : 'background: var(--pibiex-papel); color: var(--pibiex-texto-suave);'}">
+                            ${p.euCurti ? 'â¥' : 'â¡'} ${p.totalCurtidas}
+                        </button>
+
+                        <div class="space-y-1.5 mb-3">
+                            ${p.comentarios.map(c => `
+                                <p class="text-xs" style="color: var(--pibiex-texto-suave);"><span class="font-semibold" style="color: var(--pibiex-texto);">${c.autorNome}:</span> ${c.comentario}</p>
+                            `).join('')}
+                        </div>
+
+                        <form onsubmit="return comentar(event, '${p.id}')" class="flex gap-2">
+                            <input id="comentario-${p.id}" placeholder="Escreva um comentÃ¡rio..." class="flex-1 border rounded-full px-3 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                            <button type="submit" class="text-xs font-semibold px-3 py-1.5 rounded-full" style="background: var(--pibiex-tinta); color: white;">Enviar</button>
+                        </form>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.alternarCurtida = async (projetoId, jaCurti) => {
+            await window.supabaseClient.functions.invoke('galeria', {
+                body: { token: TOKEN_ALUNO, acao: jaCurti ? 'descurtir' : 'curtir', projetoId },
+            });
+            await carregar();
+        };
+
+        window.comentar = async (event, projetoId) => {
+            event.preventDefault();
+            const input = document.getElementById(`comentario-${projetoId}`);
+            const comentario = input.value.trim();
+            if (!comentario) return false;
+
+            input.value = '';
+            await window.supabaseClient.functions.invoke('galeria', {
+                body: { token: TOKEN_ALUNO, acao: 'comentar', projetoId, comentario },
+            });
+            await carregar();
+            return false;
+        };
+
+        document.getElementById('form-postar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('novo-titulo').value.trim();
+            const descricao = document.getElementById('novo-descricao').value.trim();
+            const arquivoUrl = document.getElementById('novo-link').value.trim();
+            if (!titulo) return;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('galeria', {
+                body: { token: TOKEN_ALUNO, acao: 'postar', titulo, descricao, arquivoUrl },
+            });
+
+            if (error || !data || data.erro) {
+                alert((data && data.erro) || 'Erro ao publicar. Tente novamente.');
+                return;
+            }
+
+            document.getElementById('form-postar').reset();
+            await carregar();
+        });
+
+        async function carregar() {
+            const { data, error } = await window.supabaseClient.functions.invoke('galeria', {
+                body: { token: TOKEN_ALUNO, acao: 'listar' },
+            });
+            if (error || !data || data.erro) {
+                document.getElementById('lista-galeria').innerHTML = `<p class="text-sm text-red-600">NÃ£o foi possÃ­vel carregar a galeria.</p>`;
+                return;
+            }
+            renderizar(data.projetos);
+        }
+
+        iniciarShellAluno('galeria').then((dados) => {
+            if (!dados) return;
+            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            carregar();
+        });
+    </script>
+</body>
+</html>
