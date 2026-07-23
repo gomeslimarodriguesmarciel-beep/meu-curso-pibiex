@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIBIEX 2026 Â· Galeria</title>
+    <title>PIBIEX 2026 · Galeria</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,11 +18,11 @@
 
         <main class="p-9 max-w-3xl mx-auto">
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Galeria dos Alunos</h1>
-            <p class="text-sm mb-6" style="color: var(--pibiex-texto-suave);">Compartilhe o que vocÃª produziu com IA. Curta e comente os projetos dos colegas.</p>
+            <p class="text-sm mb-6" style="color: var(--pibiex-texto-suave);">Compartilhe o que você produziu com IA. Curta e comente os projetos dos colegas.</p>
 
             <form id="form-postar" class="bg-white rounded-lg p-4 border mb-8 space-y-2" style="border-color: var(--pibiex-borda);">
                 <p class="text-[11px] font-bold uppercase tracking-wide mb-1" style="color: var(--pibiex-texto-suave);">Publicar novo projeto</p>
-                <input id="novo-titulo" placeholder="TÃ­tulo do projeto" required class="w-full border rounded-md px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);">
+                <input id="novo-titulo" placeholder="Título do projeto" required class="w-full border rounded-md px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);">
                 <textarea id="novo-descricao" placeholder="Descreva seu projeto (opcional)" rows="2" class="w-full border rounded-md px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);"></textarea>
                 <input id="novo-link" type="url" placeholder="Link da imagem/arquivo (opcional)" class="w-full border rounded-md px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);">
                 <button type="submit" class="text-white text-xs font-semibold px-4 py-2 rounded-md" style="background: var(--pibiex-tinta);">Publicar</button>
@@ -57,13 +57,13 @@
                     ${p.arquivo_url ? `<img src="${p.arquivo_url}" class="w-full max-h-80 object-cover" onerror="this.style.display='none'">` : ''}
                     <div class="p-4">
                         <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${p.titulo}</p>
-                        <p class="text-[11px] mb-2" style="color: var(--pibiex-texto-suave);">${p.autorNome} Â· ${formatarData(p.criado_em)}</p>
+                        <p class="text-[11px] mb-2" style="color: var(--pibiex-texto-suave);">${p.autorNome} · ${formatarData(p.criado_em)}</p>
                         ${p.descricao ? `<p class="text-sm mb-3" style="color: var(--pibiex-texto-suave);">${p.descricao}</p>` : ''}
 
                         <button onclick="alternarCurtida('${p.id}', ${p.euCurti})"
                                 class="text-xs font-semibold px-3 py-1 rounded-full mb-3"
                                 style="${p.euCurti ? 'background: var(--pibiex-tinta); color: white;' : 'background: var(--pibiex-papel); color: var(--pibiex-texto-suave);'}">
-                            ${p.euCurti ? 'â¥' : 'â¡'} ${p.totalCurtidas}
+                            ${p.euCurti ? '♥' : '♡'} ${p.totalCurtidas}
                         </button>
 
                         <div class="space-y-1.5 mb-3">
@@ -73,7 +73,7 @@
                         </div>
 
                         <form onsubmit="return comentar(event, '${p.id}')" class="flex gap-2">
-                            <input id="comentario-${p.id}" placeholder="Escreva um comentÃ¡rio..." class="flex-1 border rounded-full px-3 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                            <input id="comentario-${p.id}" placeholder="Escreva um comentário..." class="flex-1 border rounded-full px-3 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                             <button type="submit" class="text-xs font-semibold px-3 py-1.5 rounded-full" style="background: var(--pibiex-tinta); color: white;">Enviar</button>
                         </form>
                     </div>
@@ -127,7 +127,7 @@
                 body: { token: TOKEN_ALUNO, acao: 'listar' },
             });
             if (error || !data || data.erro) {
-                document.getElementById('lista-galeria').innerHTML = `<p class="text-sm text-red-600">NÃ£o foi possÃ­vel carregar a galeria.</p>`;
+                document.getElementById('lista-galeria').innerHTML = `<p class="text-sm text-red-600">Não foi possível carregar a galeria.</p>`;
                 return;
             }
             renderizar(data.projetos);
