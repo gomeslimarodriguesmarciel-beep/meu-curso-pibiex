@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 Â· Recursos Extras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-4xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Recursos Extras</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">VÃ­deos, e-books, sites e artigos recomendados para aprofundar seus estudos.</p>
+
+            <div id="lista-recursos" class="space-y-3">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        const ICONE_POR_TIPO = { video: 'ð¬', ebook: 'ð', site: 'ð', artigo: 'ð°' };
+        const ROTULO_TIPO = { video: 'VÃ­deo', ebook: 'E-book', site: 'Site', artigo: 'Artigo' };
+
+        function renderizar(recursos) {
+            const container = document.getElementById('lista-recursos');
+
+            if (!recursos || recursos.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum recurso cadastrado ainda.</p>`;
+                return;
+            }
+
+            container.innerHTML = recursos.map(r => `
+                <a href="${r.url}" target="_blank" rel="noopener"
+                   class="flex items-center gap-4 bg-white rounded-lg p-4 border hover:shadow-sm transition" style="border-color: var(--pibiex-borda);">
+                    <div class="text-2xl shrink-0">${ICONE_POR_TIPO[r.tipo] || 'ð'}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="font-semibold text-[14.5px]" style="color: var(--pibiex-texto);">${r.titulo}</p>
+                            <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">${ROTULO_TIPO[r.tipo] || r.tipo}</span>
+                        </div>
+                        ${r.descricao ? `<p class="text-xs mt-0.5" style="color: var(--pibiex-texto-suave);">${r.descricao}</p>` : ''}
+                    </div>
+                    <span class="text-sm shrink-0" style="color: var(--pibiex-texto-suave);">Abrir â</span>
+                </a>
+            `).join('');
+        }
+
+        async function carregar() {
+            const { data, error } = await window.supabaseClient
+                .from('recursos_extras')
+                .select('titulo, tipo, url, descricao, categoria, ordem')
+                .order('ordem', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-recursos').innerHTML =
+                    `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">NÃ£o foi possÃ­vel carregar os recursos.</p>`;
+                console.error(error);
+                return;
+            }
+            renderizar(data);
+        }
+
+        iniciarShellAluno('recursos').then((dados) => {
+            if (dados) carregar();
+        });
+    </script>
+</body>
+</html>
