@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 Â· LaboratÃ³rio de IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-4xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">LaboratÃ³rio de IA</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Problemas prÃ¡ticos para resolver usando ferramentas de IA. Envie um texto e/ou um link com sua soluÃ§Ã£o.</p>
+
+            <div id="lista-laboratorio" class="space-y-4">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_ALUNO = null;
+
+        const ROTULO_DIFICULDADE = { facil: 'FÃ¡cil', medio: 'MÃ©dio', dificil: 'DifÃ­cil' };
+        const COR_DIFICULDADE = { facil: '#15803D', medio: '#8A6D1E', dificil: '#B91C1C' };
+
+        function renderizar(labs, enviosPorLab) {
+            const container = document.getElementById('lista-laboratorio');
+
+            if (!labs || labs.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum problema publicado ainda.</p>`;
+                return;
+            }
+
+            container.innerHTML = labs.map((lab) => {
+                const envio = enviosPorLab[lab.id];
+                const corDif = COR_DIFICULDADE[lab.dificuldade] || 'var(--pibiex-texto-suave)';
+
+                return `
+                    <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${lab.titulo}</p>
+                            ${lab.dificuldade ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: ${corDif};">${ROTULO_DIFICULDADE[lab.dificuldade] || lab.dificuldade}</span>` : ''}
+                        </div>
+                        <p class="text-sm mb-2" style="color: var(--pibiex-texto-suave);">${lab.problema}</p>
+                        ${lab.instrucoes ? `<p class="text-xs mb-4 italic" style="color: var(--pibiex-texto-suave);">${lab.instrucoes}</p>` : ''}
+
+                        ${envio ? `
+                            <div class="rounded-md p-3 mb-3 text-xs" style="background: var(--pibiex-papel); color: var(--pibiex-texto-suave);">
+                                VocÃª jÃ¡ enviou uma resposta para este laboratÃ³rio.
+                                ${envio.arquivo_url ? `<a href="${envio.arquivo_url}" target="_blank" rel="noopener" class="underline font-semibold ml-1" style="color: var(--pibiex-tinta);">abrir link</a>` : ''}
+                            </div>
+                        ` : ''}
+
+                        <div class="space-y-2 pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                            <textarea id="texto-${lab.id}" rows="3" placeholder="Descreva sua soluÃ§Ã£o (opcional se for enviar sÃ³ um link)..."
+                                      class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">${envio ? (envio.resposta_texto || '') : ''}</textarea>
+                            <div class="flex flex-wrap items-end gap-2">
+                                <input type="url" id="link-${lab.id}" placeholder="Link (opcional)" value="${envio ? (envio.arquivo_url || '') : ''}"
+                                       class="flex-1 min-w-[200px] border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                                <button onclick="enviarResposta('${lab.id}')" id="btn-${lab.id}"
+                                        class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
+                                    Enviar
+                                </button>
+                            </div>
+                            <p id="msg-${lab.id}" class="text-xs hidden"></p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.enviarResposta = async (laboratorioId) => {
+            const textoEl = document.getElementById(`texto-${laboratorioId}`);
+            const linkEl = document.getElementById(`link-${laboratorioId}`);
+            const btn = document.getElementById(`btn-${laboratorioId}`);
+            const msg = document.getElementById(`msg-${laboratorioId}`);
+
+            const respostaTexto = textoEl.value.trim();
+            const arquivoUrl = linkEl.value.trim();
+
+            if (!respostaTexto && !arquivoUrl) {
+                msg.innerText = 'Escreva uma resposta ou cole um link.';
+                msg.className = 'text-xs text-red-600';
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            btn.innerText = 'Enviando...';
+            btn.disabled = true;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('enviar-laboratorio', {
+                body: { token: TOKEN_ALUNO, acao: 'enviar', laboratorioId, respostaTexto, arquivoUrl },
+            });
+
+            if (error || !data || data.erro) {
+                msg.innerText = (data && data.erro) || 'Erro ao enviar. Tente novamente.';
+                msg.className = 'text-xs text-red-600';
+                msg.classList.remove('hidden');
+                btn.innerText = 'Enviar';
+                btn.disabled = false;
+                return;
+            }
+
+            await carregarTudo();
+        };
+
+        async function carregarTudo() {
+            const { data: labs } = await window.supabaseClient
+                .from('laboratorio_ia')
+                .select('id, titulo, problema, instrucoes, categoria, dificuldade')
+                .eq('ativo', true)
+                .order('criado_em', { ascending: true });
+
+            const { data: resultado } = await window.supabaseClient.functions.invoke('enviar-laboratorio', {
+                body: { token: TOKEN_ALUNO, acao: 'listar' },
+            });
+
+            const enviosPorLab = {};
+            (resultado && resultado.envios ? resultado.envios : []).forEach(e => { enviosPorLab[e.laboratorio_id] = e; });
+
+            renderizar(labs, enviosPorLab);
+        }
+
+        iniciarShellAluno('laboratorio-ia').then((dados) => {
+            if (!dados) return;
+            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            carregarTudo();
+        });
+    </script>
+</body>
+</html>
