@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 Â· Ferramentas de IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-5xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Ferramentas de IA</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Um panorama das principais ferramentas de IA usadas no curso, organizadas por categoria.</p>
+
+            <div id="lista-ferramentas" class="space-y-8">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        function agruparPorCategoria(ferramentas) {
+            const grupos = {};
+            ferramentas.forEach(f => {
+                if (!grupos[f.categoria]) grupos[f.categoria] = [];
+                grupos[f.categoria].push(f);
+            });
+            return grupos;
+        }
+
+        function renderizar(ferramentas) {
+            const container = document.getElementById('lista-ferramentas');
+
+            if (!ferramentas || ferramentas.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhuma ferramenta cadastrada ainda.</p>`;
+                return;
+            }
+
+            const grupos = agruparPorCategoria(ferramentas);
+
+            container.innerHTML = Object.keys(grupos).map((categoria) => `
+                <section>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] mb-3" style="color: var(--pibiex-texto-suave);">${categoria}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${grupos[categoria].map(f => `
+                            <a href="${f.url || '#'}" target="_blank" rel="noopener"
+                               class="bg-white rounded-lg p-4 border hover:shadow-sm transition block" style="border-color: var(--pibiex-borda);">
+                                <p class="font-semibold text-[14.5px] mb-1" style="color: var(--pibiex-texto);">${f.nome}</p>
+                                <p class="text-xs" style="color: var(--pibiex-texto-suave);">${f.descricao || ''}</p>
+                            </a>
+                        `).join('')}
+                    </div>
+                </section>
+            `).join('');
+        }
+
+        async function carregar() {
+            const { data, error } = await window.supabaseClient
+                .from('ferramentas_ia')
+                .select('id, nome, categoria, descricao, url, ordem')
+                .eq('ativo', true)
+                .order('ordem', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-ferramentas').innerHTML =
+                    `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">NÃ£o foi possÃ­vel carregar as ferramentas.</p>`;
+                console.error(error);
+                return;
+            }
+            renderizar(data);
+        }
+
+        iniciarShellAluno('ferramentas-ia').then((dados) => {
+            if (dados) carregar();
+        });
+    </script>
+</body>
+</html>
