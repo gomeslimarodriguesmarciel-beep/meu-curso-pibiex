@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 Â· Banco de Prompts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-5xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Banco de Prompts</h1>
+            <p class="text-sm mb-6" style="color: var(--pibiex-texto-suave);">Prompts prontos, organizados por categoria. Copie e adapte para sua necessidade.</p>
+
+            <div id="filtros" class="flex flex-wrap gap-2 mb-7"></div>
+            <div id="lista-prompts" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TODOS_PROMPTS = [];
+        let CATEGORIA_ATIVA = 'Todas';
+
+        function renderizarFiltros(categorias) {
+            const container = document.getElementById('filtros');
+            const todas = ['Todas', ...categorias];
+            container.innerHTML = todas.map(cat => `
+                <button onclick="filtrarPorCategoria('${cat.replace(/'/g, "\\'")}')"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-full border transition"
+                        style="${cat === CATEGORIA_ATIVA
+                            ? 'background: var(--pibiex-tinta); color: white; border-color: var(--pibiex-tinta);'
+                            : 'background: white; color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);'}">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function renderizarPrompts() {
+            const container = document.getElementById('lista-prompts');
+            const filtrados = CATEGORIA_ATIVA === 'Todas'
+                ? TODOS_PROMPTS
+                : TODOS_PROMPTS.filter(p => p.categoria === CATEGORIA_ATIVA);
+
+            if (filtrados.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border col-span-2" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum prompt nessa categoria ainda.</p>`;
+                return;
+            }
+
+            container.innerHTML = filtrados.map(p => `
+                <div class="bg-white rounded-lg p-4 border flex flex-col gap-2" style="border-color: var(--pibiex-borda);">
+                    <div class="flex items-center justify-between gap-2">
+                        <p class="font-semibold text-[14px]" style="color: var(--pibiex-texto);">${p.titulo}</p>
+                        <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">${p.categoria}</span>
+                    </div>
+                    <p class="text-xs whitespace-pre-wrap font-mono p-2.5 rounded-md" style="background: var(--pibiex-papel); color: var(--pibiex-texto);">${p.conteudo}</p>
+                    <button onclick="copiarPrompt(this, \`${p.conteudo.replace(/`/g, '\\`')}\`)"
+                            class="text-xs font-semibold self-start px-3 py-1 rounded-full" style="background: var(--pibiex-tinta); color: white;">
+                        Copiar
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.filtrarPorCategoria = (categoria) => {
+            CATEGORIA_ATIVA = categoria;
+            const categorias = [...new Set(TODOS_PROMPTS.map(p => p.categoria))];
+            renderizarFiltros(categorias);
+            renderizarPrompts();
+        };
+
+        window.copiarPrompt = async (botao, texto) => {
+            await navigator.clipboard.writeText(texto);
+            const original = botao.innerText;
+            botao.innerText = 'Copiado!';
+            setTimeout(() => { botao.innerText = original; }, 1500);
+        };
+
+        async function carregar() {
+            const { data, error } = await window.supabaseClient
+                .from('prompts')
+                .select('id, titulo, categoria, conteudo')
+                .eq('publico', true)
+                .order('categoria', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-prompts').innerHTML =
+                    `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100 col-span-2">NÃ£o foi possÃ­vel carregar os prompts.</p>`;
+                console.error(error);
+                return;
+            }
+
+            TODOS_PROMPTS = data || [];
+            const categorias = [...new Set(TODOS_PROMPTS.map(p => p.categoria))];
+            renderizarFiltros(categorias);
+            renderizarPrompts();
+        }
+
+        iniciarShellAluno('prompts').then((dados) => {
+            if (dados) carregar();
+        });
+    </script>
+</body>
+</html>
