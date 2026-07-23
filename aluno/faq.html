@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIBIEX 2026 Â· FAQ</title>
+    <title>PIBIEX 2026 · FAQ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,7 +18,7 @@
 
         <main class="p-9 max-w-3xl mx-auto">
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Perguntas Frequentes</h1>
-            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Respostas rÃ¡pidas para as dÃºvidas mais comuns sobre IA.</p>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Respostas rápidas para as dúvidas mais comuns sobre IA.</p>
 
             <div id="lista-faq" class="space-y-3">
                 <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
@@ -58,7 +58,7 @@
 
             if (error) {
                 document.getElementById('lista-faq').innerHTML =
-                    `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">NÃ£o foi possÃ­vel carregar o FAQ.</p>`;
+                    `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">Não foi possível carregar o FAQ.</p>`;
                 console.error(error);
                 return;
             }
