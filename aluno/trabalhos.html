@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 Â· Meus Trabalhos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-4xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Meus Trabalhos</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Envie seus arquivos e acompanhe notas e comentÃ¡rios do professor.</p>
+
+            <div id="lista-trabalhos" class="space-y-4">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_ALUNO = null;
+
+        const ROTULO_STATUS = {
+            pendente: { texto: 'NÃ£o enviado', cor: '#6B7280', fundo: '#F3F4F6' },
+            enviado:  { texto: 'Enviado Â· aguardando correÃ§Ã£o', cor: '#8A6D1E', fundo: '#FBF3DC' },
+            avaliado: { texto: 'Corrigido', cor: '#15803D', fundo: '#E9F7EE' },
+        };
+
+        function formatarPrazo(dataIso) {
+            if (!dataIso) return null;
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function renderizarTrabalhos(atividades, trabalhosPorAtividade) {
+            const container = document.getElementById('lista-trabalhos');
+
+            if (!atividades || atividades.length === 0) {
+                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhuma atividade publicada ainda.</p>`;
+                return;
+            }
+
+            container.innerHTML = atividades.map((atv) => {
+                const trabalho = trabalhosPorAtividade[atv.id];
+                const status = trabalho ? trabalho.status : 'pendente';
+                const rotulo = ROTULO_STATUS[status] || ROTULO_STATUS.pendente;
+                const prazo = formatarPrazo(atv.data_entrega);
+
+                return `
+                    <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
+                        <div class="flex items-start justify-between gap-4 mb-3">
+                            <div>
+                                <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${atv.titulo}</p>
+                                ${prazo ? `<p class="text-xs mt-0.5" style="color: var(--pibiex-texto-suave);">Prazo: ${prazo}</p>` : ''}
+                            </div>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" style="background: ${rotulo.fundo}; color: ${rotulo.cor};">${rotulo.texto}</span>
+                        </div>
+
+                        ${trabalho && trabalho.arquivo_url ? `
+                            <p class="text-xs mb-3" style="color: var(--pibiex-texto-suave);">
+                                Arquivo enviado: <a href="${trabalho.arquivo_url}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir arquivo</a>
+                            </p>
+                        ` : ''}
+
+                        ${status === 'avaliado' ? `
+                            <div class="rounded-md p-3 mb-3" style="background: var(--pibiex-papel);">
+                                <p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Nota: ${trabalho.nota ?? 'â'}</p>
+                                ${trabalho.feedback_professor ? `<p class="text-xs" style="color: var(--pibiex-texto-suave);">${trabalho.feedback_professor}</p>` : ''}
+                            </div>
+                        ` : ''}
+
+                        <div class="flex flex-wrap items-end gap-2 pt-2 border-t" style="border-color: var(--pibiex-borda);">
+                            <div class="flex-1 min-w-[180px]">
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">
+                                    ${trabalho ? 'Reenviar arquivo (substitui o anterior)' : 'Arquivo'}
+                                </label>
+                                <input type="file" id="arquivo-${atv.id}" class="text-xs w-full">
+                            </div>
+                            <div class="flex-1 min-w-[180px]">
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">ComentÃ¡rio (opcional)</label>
+                                <input type="text" id="comentario-${atv.id}" class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                            </div>
+                            <button onclick="enviarArquivo('${atv.id}')" id="btn-enviar-${atv.id}"
+                                    class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
+                                Enviar
+                            </button>
+                        </div>
+                        <p id="msg-${atv.id}" class="text-xs mt-2 hidden"></p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.enviarArquivo = async (atividadeId) => {
+            const inputArquivo = document.getElementById(`arquivo-${atividadeId}`);
+            const inputComentario = document.getElementById(`comentario-${atividadeId}`);
+            const btn = document.getElementById(`btn-enviar-${atividadeId}`);
+            const msg = document.getElementById(`msg-${atividadeId}`);
+
+            const arquivo = inputArquivo.files[0];
+            if (!arquivo) {
+                msg.innerText = 'Selecione um arquivo antes de enviar.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                return;
+            }
+
+            btn.innerText = 'Enviando...';
+            btn.disabled = true;
+            msg.classList.add('hidden');
+
+            try {
+                // 1) Pede um link seguro de upload
+                const { data: urlDados, error: erroUrl } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                    body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', atividadeId, nomeArquivo: arquivo.name },
+                });
+                if (erroUrl || !urlDados || urlDados.erro) throw new Error((urlDados && urlDados.erro) || 'Erro ao preparar envio.');
+
+                // 2) Envia o arquivo direto pro Storage usando esse link
+                const { error: erroUpload } = await window.supabaseClient
+                    .storage.from('arquivos')
+                    .uploadToSignedUrl(urlDados.caminho, urlDados.token, arquivo);
+                if (erroUpload) throw new Error('Erro ao enviar o arquivo.');
+
+                // 3) Pega o link pÃºblico e registra o envio
+                const { data: urlPublica } = window.supabaseClient.storage.from('arquivos').getPublicUrl(urlDados.caminho);
+
+                const { data: registro, error: erroRegistro } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                    body: {
+                        token: TOKEN_ALUNO, acao: 'enviar', atividadeId,
+                        arquivoUrl: urlPublica.publicUrl,
+                        comentario: inputComentario.value.trim(),
+                    },
+                });
+                if (erroRegistro || !registro || registro.erro) throw new Error((registro && registro.erro) || 'Erro ao registrar envio.');
+
+                await carregarTudo();
+            } catch (erro) {
+                msg.innerText = erro.message || 'Erro ao enviar. Tente novamente.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                btn.innerText = 'Enviar';
+                btn.disabled = false;
+            }
+        };
+
+        async function carregarTudo() {
+            const dados = JSON.parse(localStorage.getItem('pibiex_aluno_dados'));
+
+            const { data: atividades } = await window.supabaseClient
+                .from('atividades')
+                .select('id, titulo, descricao, data_entrega, modulos(titulo, turma_id)')
+                .order('data_entrega', { ascending: true });
+
+            const daTurma = (atividades || []).filter(a => a.modulos && a.modulos.turma_id === dados.turmaId);
+
+            const { data: resultado } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                body: { token: TOKEN_ALUNO, acao: 'listar' },
+            });
+
+            const trabalhosPorAtividade = {};
+            (resultado && resultado.trabalhos ? resultado.trabalhos : []).forEach(t => { trabalhosPorAtividade[t.atividade_id] = t; });
+
+            renderizarTrabalhos(daTurma, trabalhosPorAtividade);
+        }
+
+        iniciarShellAluno('trabalhos').then((dados) => {
+            if (!dados) return;
+            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            carregarTudo();
+        });
+    </script>
+</body>
+</html>
