@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Painel da Equipe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-6xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-900 mb-1">Painel do Professor</h1>
+            <p class="text-sm text-gray-500 mb-8">Visão geral da turma PIBIEX 2026.</p>
+
+            <div id="cartoes-estatisticas" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                <p class="text-sm text-gray-400 col-span-4">Carregando estatísticas...</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <section>
+                    <h2 class="text-xs font-black uppercase tracking-wide text-gray-400 mb-3">Acesso rápido</h2>
+                    <div id="atalhos" class="grid grid-cols-2 gap-3"></div>
+                </section>
+
+                <section>
+                    <h2 class="text-xs font-black uppercase tracking-wide text-gray-400 mb-3">Avisos recentes</h2>
+                    <div id="lista-avisos" class="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+                        <p class="text-sm text-gray-400 p-4">Carregando...</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        const ATALHOS = [
+            { label: 'Cadastrar Aluno', href: 'alunos.html', icone: '🎓', cor: 'bg-blue-50 text-blue-700' },
+            { label: 'Conteúdo',        href: 'conteudo.html', icone: '📚', cor: 'bg-purple-50 text-purple-700' },
+            { label: 'Atividades',      href: 'atividades.html', icone: '📝', cor: 'bg-amber-50 text-amber-700' },
+            { label: 'Avisos',          href: 'avisos.html', icone: '📢', cor: 'bg-red-50 text-red-700' },
+            { label: 'Chat da Turma',   href: 'chat.html', icone: '💬', cor: 'bg-green-50 text-green-700' },
+            { label: 'Galeria',         href: 'galeria.html', icone: '🖼️', cor: 'bg-pink-50 text-pink-700' },
+        ];
+
+        function renderizarAtalhos() {
+            document.getElementById('atalhos').innerHTML = ATALHOS.map(a => `
+                <a href="${a.href}" class="flex items-center gap-3 ${a.cor} rounded-xl p-4 font-bold text-sm hover:opacity-80 transition">
+                    <span class="text-xl">${a.icone}</span>
+                    <span>${a.label}</span>
+                </a>
+            `).join('');
+        }
+
+        function formatarData(dataIso) {
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        }
+
+        function renderizarEstatisticas(dados) {
+            const cartoes = [
+                { valor: dados.totalAlunos, label: 'Alunos cadastrados', cor: 'text-blue-700' },
+                { valor: dados.trabalhosPendentes, label: 'Trabalhos p/ corrigir', cor: 'text-amber-700' },
+                { valor: dados.totalDesafiosEnviados, label: 'Respostas a desafios', cor: 'text-green-700' },
+                { valor: dados.totalProjetosGaleria, label: 'Projetos na galeria', cor: 'text-pink-700' },
+            ];
+
+            document.getElementById('cartoes-estatisticas').innerHTML = cartoes.map(c => `
+                <div class="bg-white rounded-xl border border-gray-100 p-5">
+                    <p class="text-3xl font-black ${c.cor}">${c.valor}</p>
+                    <p class="text-xs font-semibold text-gray-500 mt-1">${c.label}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderizarAvisos(avisos) {
+            const container = document.getElementById('lista-avisos');
+            if (!avisos || avisos.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-400 p-4">Nenhum aviso publicado ainda.</p>`;
+                return;
+            }
+            container.innerHTML = avisos.map(a => `
+                <div class="flex items-center justify-between p-4">
+                    <p class="text-sm font-semibold text-gray-800">${a.titulo}</p>
+                    <span class="text-xs text-gray-400 shrink-0">${formatarData(a.criado_em)}</span>
+                </div>
+            `).join('');
+        }
+
+        iniciarShellEquipe('inicio').then(async (sessao) => {
+            if (!sessao) return;
+            renderizarAtalhos();
+
+            const { data, error } = await window.supabaseClient.functions.invoke('admin-dashboard', {
+                body: { token: sessao.token, acao: 'resumo' },
+            });
+
+            if (error || !data || data.erro) {
+                document.getElementById('cartoes-estatisticas').innerHTML =
+                    `<p class="text-sm text-red-600 col-span-4">Não foi possível carregar as estatísticas.</p>`;
+                return;
+            }
+
+            renderizarEstatisticas(dados);
+            renderizarAvisos(dados.avisosRecentes);
+        });
+    </script>
+</body>
+</html>
