@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Galeria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">🖼️ Moderar Galeria</h1>
+            <p class="text-gray-500 mb-6">Veja os projetos publicados pelos alunos, comente como equipe e remova conteúdo inadequado.</p>
+
+            <div id="lista-projetos" class="space-y-4">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarData(dataIso) {
+            if (!dataIso) return '';
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function chamarModerarGaleria(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('moderar-galeria', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao executar a ação. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarGaleria() {
+            const resultado = await chamarModerarGaleria('listar', {});
+            if (!resultado) {
+                document.getElementById('lista-projetos').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar a galeria.</p>';
+                return;
+            }
+            renderizarGaleria(resultado.projetos || []);
+        }
+
+        function renderizarGaleria(projetos) {
+            const container = document.getElementById('lista-projetos');
+
+            if (projetos.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum projeto publicado ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = projetos.map((p) => {
+                const comentariosHtml = (p.comentarios || []).length === 0
+                    ? '<p class="text-xs text-gray-400">Nenhum comentário.</p>'
+                    : p.comentarios.map(c => `
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="text-xs text-gray-600">
+                                <span class="font-bold ${c.autor_tipo === 'equipe' ? 'text-red-700' : 'text-gray-800'}">${escaparHtml(c.autorNome)}:</span>
+                                ${escaparHtml(c.comentario)}
+                            </p>
+                            <button onclick="excluirComentario('${c.id}')" title="Excluir comentário" class="text-gray-300 hover:text-red-600 text-xs shrink-0">🗑️</button>
+                        </div>
+                    `).join('');
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-sm">${escaparHtml(p.titulo)}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Por ${escaparHtml(p.autorNome)} · ${formatarData(p.criado_em)} · ❤️ ${p.totalCurtidas}</p>
+                                ${p.descricao ? `<p class="text-sm text-gray-600 mt-2">${escaparHtml(p.descricao)}</p>` : ''}
+                                ${p.arquivo_url ? `<a href="${escaparHtml(p.arquivo_url)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline mt-1 inline-block">Abrir projeto →</a>` : ''}
+                            </div>
+                            <button onclick="excluirProjeto('${p.id}')" title="Excluir projeto" class="text-gray-400 hover:text-red-600 text-xs shrink-0">🗑️</button>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-100 space-y-2">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Comentários</p>
+                            ${comentariosHtml}
+                            <form onsubmit="return comentarProjeto(event, '${p.id}')" class="flex gap-2 pt-1">
+                                <input id="comentario-${p.id}" required placeholder="Comentar como equipe..." class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs">
+                                <button type="submit" class="bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg shrink-0">Comentar</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.comentarProjeto = async (event, projetoId) => {
+            event.preventDefault();
+            const input = document.getElementById(`comentario-${projetoId}`);
+            const comentario = input.value.trim();
+            if (!comentario) return false;
+
+            const resultado = await chamarModerarGaleria('comentar', { projetoId, comentario });
+            if (resultado) carregarGaleria();
+            return false;
+        };
+
+        window.excluirProjeto = async (projetoId) => {
+            if (!confirm('Excluir este projeto, com todas as curtidas e comentários? Essa ação não pode ser desfeita.')) return;
+            const resultado = await chamarModerarGaleria('excluir_projeto', { projetoId });
+            if (resultado) carregarGaleria();
+        };
+
+        window.excluirComentario = async (comentarioId) => {
+            if (!confirm('Excluir este comentário?')) return;
+            const resultado = await chamarModerarGaleria('excluir_comentario', { comentarioId });
+            if (resultado) carregarGaleria();
+        };
+
+        iniciarShellEquipe('galeria').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarGaleria();
+        });
+    </script>
+</body>
+</html>
