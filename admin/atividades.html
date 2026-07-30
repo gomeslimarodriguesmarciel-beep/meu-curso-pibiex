@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Atividades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">📝 Gerenciar Atividades</h1>
+            <p class="text-gray-500 mb-6">Crie atividades com prazo, vinculadas a um módulo. Isso aparece na área do aluno.</p>
+
+            <form id="form-nova-atividade" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Módulo</label>
+                        <select id="nova-modulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></select>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
+                        <input id="nova-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-56">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Prazo (opcional)</label>
+                        <input id="nova-prazo" type="datetime-local" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Descrição / enunciado (opcional)</label>
+                    <textarea id="nova-descricao" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
+                </div>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Nova atividade</button>
+            </form>
+
+            <div id="lista-atividades" class="space-y-3">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let TURMA_ATUAL = null;
+        let MODULOS = [];
+        let idEmEdicao = null;
+
+        function formatarPrazo(dataIso) {
+            if (!dataIso) return null;
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function paraDatetimeLocal(dataIso) {
+            if (!dataIso) return '';
+            const d = new Date(dataIso);
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function opcoesModulo(selecionado) {
+            return MODULOS.map(m => `<option value="${m.id}" ${m.id === selecionado ? 'selected' : ''}>${m.titulo}</option>`).join('');
+        }
+
+        async function chamarGerenciarAtividades(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-atividades', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarAtividades() {
+            const { data, error } = await window.supabaseClient
+                .from('atividades')
+                .select('id, titulo, descricao, data_entrega, modulo_id, modulos(titulo, turma_id)')
+                .order('data_entrega', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-atividades').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar atividades.</p>';
+                console.error(error);
+                return;
+            }
+
+            const daTurma = (data || []).filter(a => a.modulos && a.modulos.turma_id === TURMA_ATUAL);
+            renderizarAtividades(daTurma);
+        }
+
+        function renderizarAtividades(atividades) {
+            const container = document.getElementById('lista-atividades');
+
+            if (atividades.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma atividade criada ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = atividades.map((atv) => {
+                const editando = idEmEdicao === atv.id;
+
+                if (editando) {
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+                            <select id="edit-modulo-${atv.id}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${opcoesModulo(atv.modulo_id)}</select>
+                            <input id="edit-titulo-${atv.id}" value="${atv.titulo}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-descricao-${atv.id}" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${atv.descricao || ''}</textarea>
+                            <input id="edit-prazo-${atv.id}" type="datetime-local" value="${paraDatetimeLocal(atv.data_entrega)}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <div class="flex gap-2">
+                                <button onclick="salvarAtividade('${atv.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
+                                <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const prazo = formatarPrazo(atv.data_entrega);
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-sm">${atv.titulo}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">${atv.modulos ? atv.modulos.titulo : ''}</p>
+                                ${atv.descricao ? `<p class="text-sm text-gray-600 mt-2">${atv.descricao}</p>` : ''}
+                            </div>
+                            <div class="flex flex-col items-end gap-2 shrink-0">
+                                ${prazo ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 whitespace-nowrap">Prazo: ${prazo}</span>` : ''}
+                                <div class="flex gap-2">
+                                    <button onclick="editarAtividade('${atv.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
+                                    <button onclick="excluirAtividade('${atv.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('form-nova-atividade').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const moduloId = document.getElementById('nova-modulo').value;
+            const titulo = document.getElementById('nova-titulo').value.trim();
+            const descricao = document.getElementById('nova-descricao').value.trim();
+            const prazoLocal = document.getElementById('nova-prazo').value;
+            const dataEntrega = prazoLocal ? new Date(prazoLocal).toISOString() : null;
+            if (!moduloId || !titulo) return;
+
+            const resultado = await chamarGerenciarAtividades('criar', { moduloId, titulo, descricao, dataEntrega });
+            if (resultado) {
+                document.getElementById('form-nova-atividade').reset();
+                carregarAtividades();
+            }
+        });
+
+        window.editarAtividade = (id) => { idEmEdicao = id; carregarAtividades(); };
+        window.cancelarEdicao = () => { idEmEdicao = null; carregarAtividades(); };
+
+        window.salvarAtividade = async (atividadeId) => {
+            const titulo = document.getElementById(`edit-titulo-${atividadeId}`).value.trim();
+            const descricao = document.getElementById(`edit-descricao-${atividadeId}`).value.trim();
+            const prazoLocal = document.getElementById(`edit-prazo-${atividadeId}`).value;
+            const dataEntrega = prazoLocal ? new Date(prazoLocal).toISOString() : null;
+            if (!titulo) return;
+
+            const resultado = await chamarGerenciarAtividades('atualizar', { atividadeId, titulo, descricao, dataEntrega });
+            if (resultado) { idEmEdicao = null; carregarAtividades(); }
+        };
+
+        window.excluirAtividade = async (atividadeId) => {
+            if (!confirm('Excluir esta atividade?')) return;
+            const resultado = await chamarGerenciarAtividades('excluir', { atividadeId });
+            if (resultado) carregarAtividades();
+        };
+
+        iniciarShellEquipe('atividades').then(async (sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+
+            const { data: turmas } = await window.supabaseClient.from('turmas').select('id, nome').order('ano', { ascending: false }).limit(1);
+            TURMA_ATUAL = turmas && turmas[0] ? turmas[0].id : null;
+
+            if (!TURMA_ATUAL) {
+                document.getElementById('lista-atividades').innerHTML = '<p class="text-red-500 text-sm">Nenhuma turma cadastrada ainda.</p>';
+                return;
+            }
+
+            const { data: modulos } = await window.supabaseClient.from('modulos').select('id, titulo').eq('turma_id', TURMA_ATUAL).order('ordem', { ascending: true });
+            MODULOS = modulos || [];
+            document.getElementById('nova-modulo').innerHTML = opcoesModulo(null);
+
+            if (MODULOS.length === 0) {
+                document.getElementById('lista-atividades').innerHTML = '<p class="text-amber-600 text-sm bg-amber-50 rounded-xl p-5 border border-amber-100">Crie um módulo na página Cronograma antes de adicionar atividades.</p>';
+                return;
+            }
+
+            carregarAtividades();
+        });
+    </script>
+</body>
+</html>
