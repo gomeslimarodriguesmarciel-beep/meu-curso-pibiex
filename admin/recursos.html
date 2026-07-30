@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Recursos Extras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">🔗 Recursos Extras</h1>
+            <p class="text-gray-500 mb-6">Vídeos, e-books, sites e artigos recomendados que aparecem na área do aluno.</p>
+
+            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
+                        <input id="novo-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-40">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Tipo</label>
+                        <select id="novo-tipo" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <option value="video">Vídeo</option>
+                            <option value="ebook">E-book</option>
+                            <option value="site">Site</option>
+                            <option value="artigo">Artigo</option>
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Ordem</label>
+                        <input id="novo-ordem" type="number" value="0" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">URL</label>
+                    <input id="novo-url" required type="url" placeholder="https://..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Descrição (opcional)</label>
+                    <input id="novo-descricao" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo recurso</button>
+            </form>
+
+            <div id="lista-recursos" class="space-y-3">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let idEmEdicao = null;
+
+        const ICONE_POR_TIPO = { video: '🎬', ebook: '📖', site: '🌐', artigo: '📰' };
+        const ROTULO_TIPO = { video: 'Vídeo', ebook: 'E-book', site: 'Site', artigo: 'Artigo' };
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function opcoesTipo(selecionado) {
+            return Object.entries(ROTULO_TIPO)
+                .map(([valor, rotulo]) => `<option value="${valor}" ${valor === selecionado ? 'selected' : ''}>${rotulo}</option>`)
+                .join('');
+        }
+
+        async function chamarGerenciarRecursos(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-recursos', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarRecursos() {
+            const resultado = await chamarGerenciarRecursos('listar', {});
+            if (!resultado) {
+                document.getElementById('lista-recursos').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar recursos.</p>';
+                return;
+            }
+            renderizarRecursos(resultado.recursos || []);
+        }
+
+        function renderizarRecursos(recursos) {
+            const container = document.getElementById('lista-recursos');
+
+            if (recursos.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum recurso cadastrado ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = recursos.map((r) => {
+                if (idEmEdicao === r.id) {
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+                            <input id="edit-titulo-${r.id}" value="${escaparHtml(r.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <input id="edit-url-${r.id}" value="${escaparHtml(r.url)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <input id="edit-descricao-${r.id}" value="${escaparHtml(r.descricao || '')}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <div class="flex gap-2 flex-wrap">
+                                <select id="edit-tipo-${r.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">${opcoesTipo(r.tipo)}</select>
+                                <input id="edit-ordem-${r.id}" type="number" value="${r.ordem ?? 0}" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <button onclick="salvarRecurso('${r.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
+                                <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="text-2xl shrink-0">${ICONE_POR_TIPO[r.tipo] || '🔗'}</span>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(r.titulo)}</p>
+                                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">${ROTULO_TIPO[r.tipo] || escaparHtml(r.tipo)}</span>
+                                    </div>
+                                    <a href="${escaparHtml(r.url)}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${escaparHtml(r.url)}</a>
+                                    ${r.descricao ? `<p class="text-xs text-gray-500 mt-0.5">${escaparHtml(r.descricao)}</p>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex gap-2 shrink-0">
+                                <button onclick="editarRecurso('${r.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
+                                <button onclick="excluirRecurso('${r.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('form-novo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('novo-titulo').value.trim();
+            const tipo = document.getElementById('novo-tipo').value;
+            const url = document.getElementById('novo-url').value.trim();
+            const descricao = document.getElementById('novo-descricao').value.trim();
+            const ordem = parseInt(document.getElementById('novo-ordem').value || '0', 10);
+            if (!titulo || !url) return;
+
+            const resultado = await chamarGerenciarRecursos('criar', { titulo, tipo, url, descricao, ordem });
+            if (resultado) {
+                document.getElementById('form-novo').reset();
+                document.getElementById('novo-ordem').value = '0';
+                carregarRecursos();
+            }
+        });
+
+        window.editarRecurso = (id) => { idEmEdicao = id; carregarRecursos(); };
+        window.cancelarEdicao = () => { idEmEdicao = null; carregarRecursos(); };
+
+        window.salvarRecurso = async (recursoId) => {
+            const titulo = document.getElementById(`edit-titulo-${recursoId}`).value.trim();
+            const tipo = document.getElementById(`edit-tipo-${recursoId}`).value;
+            const url = document.getElementById(`edit-url-${recursoId}`).value.trim();
+            const descricao = document.getElementById(`edit-descricao-${recursoId}`).value.trim();
+            const ordem = parseInt(document.getElementById(`edit-ordem-${recursoId}`).value || '0', 10);
+            if (!titulo || !url) return;
+
+            const resultado = await chamarGerenciarRecursos('atualizar', { recursoId, titulo, tipo, url, descricao, ordem });
+            if (resultado) { idEmEdicao = null; carregarRecursos(); }
+        };
+
+        window.excluirRecurso = async (recursoId) => {
+            if (!confirm('Excluir este recurso?')) return;
+            const resultado = await chamarGerenciarRecursos('excluir', { recursoId });
+            if (resultado) carregarRecursos();
+        };
+
+        iniciarShellEquipe('recursos').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarRecursos();
+        });
+    </script>
+</body>
+</html>
