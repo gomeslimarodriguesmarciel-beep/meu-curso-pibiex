@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Conteúdo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">📚 Gerenciar Conteúdo</h1>
+            <p class="text-gray-500 mb-6">
+                Adicione slides, PDFs, vídeos e links dentro de cada módulo. Para criar ou editar módulos,
+                use a página <a href="cronograma.html" class="underline font-semibold text-gray-700">Cronograma</a>.
+            </p>
+
+            <div id="lista-modulos" class="space-y-6">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let TURMA_ATUAL = null;
+        let idEmEdicao = null; // conteudoId em edição
+
+        const TIPOS = [
+            { valor: 'pdf', label: 'PDF' },
+            { valor: 'slide', label: 'Slide' },
+            { valor: 'video', label: 'Vídeo' },
+            { valor: 'link', label: 'Link' },
+            { valor: 'documento', label: 'Documento' },
+        ];
+        const ICONE_POR_TIPO = { pdf: '📄', slide: '📊', video: '🎬', link: '🔗', documento: '📁' };
+
+        function opcoesTipo(selecionado) {
+            return TIPOS.map(t => `<option value="${t.valor}" ${t.valor === selecionado ? 'selected' : ''}>${t.label}</option>`).join('');
+        }
+
+        async function chamarGerenciarConteudo(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-conteudo', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarModulos() {
+            const { data: modulos, error } = await window.supabaseClient
+                .from('modulos')
+                .select('id, titulo, descricao, ordem, conteudos(id, titulo, tipo, url, descricao, ordem)')
+                .eq('turma_id', TURMA_ATUAL)
+                .order('ordem', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-modulos').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar módulos.</p>';
+                console.error(error);
+                return;
+            }
+
+            (modulos || []).forEach(m => (m.conteudos || []).sort((a, b) => a.ordem - b.ordem));
+            renderizarModulos(modulos || []);
+        }
+
+        function renderizarModulos(modulos) {
+            const container = document.getElementById('lista-modulos');
+
+            if (modulos.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum módulo cadastrado ainda. Crie um na página Cronograma.</p>';
+                return;
+            }
+
+            container.innerHTML = modulos.map((modulo) => {
+                const itensHtml = (modulo.conteudos || []).map((item) => {
+                    const editando = idEmEdicao === item.id;
+
+                    if (editando) {
+                        return `
+                            <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
+                                <input id="edit-titulo-${item.id}" value="${item.titulo}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <input id="edit-url-${item.id}" value="${item.url}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <input id="edit-descricao-${item.id}" value="${item.descricao || ''}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <div class="flex gap-2 flex-wrap">
+                                    <select id="edit-tipo-${item.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">${opcoesTipo(item.tipo)}</select>
+                                    <input id="edit-ordem-${item.id}" type="number" value="${item.ordem}" class="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                    <button onclick="salvarConteudo('${item.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Salvar</button>
+                                    <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-lg">Cancelar</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="text-xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</span>
+                                <div class="min-w-0">
+                                    <p class="font-bold text-gray-800 text-sm truncate">${item.titulo}</p>
+                                    <a href="${item.url}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${item.url}</a>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 shrink-0">
+                                <button onclick="editarConteudo('${item.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
+                                <button onclick="excluirConteudo('${item.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const formNovoConteudo = `
+                    <form onsubmit="return criarConteudo(event, '${modulo.id}')" class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
+                        <div class="flex gap-2 flex-wrap">
+                            <input required placeholder="Título" id="novo-titulo-${modulo.id}" class="flex-1 min-w-[140px] border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                            <select id="novo-tipo-${modulo.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">${opcoesTipo('pdf')}</select>
+                        </div>
+                        <input required placeholder="URL (link do arquivo, vídeo ou site)" id="novo-url-${modulo.id}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                        <div class="flex gap-2">
+                            <input placeholder="Descrição (opcional)" id="novo-descricao-${modulo.id}" class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                            <button type="submit" class="bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-lg shrink-0">+ Conteúdo</button>
+                        </div>
+                    </form>
+                `;
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-4 bg-gray-900">
+                            <p class="text-white font-black">${modulo.titulo}</p>
+                            ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${modulo.descricao}</p>` : ''}
+                        </div>
+                        ${itensHtml || '<p class="text-gray-400 text-sm px-5 py-4">Nenhum conteúdo neste módulo ainda.</p>'}
+                        ${formNovoConteudo}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.criarConteudo = async (event, moduloId) => {
+            event.preventDefault();
+            const titulo = document.getElementById(`novo-titulo-${moduloId}`).value.trim();
+            const tipo = document.getElementById(`novo-tipo-${moduloId}`).value;
+            const url = document.getElementById(`novo-url-${moduloId}`).value.trim();
+            const descricao = document.getElementById(`novo-descricao-${moduloId}`).value.trim();
+            if (!titulo || !url) return false;
+
+            const resultado = await chamarGerenciarConteudo('criar', { moduloId, titulo, tipo, url, descricao });
+            if (resultado) carregarModulos();
+            return false;
+        };
+
+        window.editarConteudo = (conteudoId) => { idEmEdicao = conteudoId; carregarModulos(); };
+        window.cancelarEdicao = () => { idEmEdicao = null; carregarModulos(); };
+
+        window.salvarConteudo = async (conteudoId) => {
+            const titulo = document.getElementById(`edit-titulo-${conteudoId}`).value.trim();
+            const tipo = document.getElementById(`edit-tipo-${conteudoId}`).value;
+            const url = document.getElementById(`edit-url-${conteudoId}`).value.trim();
+            const descricao = document.getElementById(`edit-descricao-${conteudoId}`).value.trim();
+            const ordem = parseInt(document.getElementById(`edit-ordem-${conteudoId}`).value || '0', 10);
+            if (!titulo || !url) return;
+
+            const resultado = await chamarGerenciarConteudo('atualizar', { conteudoId, titulo, tipo, url, descricao, ordem });
+            if (resultado) { idEmEdicao = null; carregarModulos(); }
+        };
+
+        window.excluirConteudo = async (conteudoId) => {
+            if (!confirm('Excluir este conteúdo?')) return;
+            const resultado = await chamarGerenciarConteudo('excluir', { conteudoId });
+            if (resultado) carregarModulos();
+        };
+
+        iniciarShellEquipe('conteudo').then(async (sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+
+            const { data: turmas } = await window.supabaseClient.from('turmas').select('id, nome').order('ano', { ascending: false }).limit(1);
+            TURMA_ATUAL = turmas && turmas[0] ? turmas[0].id : null;
+
+            if (!TURMA_ATUAL) {
+                document.getElementById('lista-modulos').innerHTML = '<p class="text-red-500 text-sm">Nenhuma turma cadastrada ainda.</p>';
+                return;
+            }
+
+            carregarModulos();
+        });
+    </script>
+</body>
+</html>
