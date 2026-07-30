@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Desafios Semanais</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">🏆 Desafios Semanais</h1>
+            <p class="text-gray-500 mb-6">Crie desafios e acompanhe os envios dos alunos. Desafios inativos ficam ocultos para a turma.</p>
+
+            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
+                        <input id="novo-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-28">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Semana</label>
+                        <input id="novo-semana" type="number" min="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Descrição</label>
+                    <textarea id="novo-descricao" required rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input type="checkbox" id="novo-ativo" checked class="rounded border-gray-300">
+                    Visível para os alunos
+                </label>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo desafio</button>
+            </form>
+
+            <div id="lista-desafios" class="space-y-4">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let idEmEdicao = null;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarData(dataIso) {
+            if (!dataIso) return '';
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function chamarGerenciarDesafios(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-desafios', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarDesafios() {
+            const resultado = await chamarGerenciarDesafios('listar', {});
+            if (!resultado) {
+                document.getElementById('lista-desafios').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar desafios.</p>';
+                return;
+            }
+            renderizarDesafios(resultado.desafios || []);
+        }
+
+        function renderizarDesafios(desafios) {
+            const container = document.getElementById('lista-desafios');
+
+            if (desafios.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum desafio criado ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = desafios.map((d) => {
+                if (idEmEdicao === d.id) {
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+                            <input id="edit-titulo-${d.id}" value="${escaparHtml(d.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-descricao-${d.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(d.descricao)}</textarea>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <input id="edit-semana-${d.id}" type="number" min="1" value="${d.semana ?? ''}" placeholder="Semana" class="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" id="edit-ativo-${d.id}" class="rounded border-gray-300" ${d.ativo ? 'checked' : ''}>
+                                    Visível para os alunos
+                                </label>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="salvarDesafio('${d.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
+                                <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const envios = d.envios || [];
+                const enviosHtml = envios.length === 0
+                    ? '<p class="text-xs text-gray-400 px-5 pb-4">Nenhum envio ainda.</p>'
+                    : envios.map(e => `
+                        <div class="px-5 py-2.5 border-t border-gray-100 flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
+                                <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
+                            </div>
+                            <a href="${escaparHtml(e.link_ou_arquivo)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir resposta →</a>
+                        </div>
+                    `).join('');
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                        ${d.semana ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">Semana ${d.semana}</span>` : ''}
+                                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(d.titulo)}</p>
+                                        ${!d.ativo ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inativo</span>' : ''}
+                                    </div>
+                                    <p class="text-sm text-gray-600">${escaparHtml(d.descricao)}</p>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="editarDesafio('${d.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
+                                    <button onclick="excluirDesafio('${d.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-5 py-2 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
+                        </div>
+                        ${enviosHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('form-novo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('novo-titulo').value.trim();
+            const descricao = document.getElementById('novo-descricao').value.trim();
+            const semanaBruta = document.getElementById('novo-semana').value;
+            const semana = semanaBruta ? parseInt(semanaBruta, 10) : null;
+            const ativo = document.getElementById('novo-ativo').checked;
+            if (!titulo || !descricao) return;
+
+            const resultado = await chamarGerenciarDesafios('criar', { titulo, descricao, semana, ativo });
+            if (resultado) {
+                document.getElementById('form-novo').reset();
+                document.getElementById('novo-ativo').checked = true;
+                carregarDesafios();
+            }
+        });
+
+        window.editarDesafio = (id) => { idEmEdicao = id; carregarDesafios(); };
+        window.cancelarEdicao = () => { idEmEdicao = null; carregarDesafios(); };
+
+        window.salvarDesafio = async (desafioId) => {
+            const titulo = document.getElementById(`edit-titulo-${desafioId}`).value.trim();
+            const descricao = document.getElementById(`edit-descricao-${desafioId}`).value.trim();
+            const semanaBruta = document.getElementById(`edit-semana-${desafioId}`).value;
+            const semana = semanaBruta ? parseInt(semanaBruta, 10) : null;
+            const ativo = document.getElementById(`edit-ativo-${desafioId}`).checked;
+            if (!titulo || !descricao) return;
+
+            const resultado = await chamarGerenciarDesafios('atualizar', { desafioId, titulo, descricao, semana, ativo });
+            if (resultado) { idEmEdicao = null; carregarDesafios(); }
+        };
+
+        window.excluirDesafio = async (desafioId) => {
+            if (!confirm('Excluir este desafio e todos os envios dos alunos? Essa ação não pode ser desfeita.')) return;
+            const resultado = await chamarGerenciarDesafios('excluir', { desafioId });
+            if (resultado) carregarDesafios();
+        };
+
+        iniciarShellEquipe('desafios').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarDesafios();
+        });
+    </script>
+</body>
+</html>
