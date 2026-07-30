@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Laboratório de IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">🧪 Laboratório de IA</h1>
+            <p class="text-gray-500 mb-6">Crie problemas práticos e acompanhe as soluções enviadas pelos alunos.</p>
+
+            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
+                        <input id="novo-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-40">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Dificuldade</label>
+                        <select id="novo-dificuldade" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <option value="facil">Fácil</option>
+                            <option value="medio" selected>Médio</option>
+                            <option value="dificil">Difícil</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Problema</label>
+                    <textarea id="novo-problema" required rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Instruções (opcional)</label>
+                    <textarea id="novo-instrucoes" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input type="checkbox" id="novo-ativo" checked class="rounded border-gray-300">
+                    Visível para os alunos
+                </label>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo problema</button>
+            </form>
+
+            <div id="lista-laboratorio" class="space-y-4">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let idEmEdicao = null;
+
+        const ROTULO_DIFICULDADE = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' };
+        const COR_DIFICULDADE = { facil: 'bg-green-50 text-green-700', medio: 'bg-amber-50 text-amber-700', dificil: 'bg-red-50 text-red-700' };
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarData(dataIso) {
+            if (!dataIso) return '';
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function opcoesDificuldade(selecionada) {
+            return Object.entries(ROTULO_DIFICULDADE)
+                .map(([valor, rotulo]) => `<option value="${valor}" ${valor === selecionada ? 'selected' : ''}>${rotulo}</option>`)
+                .join('');
+        }
+
+        async function chamarGerenciarLaboratorio(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-laboratorio', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarLaboratorio() {
+            const resultado = await chamarGerenciarLaboratorio('listar', {});
+            if (!resultado) {
+                document.getElementById('lista-laboratorio').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar o laboratório.</p>';
+                return;
+            }
+            renderizarLaboratorio(resultado.laboratorios || []);
+        }
+
+        function renderizarLaboratorio(laboratorios) {
+            const container = document.getElementById('lista-laboratorio');
+
+            if (laboratorios.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum problema criado ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = laboratorios.map((lab) => {
+                if (idEmEdicao === lab.id) {
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+                            <input id="edit-titulo-${lab.id}" value="${escaparHtml(lab.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-problema-${lab.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(lab.problema)}</textarea>
+                            <textarea id="edit-instrucoes-${lab.id}" rows="2" placeholder="Instruções (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(lab.instrucoes || '')}</textarea>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <select id="edit-dificuldade-${lab.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">${opcoesDificuldade(lab.dificuldade)}</select>
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" id="edit-ativo-${lab.id}" class="rounded border-gray-300" ${lab.ativo ? 'checked' : ''}>
+                                    Visível para os alunos
+                                </label>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="salvarLaboratorio('${lab.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
+                                <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const envios = lab.envios || [];
+                const enviosHtml = envios.length === 0
+                    ? '<p class="text-xs text-gray-400 px-5 pb-4">Nenhum envio ainda.</p>'
+                    : envios.map(e => `
+                        <div class="px-5 py-2.5 border-t border-gray-100">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
+                                    <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
+                                </div>
+                                ${e.arquivo_url ? `<a href="${escaparHtml(e.arquivo_url)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir link →</a>` : ''}
+                            </div>
+                            ${e.resposta_texto ? `<p class="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5 mt-2 whitespace-pre-wrap">${escaparHtml(e.resposta_texto)}</p>` : ''}
+                        </div>
+                    `).join('');
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(lab.titulo)}</p>
+                                        ${lab.dificuldade ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${COR_DIFICULDADE[lab.dificuldade] || 'bg-gray-100 text-gray-500'}">${ROTULO_DIFICULDADE[lab.dificuldade] || escaparHtml(lab.dificuldade)}</span>` : ''}
+                                        ${!lab.ativo ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inativo</span>' : ''}
+                                    </div>
+                                    <p class="text-sm text-gray-600">${escaparHtml(lab.problema)}</p>
+                                    ${lab.instrucoes ? `<p class="text-xs text-gray-500 italic mt-1">${escaparHtml(lab.instrucoes)}</p>` : ''}
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="editarLaboratorio('${lab.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
+                                    <button onclick="excluirLaboratorio('${lab.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-5 py-2 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
+                        </div>
+                        ${enviosHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('form-novo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('novo-titulo').value.trim();
+            const problema = document.getElementById('novo-problema').value.trim();
+            const instrucoes = document.getElementById('novo-instrucoes').value.trim();
+            const dificuldade = document.getElementById('novo-dificuldade').value;
+            const ativo = document.getElementById('novo-ativo').checked;
+            if (!titulo || !problema) return;
+
+            const resultado = await chamarGerenciarLaboratorio('criar', { titulo, problema, instrucoes, dificuldade, ativo });
+            if (resultado) {
+                document.getElementById('form-novo').reset();
+                document.getElementById('novo-ativo').checked = true;
+                carregarLaboratorio();
+            }
+        });
+
+        window.editarLaboratorio = (id) => { idEmEdicao = id; carregarLaboratorio(); };
+        window.cancelarEdicao = () => { idEmEdicao = null; carregarLaboratorio(); };
+
+        window.salvarLaboratorio = async (laboratorioId) => {
+            const titulo = document.getElementById(`edit-titulo-${laboratorioId}`).value.trim();
+            const problema = document.getElementById(`edit-problema-${laboratorioId}`).value.trim();
+            const instrucoes = document.getElementById(`edit-instrucoes-${laboratorioId}`).value.trim();
+            const dificuldade = document.getElementById(`edit-dificuldade-${laboratorioId}`).value;
+            const ativo = document.getElementById(`edit-ativo-${laboratorioId}`).checked;
+            if (!titulo || !problema) return;
+
+            const resultado = await chamarGerenciarLaboratorio('atualizar', { laboratorioId, titulo, problema, instrucoes, dificuldade, ativo });
+            if (resultado) { idEmEdicao = null; carregarLaboratorio(); }
+        };
+
+        window.excluirLaboratorio = async (laboratorioId) => {
+            if (!confirm('Excluir este problema e todos os envios dos alunos? Essa ação não pode ser desfeita.')) return;
+            const resultado = await chamarGerenciarLaboratorio('excluir', { laboratorioId });
+            if (resultado) carregarLaboratorio();
+        };
+
+        iniciarShellEquipe('laboratorio').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarLaboratorio();
+        });
+    </script>
+</body>
+</html>
