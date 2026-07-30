@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Banco de Prompts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">💡 Banco de Prompts</h1>
+            <p class="text-gray-500 mb-6">Cadastre prompts prontos para os alunos copiarem. Prompts não públicos ficam ocultos na área do aluno.</p>
+
+            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
+                        <input id="novo-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-56">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Categoria</label>
+                        <input id="novo-categoria" required placeholder="ex: Estudos" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Conteúdo do prompt</label>
+                    <textarea id="novo-conteudo" required rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"></textarea>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input type="checkbox" id="novo-publico" checked class="rounded border-gray-300">
+                    Visível para os alunos
+                </label>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo prompt</button>
+            </form>
+
+            <div id="lista-prompts" class="space-y-3">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let idEmEdicao = null;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        async function chamarGerenciarPrompts(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-prompts', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarPrompts() {
+            const resultado = await chamarGerenciarPrompts('listar', {});
+            if (!resultado) {
+                document.getElementById('lista-prompts').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar prompts.</p>';
+                return;
+            }
+            renderizarPrompts(resultado.prompts || []);
+        }
+
+        function renderizarPrompts(prompts) {
+            const container = document.getElementById('lista-prompts');
+
+            if (prompts.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum prompt cadastrado ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = prompts.map((p) => {
+                if (idEmEdicao === p.id) {
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+                            <input id="edit-titulo-${p.id}" value="${escaparHtml(p.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <input id="edit-categoria-${p.id}" value="${escaparHtml(p.categoria)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <textarea id="edit-conteudo-${p.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono">${escaparHtml(p.conteudo)}</textarea>
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" id="edit-publico-${p.id}" class="rounded border-gray-300" ${p.publico ? 'checked' : ''}>
+                                Visível para os alunos
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="salvarPrompt('${p.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
+                                <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(p.titulo)}</p>
+                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">${escaparHtml(p.categoria)}</span>
+                                    ${!p.publico ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Oculto</span>' : ''}
+                                </div>
+                                <p class="text-xs text-gray-600 font-mono whitespace-pre-wrap bg-gray-50 rounded-lg p-2.5 mt-2">${escaparHtml(p.conteudo)}</p>
+                            </div>
+                            <div class="flex gap-2 shrink-0">
+                                <button onclick="editarPrompt('${p.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
+                                <button onclick="excluirPrompt('${p.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('form-novo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('novo-titulo').value.trim();
+            const categoria = document.getElementById('novo-categoria').value.trim();
+            const conteudo = document.getElementById('novo-conteudo').value.trim();
+            const publico = document.getElementById('novo-publico').checked;
+            if (!titulo || !categoria || !conteudo) return;
+
+            const resultado = await chamarGerenciarPrompts('criar', { titulo, categoria, conteudo, publico });
+            if (resultado) {
+                document.getElementById('form-novo').reset();
+                document.getElementById('novo-publico').checked = true;
+                carregarPrompts();
+            }
+        });
+
+        window.editarPrompt = (id) => { idEmEdicao = id; carregarPrompts(); };
+        window.cancelarEdicao = () => { idEmEdicao = null; carregarPrompts(); };
+
+        window.salvarPrompt = async (promptId) => {
+            const titulo = document.getElementById(`edit-titulo-${promptId}`).value.trim();
+            const categoria = document.getElementById(`edit-categoria-${promptId}`).value.trim();
+            const conteudo = document.getElementById(`edit-conteudo-${promptId}`).value.trim();
+            const publico = document.getElementById(`edit-publico-${promptId}`).checked;
+            if (!titulo || !categoria || !conteudo) return;
+
+            const resultado = await chamarGerenciarPrompts('atualizar', { promptId, titulo, categoria, conteudo, publico });
+            if (resultado) { idEmEdicao = null; carregarPrompts(); }
+        };
+
+        window.excluirPrompt = async (promptId) => {
+            if (!confirm('Excluir este prompt?')) return;
+            const resultado = await chamarGerenciarPrompts('excluir', { promptId });
+            if (resultado) carregarPrompts();
+        };
+
+        iniciarShellEquipe('prompts').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarPrompts();
+        });
+    </script>
+</body>
+</html>
