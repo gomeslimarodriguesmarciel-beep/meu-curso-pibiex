@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · FAQ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">❓ Gerenciar FAQ</h1>
+            <p class="text-gray-500 mb-6">Perguntas e respostas exibidas na área do aluno. Itens inativos ficam ocultos.</p>
+
+            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Pergunta</label>
+                    <input id="novo-pergunta" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Resposta</label>
+                    <textarea id="novo-resposta" required rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
+                </div>
+                <div class="flex items-end gap-3 flex-wrap">
+                    <div class="w-24">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Ordem</label>
+                        <input id="novo-ordem" type="number" value="0" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-gray-700 pb-2">
+                        <input type="checkbox" id="novo-ativo" checked class="rounded border-gray-300">
+                        Visível para os alunos
+                    </label>
+                </div>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Nova pergunta</button>
+            </form>
+
+            <div id="lista-faq" class="space-y-3">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let idEmEdicao = null;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        async function chamarGerenciarFaq(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-faq', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarFaq() {
+            const resultado = await chamarGerenciarFaq('listar', {});
+            if (!resultado) {
+                document.getElementById('lista-faq').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar o FAQ.</p>';
+                return;
+            }
+            renderizarFaq(resultado.faqs || []);
+        }
+
+        function renderizarFaq(faqs) {
+            const container = document.getElementById('lista-faq');
+
+            if (faqs.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma pergunta cadastrada ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = faqs.map((f) => {
+                if (idEmEdicao === f.id) {
+                    return `
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
+                            <input id="edit-pergunta-${f.id}" value="${escaparHtml(f.pergunta)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-resposta-${f.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(f.resposta)}</textarea>
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <input id="edit-ordem-${f.id}" type="number" value="${f.ordem ?? 0}" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" id="edit-ativo-${f.id}" class="rounded border-gray-300" ${f.ativo ? 'checked' : ''}>
+                                    Visível para os alunos
+                                </label>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="salvarFaq('${f.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
+                                <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(f.pergunta)}</p>
+                                    ${!f.ativo ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inativo</span>' : ''}
+                                </div>
+                                <p class="text-sm text-gray-600">${escaparHtml(f.resposta)}</p>
+                                <p class="text-[11px] text-gray-400 mt-2">Ordem: ${f.ordem ?? 0}</p>
+                            </div>
+                            <div class="flex gap-2 shrink-0">
+                                <button onclick="editarFaq('${f.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
+                                <button onclick="excluirFaq('${f.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('form-novo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pergunta = document.getElementById('novo-pergunta').value.trim();
+            const resposta = document.getElementById('novo-resposta').value.trim();
+            const ordem = parseInt(document.getElementById('novo-ordem').value || '0', 10);
+            const ativo = document.getElementById('novo-ativo').checked;
+            if (!pergunta || !resposta) return;
+
+            const resultado = await chamarGerenciarFaq('criar', { pergunta, resposta, ordem, ativo });
+            if (resultado) {
+                document.getElementById('form-novo').reset();
+                document.getElementById('novo-ordem').value = '0';
+                document.getElementById('novo-ativo').checked = true;
+                carregarFaq();
+            }
+        });
+
+        window.editarFaq = (id) => { idEmEdicao = id; carregarFaq(); };
+        window.cancelarEdicao = () => { idEmEdicao = null; carregarFaq(); };
+
+        window.salvarFaq = async (faqId) => {
+            const pergunta = document.getElementById(`edit-pergunta-${faqId}`).value.trim();
+            const resposta = document.getElementById(`edit-resposta-${faqId}`).value.trim();
+            const ordem = parseInt(document.getElementById(`edit-ordem-${faqId}`).value || '0', 10);
+            const ativo = document.getElementById(`edit-ativo-${faqId}`).checked;
+            if (!pergunta || !resposta) return;
+
+            const resultado = await chamarGerenciarFaq('atualizar', { faqId, pergunta, resposta, ordem, ativo });
+            if (resultado) { idEmEdicao = null; carregarFaq(); }
+        };
+
+        window.excluirFaq = async (faqId) => {
+            if (!confirm('Excluir esta pergunta?')) return;
+            const resultado = await chamarGerenciarFaq('excluir', { faqId });
+            if (resultado) carregarFaq();
+        };
+
+        iniciarShellEquipe('faq').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarFaq();
+        });
+    </script>
+</body>
+</html>
