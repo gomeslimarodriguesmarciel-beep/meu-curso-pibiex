@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Chat da Turma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">💬 Chat da Turma</h1>
+            <p class="text-gray-500 mb-6">Acompanhe a conversa, responda como equipe e exclua mensagens inadequadas.</p>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div id="lista-mensagens" class="p-5 space-y-3 max-h-[55vh] overflow-y-auto">
+                    <p class="text-gray-400 text-sm">Carregando...</p>
+                </div>
+                <form id="form-mensagem" class="flex gap-2 p-4 border-t border-gray-100 bg-gray-50">
+                    <input id="nova-mensagem" required placeholder="Escreva uma mensagem como equipe..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm shrink-0">Enviar</button>
+                </form>
+            </div>
+
+            <p class="text-xs text-gray-400 mt-3">O chat não atualiza sozinho — use o botão
+                <button onclick="carregarMensagens()" class="underline font-semibold text-gray-600">recarregar</button>
+                para ver novas mensagens.
+            </p>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let TURMA_ATUAL = null;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarData(dataIso) {
+            if (!dataIso) return '';
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function chamarModerarChat(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('moderar-chat', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao executar a ação. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        window.carregarMensagens = async () => {
+            const resultado = await chamarModerarChat('listar', { turmaId: TURMA_ATUAL });
+            if (!resultado) {
+                document.getElementById('lista-mensagens').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar o chat.</p>';
+                return;
+            }
+            renderizarMensagens(resultado.mensagens || []);
+        };
+
+        function renderizarMensagens(mensagens) {
+            const container = document.getElementById('lista-mensagens');
+
+            if (mensagens.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm">Nenhuma mensagem no chat ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = mensagens.map((m) => {
+                const daEquipe = m.autor_tipo === 'equipe';
+                return `
+                    <div class="flex items-start gap-3 ${daEquipe ? 'flex-row-reverse' : ''}">
+                        <div class="max-w-[75%] rounded-xl px-4 py-2.5 ${daEquipe ? 'bg-red-50' : 'bg-gray-100'}">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <p class="text-xs font-bold ${daEquipe ? 'text-red-700' : 'text-gray-700'}">${escaparHtml(m.autorNome)}</p>
+                                <p class="text-[10px] text-gray-400">${formatarData(m.criado_em)}</p>
+                            </div>
+                            <p class="text-sm text-gray-800 whitespace-pre-wrap">${escaparHtml(m.mensagem)}</p>
+                        </div>
+                        <button onclick="excluirMensagem('${m.id}')" title="Excluir mensagem" class="text-gray-300 hover:text-red-600 text-xs mt-1 shrink-0">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('form-mensagem').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('nova-mensagem');
+            const mensagem = input.value.trim();
+            if (!mensagem) return;
+
+            const resultado = await chamarModerarChat('enviar', { turmaId: TURMA_ATUAL, mensagem });
+            if (resultado) {
+                input.value = '';
+                carregarMensagens();
+            }
+        });
+
+        window.excluirMensagem = async (mensagemId) => {
+            if (!confirm('Excluir esta mensagem do chat?')) return;
+            const resultado = await chamarModerarChat('excluir', { mensagemId });
+            if (resultado) carregarMensagens();
+        };
+
+        iniciarShellEquipe('chat').then(async (sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+
+            const { data: turmas } = await window.supabaseClient.from('turmas').select('id, nome').order('ano', { ascending: false }).limit(1);
+            TURMA_ATUAL = turmas && turmas[0] ? turmas[0].id : null;
+
+            if (!TURMA_ATUAL) {
+                document.getElementById('lista-mensagens').innerHTML = '<p class="text-red-500 text-sm">Nenhuma turma cadastrada ainda.</p>';
+                return;
+            }
+
+            carregarMensagens();
+        });
+    </script>
+</body>
+</html>
