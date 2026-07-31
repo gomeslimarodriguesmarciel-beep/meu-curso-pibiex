@@ -22,7 +22,7 @@
     <div class="flex-1 min-w-0">
         <div id="topo-pagina"></div>
 
-        <main class="p-8 max-w-4xl mx-auto">
+        <main class="p-4 md:p-8 max-w-4xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">💬 Chat</h1>
             <p class="text-gray-500 mb-6">Converse com a turma, fale no privado com um aluno e modere o que for preciso.</p>
 
@@ -246,9 +246,9 @@
         function montarAreaEnvio(idArea, escopo) {
             document.getElementById(idArea).innerHTML = `
                 <div class="relative">
-                    <div id="sugestoes-${escopo}" class="hidden absolute bottom-full left-3 mb-1 w-64 max-h-52 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-20"></div>
+                    <div id="sugestoes-${escopo}" class="hidden absolute bottom-full left-3 mb-1 w-64 max-w-[85vw] max-h-52 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-20"></div>
 
-                    <div id="emojis-${escopo}" class="hidden absolute bottom-full right-3 mb-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20">
+                    <div id="emojis-${escopo}" class="hidden absolute bottom-full right-3 mb-1 w-72 max-w-[85vw] bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20">
                         <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
                             ${EMOJIS.map(e => `<button type="button" onclick="inserirEmoji('${escopo}', '${e}')" class="text-xl rounded hover:bg-gray-100 leading-none py-1">${e}</button>`).join('')}
                         </div>
