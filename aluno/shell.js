@@ -226,7 +226,14 @@ function montarAssistenteFlutuante() {
                         <p class="fonte-display font-semibold text-[15px]">Assistente PIBIEX</p>
                         <p class="text-[11.5px]" style="color: var(--pibiex-dourado);">Tire dúvidas sobre IA, 24h</p>
                     </div>
-                    <button onclick="alternarPainelAssistente()" class="text-white/70 hover:text-white font-bold">✕</button>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <button onclick="novoChatAssistente()" title="Apaga esta conversa e começa outra"
+                                class="text-[11.5px] font-semibold border rounded-full px-3 py-1 transition hover:bg-white/10"
+                                style="color: var(--pibiex-dourado); border-color: var(--pibiex-dourado);">
+                            Novo chat
+                        </button>
+                        <button onclick="alternarPainelAssistente()" class="text-white/70 hover:text-white font-bold">✕</button>
+                    </div>
                 </div>
                 <div id="mensagens-assistente" class="flex-1 overflow-y-auto p-4 space-y-3 text-[13.5px]" style="background: var(--pibiex-papel);"></div>
                 <form id="form-assistente" class="p-3 border-t flex gap-2" style="border-color: var(--pibiex-borda);">
@@ -261,6 +268,44 @@ function adicionarMensagemNaTela(autor, texto) {
     box.appendChild(bolha);
     box.scrollTop = box.scrollHeight;
 }
+
+function mostrarAvisoAssistente(texto) {
+    const box = document.getElementById('mensagens-assistente');
+    const linha = document.createElement('p');
+    linha.className = 'text-center text-[12px] py-2';
+    linha.style.color = 'var(--pibiex-texto-suave)';
+    linha.innerText = texto;
+    box.appendChild(linha);
+    box.scrollTop = box.scrollHeight;
+}
+
+// Apaga a conversa atual no banco e limpa a tela. Se ainda não houve pergunta
+// nenhuma, não existe conversa salva — aí é só limpar.
+window.novoChatAssistente = async () => {
+    const box = document.getElementById('mensagens-assistente');
+
+    if (!conversaIaAtual) {
+        box.innerHTML = '';
+        mostrarAvisoAssistente('Novo chat. Pode perguntar.');
+        return;
+    }
+
+    if (!confirm('Isso apaga esta conversa com o assistente. Começar um novo chat?')) return;
+
+    const token = localStorage.getItem('pibiex_aluno_token');
+    const { data, error } = await window.supabaseClient.functions.invoke('assistente-ia', {
+        body: { token, acao: 'apagar_conversa', conversaId: conversaIaAtual },
+    });
+
+    if (error || !data || data.erro) {
+        mostrarAvisoAssistente('Não consegui apagar a conversa agora. Tente novamente em instantes.');
+        return;
+    }
+
+    conversaIaAtual = null;
+    box.innerHTML = '';
+    mostrarAvisoAssistente('Conversa apagada. Pode começar de novo.');
+};
 
 async function enviarMensagemAssistente(e) {
     e.preventDefault();
