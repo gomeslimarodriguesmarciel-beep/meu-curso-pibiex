@@ -110,6 +110,111 @@ async function sairEquipe() {
 }
 
 // ============================================================
+// 4) Seletor de turma (usado pelas telas que trabalham sobre UMA turma:
+//    conteúdo, atividades, avisos, chat e correção de trabalhos)
+// ============================================================
+const CHAVE_TURMA_SELECIONADA = 'pibiex_turma_selecionada';
+
+function escaparHtml(texto) {
+    const div = document.createElement('div');
+    div.innerText = texto ?? '';
+    return div.innerHTML;
+}
+
+function seloTurma(turma) {
+    return turma.ativa
+        ? '<span class="text-xs font-bold uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-full shrink-0">Ativa</span>'
+        : '<span class="text-xs font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full shrink-0">Pausada</span>';
+}
+
+function rotuloTurma(turma) {
+    return turma.ano ? `${turma.nome} · ${turma.ano}` : turma.nome;
+}
+
+// Monta a barra de escolha de turma dentro de `idContainer` e devolve o id da
+// turma que ficou selecionada (ou null se não houver turma nenhuma).
+// `aoTrocar(turmaId)` é chamado só quando o professor troca de turma — na
+// primeira carga a página usa o valor devolvido e carrega os dados por conta.
+async function montarSeletorTurma(idContainer, aoTrocar) {
+    const container = document.getElementById(idContainer);
+    if (!container) return null;
+
+    const { data: turmas, error } = await window.supabaseClient
+        .from('turmas')
+        .select('id, nome, ano, ativa')
+        .order('ativa', { ascending: false })
+        .order('ano', { ascending: false })
+        .order('nome', { ascending: true });
+
+    if (error) {
+        container.innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar as turmas.</p>';
+        console.error(error);
+        return null;
+    }
+
+    if (!turmas || turmas.length === 0) {
+        container.innerHTML = `
+            <p class="text-amber-700 text-sm bg-amber-50 border border-amber-100 rounded-xl p-4">
+                Nenhuma turma cadastrada ainda. Crie a primeira em
+                <a href="turmas.html" class="underline font-bold">Turmas</a>.
+            </p>
+        `;
+        return null;
+    }
+
+    // Reaproveita a turma escolhida na tela anterior, para o professor não ter
+    // que escolher de novo a cada página. Se aquela turma foi apagada, cai na
+    // primeira da lista (que é a mais recente entre as ativas).
+    const salva = localStorage.getItem(CHAVE_TURMA_SELECIONADA);
+    let turmaAtual = turmas.some(t => t.id === salva) ? salva : turmas[0].id;
+    localStorage.setItem(CHAVE_TURMA_SELECIONADA, turmaAtual);
+
+    const molduraBarra = 'flex items-center gap-3 bg-white border border-gray-100 shadow-sm rounded-2xl px-4 py-3';
+
+    function desenhar() {
+        const turma = turmas.find(t => t.id === turmaAtual);
+
+        // Com uma turma só, um menu de uma opção seria ruído: mostra o nome direto.
+        const escolha = turmas.length === 1
+            ? `<p class="font-bold text-gray-800 text-sm truncate">${escaparHtml(rotuloTurma(turma))}</p>`
+            : `<select id="${idContainer}-campo" class="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-800 bg-white">
+                    ${turmas.map(t => `
+                        <option value="${t.id}" ${t.id === turmaAtual ? 'selected' : ''}>
+                            ${escaparHtml(rotuloTurma(t))}${t.ativa ? '' : ' (pausada)'}
+                        </option>
+                    `).join('')}
+               </select>`;
+
+        container.innerHTML = `
+            <div class="${molduraBarra}">
+                <span class="text-xs font-bold uppercase tracking-wide text-gray-500 shrink-0">Turma</span>
+                ${escolha}
+                ${seloTurma(turma)}
+            </div>
+            ${turma.ativa ? '' : `
+                <p class="text-xs text-amber-700 mt-2">
+                    Esta turma está pausada: os alunos dela não conseguem entrar na plataforma.
+                    O que você editar aqui fica guardado e volta a aparecer quando ela for reativada.
+                </p>
+            `}
+        `;
+
+        const campo = document.getElementById(`${idContainer}-campo`);
+        if (campo) {
+            campo.addEventListener('change', () => {
+                turmaAtual = campo.value;
+                localStorage.setItem(CHAVE_TURMA_SELECIONADA, turmaAtual);
+                desenhar();
+                if (aoTrocar) aoTrocar(turmaAtual);
+            });
+        }
+    }
+
+    desenhar();
+    return turmaAtual;
+}
+
+// ============================================================
 // Ponto de entrada — cada página chama isso passando seu próprio id
 // ============================================================
 async function iniciarShellEquipe(paginaAtivaId) {
