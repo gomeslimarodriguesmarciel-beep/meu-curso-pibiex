@@ -156,11 +156,21 @@ Buscar minha conta
 <div id="recuperar-etapa-2" class="hidden">
 <h3 class="text-2xl font-bold text-gray-900 mb-2">Conta encontrada</h3>
 <p class="text-sm text-gray-600 mb-1">Usuário: <span id="recuperar-usuario-mascarado" class="font-mono font-bold"></span></p>
-<p class="text-sm text-gray-600 mb-6">Enviaremos a nova senha para: <span id="recuperar-email-mascarado" class="font-mono font-bold"></span></p>
+<p id="recuperar-email-instrucao" class="text-sm text-gray-600 mb-4"></p>
 
-<button id="btn-recuperar-confirmar" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg">
+<form id="form-recuperar-email" class="space-y-3">
+<div>
+<label class="block text-sm font-bold text-gray-700">E-mail</label>
+<input type="email" id="recuperar-email" required placeholder="seuemail@exemplo.com"
+class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none">
+</div>
+
+<p id="msg-recuperar-2" class="hidden text-sm font-bold p-2 rounded"></p>
+
+<button type="submit" id="btn-recuperar-confirmar" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg">
 Confirmar e enviar nova senha
 </button>
+</form>
 <button onclick="window.voltarEtapa1Recuperar()" class="w-full text-gray-500 font-bold py-2 mt-2 hover:text-gray-700 transition text-sm">
 Voltar
 </button>
@@ -396,31 +406,43 @@ return;
 
 ticketRecuperacao = data.ticket;
 document.getElementById('recuperar-usuario-mascarado').innerText = data.usuarioMascarado;
-document.getElementById('recuperar-email-mascarado').innerText = data.emailMascarado;
+document.getElementById('recuperar-email-instrucao').innerText = data.precisaCadastrarEmail
+? 'Este é o seu primeiro pedido de recuperação. Cadastre agora o e-mail que vamos usar para te enviar a senha — e nas próximas vezes.'
+: 'Confirme o e-mail que você cadastrou da última vez que recuperou sua senha.';
+document.getElementById('recuperar-email').value = '';
+document.getElementById('msg-recuperar-2').classList.add('hidden');
 document.getElementById('recuperar-etapa-1').classList.add('hidden');
 document.getElementById('recuperar-etapa-2').classList.remove('hidden');
 });
 
-document.getElementById('btn-recuperar-confirmar').addEventListener('click', async () => {
+document.getElementById('form-recuperar-email').addEventListener('submit', async (e) => {
+e.preventDefault();
+const msg = document.getElementById('msg-recuperar-2');
+msg.classList.add('hidden');
+
+const email = document.getElementById('recuperar-email').value.trim();
+if (!email) return;
+
 const btn = document.getElementById('btn-recuperar-confirmar');
 btn.innerText = 'Enviando...';
 btn.disabled = true;
 
 const { data, error } = await supabaseClient.functions.invoke('recuperar-senha', {
-body: { etapa: 'confirmar', ticket: ticketRecuperacao },
+body: { etapa: 'confirmar', ticket: ticketRecuperacao, email },
 });
 
-if (error || !data || data.erro) {
-alert(await extrairMensagemErro(error, data, 'Erro ao enviar. Tente pedir a recuperação novamente.'));
 btn.innerText = 'Confirmar e enviar nova senha';
 btn.disabled = false;
+
+if (error || !data || data.erro) {
+msg.innerText = await extrairMensagemErro(error, data, 'Erro ao enviar. Tente pedir a recuperação novamente.');
+msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
+msg.classList.remove('hidden');
 return;
 }
 
 document.getElementById('recuperar-etapa-2').classList.add('hidden');
 document.getElementById('recuperar-etapa-3').classList.remove('hidden');
-btn.innerText = 'Confirmar e enviar nova senha';
-btn.disabled = false;
 });
 </script>
 </body>
