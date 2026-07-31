@@ -20,6 +20,8 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">📅 Gerenciar Cronograma</h1>
             <p class="text-gray-500 mb-6">Crie módulos e aulas. Isso aparece automaticamente na área do aluno.</p>
 
+            <div id="seletor-turma" class="mb-6"></div>
+
             <!-- Formulário: novo módulo -->
             <form id="form-novo-modulo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 flex flex-wrap gap-3 items-end">
                 <div class="flex-1 min-w-[200px]">
@@ -250,11 +252,15 @@
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
 
-            const { data: turmas } = await window.supabaseClient.from('turmas').select('id, nome').order('ano', { ascending: false }).limit(1);
-            TURMA_ATUAL = turmas && turmas[0] ? turmas[0].id : null;
+            TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
+                TURMA_ATUAL = turmaId;
+                document.getElementById('lista-modulos').innerHTML = '<p class="text-gray-400 text-sm">Carregando...</p>';
+                carregarModulos();
+            });
 
             if (!TURMA_ATUAL) {
-                document.getElementById('lista-modulos').innerHTML = '<p class="text-red-500 text-sm">Nenhuma turma cadastrada ainda.</p>';
+                document.getElementById('lista-modulos').innerHTML = '';
+                document.getElementById('form-novo-modulo').classList.add('hidden');
                 return;
             }
 
