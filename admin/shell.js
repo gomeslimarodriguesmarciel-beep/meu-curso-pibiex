@@ -17,6 +17,7 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
 // visíveis (mostrando o que vem por aí) mas podem não ter destino ainda.
 const ITENS_MENU_EQUIPE = [
     { id: 'inicio',       label: 'Início',            href: 'inicio.html',       icone: '🏠' },
+    { id: 'turmas',       label: 'Turmas',            href: 'turmas.html',       icone: '🏫' },
     { id: 'alunos',       label: 'Alunos',            href: 'alunos.html',       icone: '🎓' },
     { id: 'cronograma',   label: 'Cronograma',        href: 'cronograma.html',   icone: '📅' },
     { id: 'conteudo',     label: 'Conteúdo',          href: 'conteudo.html',     icone: '📚' },
