@@ -188,6 +188,17 @@ const RECAPTCHA_SITE_KEY = '6LddCF0tAAAAAMS5sgbLZgyBiBAaV9dLNyLT-OH1';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Quando o shell do aluno derruba uma sessão que não vale mais (por exemplo,
+// porque a turma foi pausada), ele volta pra cá com ?sessao=encerrada.
+// Explica o que houve em vez de deixar o aluno achando que só "caiu".
+(function avisarSessaoEncerrada() {
+const motivo = new URLSearchParams(window.location.search).get('sessao');
+if (!motivo) return;
+const caixa = document.getElementById('msg-erro-login');
+caixa.innerText = 'Sua sessão foi encerrada. Se a sua turma foi pausada, o acesso fica bloqueado — fale com o professor.';
+caixa.classList.remove('hidden');
+})();
+
 // ============================================================
 // reCAPTCHA — renderização manual (explicit) por widget
 // ============================================================
