@@ -7,7 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes surgir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .surge { animation: surgir .3s ease both; }
+    </style>
 </head>
 <body class="flex min-h-screen">
 
@@ -17,9 +21,29 @@
         <div id="topo-pagina"></div>
 
         <main class="p-9 max-w-4xl mx-auto">
-            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Desafios Semanais</h1>
-            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Desafios práticos para aplicar IA no seu dia a dia. Envie um link (Drive, documento público, etc.) com sua resposta.</p>
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">🏆 Desafios Semanais</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Cumpra os desafios, ganhe pontos e suba no ranking da turma.</p>
 
+            <!-- Meu progresso -->
+            <div id="cartao-progresso" class="rounded-lg overflow-hidden mb-7" style="background: var(--pibiex-tinta);">
+                <p class="text-center text-sm py-8" style="color: var(--pibiex-dourado);">Carregando seu progresso...</p>
+            </div>
+
+            <!-- Ranking -->
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-3">
+                    <button id="aba-ranking-semana" onclick="trocarAbaRanking('semana')"
+                            class="px-4 py-1.5 rounded-full text-[13px] font-bold transition">Ranking da semana</button>
+                    <button id="aba-ranking-geral" onclick="trocarAbaRanking('geral')"
+                            class="px-4 py-1.5 rounded-full text-[13px] font-bold transition">Ranking geral</button>
+                </div>
+                <div id="area-ranking" class="bg-white border rounded-lg p-5" style="border-color: var(--pibiex-borda);">
+                    <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando ranking...</p>
+                </div>
+            </div>
+
+            <!-- Desafios -->
+            <p class="text-[11px] font-bold uppercase tracking-[0.14em] mb-3" style="color: var(--pibiex-texto-suave);">Desafios abertos</p>
             <div id="lista-desafios" class="space-y-4">
                 <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
             </div>
@@ -31,8 +55,118 @@
     <script src="shell.js"></script>
     <script>
         let TOKEN_ALUNO = null;
+        let ABA_RANKING = 'semana';
+        let ULTIMO_PAINEL = null;
 
-        function renderizar(desafios, enviosPorDesafio) {
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarData(dataIso) {
+            if (!dataIso) return '';
+            const [ano, mes, dia] = dataIso.split('-');
+            return `${dia}/${mes}`;
+        }
+
+        const MEDALHA = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+        // ============================================================
+        // Cartão de progresso (nível, pontos, barra até o próximo nível)
+        // ============================================================
+        function renderizarProgresso(eu) {
+            const nivel = eu.nivel;
+            const proximo = nivel.pontosParaProximo;
+            // A largura da barra é só estética — sem o total do próximo nível
+            // exato aqui, uma faixa fixa de progresso já passa a ideia de avanço.
+            const percentual = proximo === null ? 100 : Math.max(8, Math.min(92, 100 - proximo));
+
+            document.getElementById('cartao-progresso').innerHTML = `
+                <div class="px-7 py-6 flex flex-wrap items-center justify-between gap-5">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.16em]" style="color: var(--pibiex-dourado);">Nível ${nivel.faixa} · ${escaparHtml(nivel.nome)}</p>
+                        <p class="fonte-display text-white text-3xl font-semibold mt-1">${eu.pontos} pontos</p>
+                        <p class="text-slate-400 text-xs mt-1">${eu.desafiosFeitos} ${eu.desafiosFeitos === 1 ? 'desafio avaliado' : 'desafios avaliados'}</p>
+                    </div>
+                    <div class="w-full sm:w-56">
+                        <div class="h-2 rounded-full overflow-hidden" style="background: rgba(255,255,255,.12);">
+                            <div class="h-full rounded-full" style="width: ${percentual}%; background: var(--pibiex-dourado);"></div>
+                        </div>
+                        <p class="text-[11px] mt-1.5" style="color: rgba(255,255,255,.55);">
+                            ${proximo === null ? 'Nível máximo alcançado!' : `Faltam ${proximo} pontos para o próximo nível`}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ============================================================
+        // Ranking (pódio + minha posição)
+        // ============================================================
+        function renderizarRanking(dados, semanaAtual) {
+            const area = document.getElementById('area-ranking');
+
+            if (!dados.alguemPontuou) {
+                area.innerHTML = `
+                    <p class="text-sm text-center py-4" style="color: var(--pibiex-texto-suave);">
+                        Ninguém pontuou ${ABA_RANKING === 'semana' ? 'nesta semana' : 'ainda'}. Envie um desafio e seja o primeiro do pódio!
+                    </p>
+                `;
+                return;
+            }
+
+            const podioHtml = dados.podio.map((p) => `
+                <div class="flex flex-col items-center ${p.posicao === 1 ? 'order-2' : p.posicao === 2 ? 'order-1' : 'order-3'}">
+                    <div class="rounded-full flex items-center justify-center text-2xl mb-1.5 ${p.posicao === 1 ? 'w-16 h-16' : 'w-12 h-12'}"
+                         style="background: var(--pibiex-papel); border: 2px solid ${p.souEu ? 'var(--pibiex-dourado)' : 'var(--pibiex-borda)'};">
+                        ${MEDALHA[p.posicao]}
+                    </div>
+                    <p class="text-[13px] font-bold text-center max-w-[92px] truncate" style="color: var(--pibiex-texto);">
+                        ${p.souEu ? 'Você' : escaparHtml(p.nome.split(' ')[0])}
+                    </p>
+                    <p class="text-[11px] font-semibold" style="color: var(--pibiex-dourado);">${p.pontos} pts</p>
+                </div>
+            `).join('');
+
+            const minhaLinha = dados.eu && dados.eu.posicao > 3 ? `
+                <div class="mt-5 pt-4 border-t flex items-center justify-between" style="border-color: var(--pibiex-borda);">
+                    <p class="text-[13px]" style="color: var(--pibiex-texto-suave);">
+                        Sua posição: <span class="font-bold" style="color: var(--pibiex-texto);">${dados.eu.posicao}º</span> de ${dados.totalAlunos}
+                    </p>
+                    <p class="text-[13px] font-bold" style="color: var(--pibiex-texto);">${dados.eu.pontos} pts</p>
+                </div>
+            ` : (dados.eu && dados.eu.pontos === 0 ? `
+                <div class="mt-5 pt-4 border-t text-center" style="border-color: var(--pibiex-borda);">
+                    <p class="text-[13px]" style="color: var(--pibiex-texto-suave);">Você ainda não pontuou ${ABA_RANKING === 'semana' ? 'nesta semana' : ''}. Envie um desafio!</p>
+                </div>
+            ` : '');
+
+            area.innerHTML = `
+                <div class="flex items-end justify-center gap-6 surge">${podioHtml}</div>
+                ${minhaLinha}
+            `;
+        }
+
+        window.trocarAbaRanking = (aba) => {
+            ABA_RANKING = aba;
+            pintarAbasRanking();
+            if (ULTIMO_PAINEL) {
+                renderizarRanking(aba === 'semana' ? ULTIMO_PAINEL.rankingSemana : ULTIMO_PAINEL.rankingGeral, ULTIMO_PAINEL.semanaAtual);
+            }
+        };
+
+        function pintarAbasRanking() {
+            const ativo = 'color: #fff; background: var(--pibiex-tinta);';
+            const inativo = 'color: var(--pibiex-texto); background: #fff; border: 1px solid var(--pibiex-borda);';
+            document.getElementById('aba-ranking-semana').style.cssText = ABA_RANKING === 'semana' ? ativo : inativo;
+            document.getElementById('aba-ranking-geral').style.cssText = ABA_RANKING === 'geral' ? ativo : inativo;
+        }
+
+        // ============================================================
+        // Desafios
+        // ============================================================
+        function renderizarDesafios(desafios) {
             const container = document.getElementById('lista-desafios');
 
             if (!desafios || desafios.length === 0) {
@@ -40,32 +174,61 @@
                 return;
             }
 
+            const hoje = new Date().toISOString().slice(0, 10);
+
             container.innerHTML = desafios.map((d) => {
-                const envio = enviosPorDesafio[d.id];
+                const envio = d.meuEnvio;
+                const encerrado = d.dataFim && d.dataFim < hoje;
+
+                let selo = '';
+                if (envio && envio.avaliado) {
+                    selo = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background: #DCFCE7; color: #15803D;">✓ ${envio.pontos} / ${d.valeQuantosPontos} pts</span>`;
+                } else if (envio) {
+                    selo = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background: #FEF9C3; color: #A16207;">Aguardando correção</span>`;
+                } else if (encerrado) {
+                    selo = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background: #FEE2E2; color: #B91C1C;">Prazo encerrado</span>`;
+                }
+
                 return `
                     <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${d.titulo}</p>
-                            ${d.semana ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">Semana ${d.semana}</span>` : ''}
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <div>
+                                <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(d.titulo)}</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    ${d.semana ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">Semana ${d.semana}</span>` : ''}
+                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style="background: var(--pibiex-dourado); color: var(--pibiex-tinta);">🏆 ${d.valeQuantosPontos} pts</span>
+                                    ${d.dataFim ? `<span class="text-[10px]" style="color: var(--pibiex-texto-suave);">até ${formatarData(d.dataFim)}</span>` : ''}
+                                </div>
+                            </div>
+                            ${selo}
                         </div>
-                        <p class="text-sm mb-4" style="color: var(--pibiex-texto-suave);">${d.descricao}</p>
+                        <p class="text-sm mb-4" style="color: var(--pibiex-texto-suave);">${escaparHtml(d.descricao)}</p>
 
                         ${envio ? `
-                            <p class="text-xs mb-3" style="color: var(--pibiex-texto-suave);">
-                                Você já enviou: <a href="${envio.link_ou_arquivo}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir link</a>
+                            <p class="text-xs mb-2" style="color: var(--pibiex-texto-suave);">
+                                Você enviou: <a href="${envio.linkOuArquivo}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir link</a>
                             </p>
                         ` : ''}
 
-                        <div class="flex flex-wrap items-end gap-2 pt-3 border-t" style="border-color: var(--pibiex-borda);">
-                            <div class="flex-1 min-w-[200px]">
-                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">${envio ? 'Substituir link' : 'Link da sua resposta'}</label>
-                                <input type="url" id="link-${d.id}" placeholder="https://..." class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                        ${envio && envio.avaliado && envio.feedback ? `
+                            <div class="rounded-md px-3 py-2 mb-3 text-xs" style="background: var(--pibiex-papel); color: var(--pibiex-texto);">
+                                <span class="font-bold">Comentário do professor:</span> ${escaparHtml(envio.feedback)}
                             </div>
-                            <button onclick="enviarResposta('${d.id}')" id="btn-${d.id}"
-                                    class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
-                                Enviar
-                            </button>
-                        </div>
+                        ` : ''}
+
+                        ${(envio && envio.avaliado) || encerrado ? '' : `
+                            <div class="flex flex-wrap items-end gap-2 pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                                <div class="flex-1 min-w-[200px]">
+                                    <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">${envio ? 'Substituir link (a correção anterior é refeita)' : 'Link da sua resposta'}</label>
+                                    <input type="url" id="link-${d.id}" placeholder="https://..." value="${envio ? escaparHtml(envio.linkOuArquivo) : ''}"
+                                           class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                                </div>
+                                <button onclick="enviarResposta('${d.id}')" id="btn-${d.id}"
+                                        class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
+                                    ${envio ? 'Reenviar' : 'Enviar'}
+                                </button>
+                            </div>
+                        `}
                         <p id="msg-${d.id}" class="text-xs mt-2 hidden"></p>
                     </div>
                 `;
@@ -104,26 +267,30 @@
             await carregarTudo();
         };
 
+        // ============================================================
+        // Início
+        // ============================================================
         async function carregarTudo() {
-            const { data: desafios } = await window.supabaseClient
-                .from('desafios_semanais')
-                .select('id, titulo, descricao, semana, data_inicio, data_fim')
-                .eq('ativo', true)
-                .order('semana', { ascending: true });
-
-            const { data: resultado } = await window.supabaseClient.functions.invoke('enviar-desafio', {
-                body: { token: TOKEN_ALUNO, acao: 'listar' },
+            const { data, error } = await window.supabaseClient.functions.invoke('enviar-desafio', {
+                body: { token: TOKEN_ALUNO, acao: 'painel' },
             });
 
-            const enviosPorDesafio = {};
-            (resultado && resultado.envios ? resultado.envios : []).forEach(e => { enviosPorDesafio[e.desafio_id] = e; });
+            if (error || !data || data.erro) {
+                document.getElementById('lista-desafios').innerHTML =
+                    `<p class="text-sm bg-white rounded-lg p-5 border" style="color:#b91c1c; border-color: var(--pibiex-borda);">Não foi possível carregar os desafios. Tente recarregar a página.</p>`;
+                return;
+            }
 
-            renderizar(desafios, enviosPorDesafio);
+            ULTIMO_PAINEL = data;
+            renderizarProgresso(data.eu);
+            renderizarRanking(ABA_RANKING === 'semana' ? data.rankingSemana : data.rankingGeral, data.semanaAtual);
+            renderizarDesafios(data.desafios);
         }
 
         iniciarShellAluno('desafios').then((dados) => {
             if (!dados) return;
             TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            pintarAbasRanking();
             carregarTudo();
         });
     </script>
