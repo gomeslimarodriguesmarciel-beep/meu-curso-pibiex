@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Corrigir Trabalhos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">✅ Corrigir Trabalhos</h1>
+            <p class="text-gray-500 mb-6">
+                Veja os trabalhos enviados em cada atividade, dê a nota e escreva um comentário.
+                O aluno vê a correção na página <span class="font-semibold">Meus Trabalhos</span>.
+            </p>
+
+            <div id="lista-atividades" class="space-y-4">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let TURMA_ATUAL = null;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarData(dataIso) {
+            if (!dataIso) return '';
+            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function chamarCorrigirTrabalho(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('corrigir-trabalho', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao executar a ação. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarTrabalhos() {
+            const resultado = await chamarCorrigirTrabalho('listar', { turmaId: TURMA_ATUAL });
+            if (!resultado) {
+                document.getElementById('lista-atividades').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar os trabalhos.</p>';
+                return;
+            }
+            renderizarAtividades(resultado.atividades || []);
+        }
+
+        function renderizarAtividades(atividades) {
+            const container = document.getElementById('lista-atividades');
+
+            if (atividades.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma atividade criada ainda. Crie uma na página Atividades.</p>';
+                return;
+            }
+
+            container.innerHTML = atividades.map((atv) => {
+                const envios = atv.envios || [];
+                const pendentes = envios.filter(e => e.status !== 'avaliado').length;
+
+                const enviosHtml = envios.length === 0
+                    ? '<p class="text-xs text-gray-400 px-5 pb-4">Nenhum aluno enviou trabalho para esta atividade ainda.</p>'
+                    : envios.map(e => {
+                        const avaliado = e.status === 'avaliado';
+                        return `
+                            <div class="px-5 py-4 border-t border-gray-100">
+                                <div class="flex items-start justify-between gap-3 mb-2">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <p class="text-sm font-bold text-gray-800">${escaparHtml(e.alunoNome)}</p>
+                                            ${avaliado
+                                                ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700">Corrigido${e.nota !== null && e.nota !== undefined ? ' · nota ' + e.nota : ''}</span>`
+                                                : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Aguardando correção</span>'}
+                                        </div>
+                                        <p class="text-[11px] text-gray-400 mt-0.5">Enviado em ${formatarData(e.enviado_em)}</p>
+                                        ${e.comentario_aluno ? `<p class="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5 mt-2 whitespace-pre-wrap">${escaparHtml(e.comentario_aluno)}</p>` : ''}
+                                    </div>
+                                    ${e.arquivo_url ? `<a href="${escaparHtml(e.arquivo_url)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir trabalho →</a>` : ''}
+                                </div>
+
+                                <div class="flex flex-wrap items-end gap-2 pt-2">
+                                    <div class="w-24">
+                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Nota</label>
+                                        <input id="nota-${e.id}" type="number" step="0.1" min="0" placeholder="0 a 10"
+                                               value="${e.nota !== null && e.nota !== undefined ? e.nota : ''}"
+                                               class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                    </div>
+                                    <div class="flex-1 min-w-[200px]">
+                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Comentário para o aluno (opcional)</label>
+                                        <input id="feedback-${e.id}" value="${escaparHtml(e.feedback_professor || '')}"
+                                               class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                    </div>
+                                    <button onclick="salvarCorrecao('${e.id}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2 rounded-lg shrink-0">
+                                        ${avaliado ? 'Atualizar nota' : 'Salvar correção'}
+                                    </button>
+                                    ${avaliado ? `<button onclick="reabrirTrabalho('${e.id}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg shrink-0">Reabrir</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5">
+                            <p class="font-bold text-gray-800 text-sm">${escaparHtml(atv.titulo)}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">${atv.modulos ? escaparHtml(atv.modulos.titulo) : ''}</p>
+                        </div>
+                        <div class="bg-gray-50 px-5 py-2 border-t border-gray-100 flex items-center justify-between gap-2">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
+                            ${pendentes > 0 ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">${pendentes} p/ corrigir</span>` : ''}
+                        </div>
+                        ${enviosHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.salvarCorrecao = async (trabalhoId) => {
+            const nota = document.getElementById(`nota-${trabalhoId}`).value.trim();
+            const feedback = document.getElementById(`feedback-${trabalhoId}`).value.trim();
+
+            const resultado = await chamarCorrigirTrabalho('corrigir', { trabalhoId, nota, feedback });
+            if (resultado) carregarTrabalhos();
+        };
+
+        window.reabrirTrabalho = async (trabalhoId) => {
+            if (!confirm('Reabrir este trabalho? A nota e o comentário serão apagados e o aluno volta a ver "aguardando correção".')) return;
+            const resultado = await chamarCorrigirTrabalho('reabrir', { trabalhoId });
+            if (resultado) carregarTrabalhos();
+        };
+
+        iniciarShellEquipe('trabalhos').then(async (sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+
+            const { data: turmas } = await window.supabaseClient.from('turmas').select('id, nome').order('ano', { ascending: false }).limit(1);
+            TURMA_ATUAL = turmas && turmas[0] ? turmas[0].id : null;
+
+            if (!TURMA_ATUAL) {
+                document.getElementById('lista-atividades').innerHTML = '<p class="text-red-500 text-sm">Nenhuma turma cadastrada ainda.</p>';
+                return;
+            }
+
+            carregarTrabalhos();
+        });
+    </script>
+</body>
+</html>
