@@ -4,78 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PIBIEX 2026 · Painel do Professor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta http-equiv="refresh" content="0; url=admin/inicio.html">
+    <link rel="canonical" href="admin/inicio.html">
+    <script>window.location.replace('admin/inicio.html');</script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 3rem; text-align: center; color: #374151; }
+        a { color: #dc2626; font-weight: 700; }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50">
-
-    <nav class="gradient-bg text-white shadow-lg">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div>
-                <h1 class="font-black text-xl">PIBIEX 2026</h1>
-                <p class="text-blue-100 text-sm">Painel do Professor/Administrador</p>
-            </div>
-            <div class="flex items-center gap-4">
-                <span id="nome-usuario" class="text-sm font-bold"></span>
-                <button onclick="window.sair()" class="bg-white/10 hover:bg-white/20 border border-white/30 px-4 py-2 rounded-lg text-sm font-bold transition">Sair</button>
-            </div>
-        </div>
-    </nav>
-
-    <main id="conteudo" class="max-w-6xl mx-auto px-6 py-12 hidden">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
-            <div class="text-5xl mb-4">🚧</div>
-            <h2 class="text-2xl font-black text-gray-900 mb-2">Painel em construção</h2>
-            <p class="text-gray-500 max-w-md mx-auto">
-                Login de administrador/professor confirmado com sucesso. As telas de cadastro de
-                alunos, conteúdos, avisos e demais recursos serão adicionadas aqui na próxima fase.
-            </p>
-        </div>
-    </main>
-
-    <div id="carregando" class="max-w-6xl mx-auto px-6 py-12 text-center text-gray-400 font-bold">
-        Verificando acesso...
-    </div>
-
-    <script>
-        const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbGNzZ3F2dW51dGJ2cGF6Z3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1Njc5MTQsImV4cCI6MjEwMDE0MzkxNH0.T87bJPVYiYO9vyJtaB6_n9CREO6f-mNGumGK0phtaYk';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        window.sair = async () => {
-            const token = localStorage.getItem('pibiex_equipe_token');
-            if (token) {
-                try { await supabaseClient.functions.invoke('logout-equipe', { body: { token } }); }
-                catch (e) { /* mesmo se falhar, ainda limpamos a sessão local */ }
-            }
-            localStorage.removeItem('pibiex_equipe_token');
-            localStorage.removeItem('pibiex_equipe_dados');
-            window.location.href = 'index.html';
-        };
-
-        (function protegerPagina() {
-            const token = localStorage.getItem('pibiex_equipe_token');
-            const dadosBrutos = localStorage.getItem('pibiex_equipe_dados');
-
-            if (!token || !dadosBrutos) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            const dados = JSON.parse(dadosBrutos);
-            document.getElementById('nome-usuario').innerText = `${dados.nomeCompleto} · ${dados.cargo}`;
-            document.getElementById('carregando').classList.add('hidden');
-            document.getElementById('conteudo').classList.remove('hidden');
-
-            // Nota: esta é uma checagem simples baseada no que foi salvo no login.
-            // As próximas Edge Functions do painel (cadastrar aluno, postar aviso etc.)
-            // vão validar o token de verdade no servidor a cada ação sensível.
-        })();
-    </script>
+<body>
+    <!-- Endereço antigo do painel. Mantido apenas para não quebrar links salvos: -->
+    <!-- o painel de verdade fica em admin/inicio.html. -->
+    <p>Esta página mudou de endereço.</p>
+    <p>Se você não for redirecionado automaticamente, <a href="admin/inicio.html">abra o painel do professor</a>.</p>
 </body>
 </html>
