@@ -151,22 +151,38 @@ function montarMenuLateral(paginaAtivaId) {
         `;
     }).join('');
 
+    // No celular a barra vira uma gaveta fora da tela até o ☰ do topo abrir.
+    // Do md pra cima ela volta ao lugar de sempre ('md:translate-x-0').
     container.outerHTML = `
-        <aside id="sidebar-container" class="w-[17rem] shrink-0 min-h-screen py-6 sticky top-0 flex flex-col"
+        <div id="sidebar-fundo" onclick="window.fecharMenuAluno()"
+             class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
+        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-[17rem] shrink-0 py-6 z-40 flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-200"
                style="background: var(--pibiex-tinta);">
-            <div class="px-5 pb-6 mb-2 flex items-center gap-3 border-b border-white/10">
-                <div class="w-10 h-10 rounded-sm border border-[var(--pibiex-dourado)] flex items-center justify-center shrink-0">
-                    <span class="fonte-display text-[var(--pibiex-dourado)] font-semibold text-sm">P26</span>
+            <div class="px-5 pb-6 mb-2 flex items-center justify-between gap-3 border-b border-white/10">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-sm border border-[var(--pibiex-dourado)] flex items-center justify-center shrink-0">
+                        <span class="fonte-display text-[var(--pibiex-dourado)] font-semibold text-sm">P26</span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="fonte-display text-white font-semibold text-[17px] leading-tight truncate">PIBIEX</p>
+                        <p class="text-[10.5px] font-bold uppercase tracking-[0.14em] text-[var(--pibiex-dourado)]">Inteligência Artificial</p>
+                    </div>
                 </div>
-                <div class="min-w-0">
-                    <p class="fonte-display text-white font-semibold text-[17px] leading-tight truncate">PIBIEX</p>
-                    <p class="text-[10.5px] font-bold uppercase tracking-[0.14em] text-[var(--pibiex-dourado)]">Inteligência Artificial</p>
-                </div>
+                <button onclick="window.fecharMenuAluno()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">✕</button>
             </div>
             <nav class="px-3 overflow-y-auto flex-1">${gruposHtml}</nav>
         </aside>
     `;
 }
+
+window.abrirMenuAluno = () => {
+    document.getElementById('sidebar-container').classList.remove('-translate-x-full');
+    document.getElementById('sidebar-fundo').classList.remove('hidden');
+};
+window.fecharMenuAluno = () => {
+    document.getElementById('sidebar-container').classList.add('-translate-x-full');
+    document.getElementById('sidebar-fundo').classList.add('hidden');
+};
 
 // ============================================================
 // 3) Barra do topo
@@ -178,11 +194,14 @@ function montarTopo(nomeCompleto) {
     const primeiroNome = (nomeCompleto || '').split(' ')[0];
 
     container.outerHTML = `
-        <header id="topo-pagina" class="flex items-center justify-between px-9 py-5 bg-white border-b" style="border-color: var(--pibiex-borda);">
-            <p class="text-[13.5px]" style="color: var(--pibiex-texto-suave);">
-                Bem-vindo(a), <span class="font-semibold" style="color: var(--pibiex-texto);">${primeiroNome}</span>
-            </p>
-            <button onclick="sairAluno()" class="text-[13px] font-semibold tracking-wide uppercase transition"
+        <header id="topo-pagina" class="flex items-center justify-between gap-3 px-4 md:px-9 py-4 md:py-5 bg-white border-b" style="border-color: var(--pibiex-borda);">
+            <div class="flex items-center gap-3 min-w-0">
+                <button onclick="window.abrirMenuAluno()" class="md:hidden shrink-0 text-xl leading-none" style="color: var(--pibiex-texto-suave);" aria-label="Abrir menu">☰</button>
+                <p class="text-[13.5px] min-w-0 truncate" style="color: var(--pibiex-texto-suave);">
+                    Bem-vindo(a), <span class="font-semibold" style="color: var(--pibiex-texto);">${primeiroNome}</span>
+                </p>
+            </div>
+            <button onclick="sairAluno()" class="text-[13px] font-semibold tracking-wide uppercase transition shrink-0"
                     style="color: var(--pibiex-texto-suave);"
                     onmouseover="this.style.color='var(--pibiex-tinta)'" onmouseout="this.style.color='var(--pibiex-texto-suave)'">
                 Sair
