@@ -69,16 +69,33 @@ function montarMenuLateralEquipe(paginaAtivaId) {
         `;
     }).join('');
 
+    // No celular a barra lateral vira uma gaveta: fica fora da tela (translate)
+    // até o ☰ no topo abrir. Do md pra cima ela volta a ficar fixa no lugar,
+    // como sempre foi — 'md:translate-x-0' cancela o deslocamento.
     container.outerHTML = `
-        <aside id="sidebar-container" class="w-72 shrink-0 bg-gray-950 min-h-screen p-5 flex flex-col gap-1 sticky top-0">
-            <div class="px-2 pb-5 mb-2 border-b border-gray-800">
-                <p class="text-white font-black text-lg leading-tight">PIBIEX 2026</p>
-                <p class="text-red-400 text-xs font-bold uppercase tracking-wide">Painel da equipe</p>
+        <div id="sidebar-fundo" onclick="window.fecharMenuEquipe()"
+             class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
+        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-72 shrink-0 bg-gray-950 p-5 flex flex-col gap-1 z-40 -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-y-auto">
+            <div class="px-2 pb-5 mb-2 border-b border-gray-800 flex items-center justify-between">
+                <div>
+                    <p class="text-white font-black text-lg leading-tight">PIBIEX 2026</p>
+                    <p class="text-red-400 text-xs font-bold uppercase tracking-wide">Painel da equipe</p>
+                </div>
+                <button onclick="window.fecharMenuEquipe()" class="md:hidden text-gray-400 hover:text-white text-xl leading-none px-1" aria-label="Fechar menu">✕</button>
             </div>
             ${itensHtml}
         </aside>
     `;
 }
+
+window.abrirMenuEquipe = () => {
+    document.getElementById('sidebar-container').classList.remove('-translate-x-full');
+    document.getElementById('sidebar-fundo').classList.remove('hidden');
+};
+window.fecharMenuEquipe = () => {
+    document.getElementById('sidebar-container').classList.add('-translate-x-full');
+    document.getElementById('sidebar-fundo').classList.add('hidden');
+};
 
 // ============================================================
 // 3) Barra do topo (nome + cargo + sair)
@@ -88,12 +105,15 @@ function montarTopoEquipe(dados) {
     if (!container) return;
 
     container.outerHTML = `
-        <header id="topo-pagina" class="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-100">
-            <p class="text-gray-500 text-sm">
-                <span class="font-bold text-gray-800">${dados.nomeCompleto}</span>
-                <span class="ml-2 text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">${dados.cargo}</span>
-            </p>
-            <button onclick="sairEquipe()" class="text-sm font-bold text-gray-500 hover:text-red-600 transition">Sair</button>
+        <header id="topo-pagina" class="flex items-center justify-between gap-3 px-4 md:px-8 py-4 md:py-5 bg-white border-b border-gray-100">
+            <div class="flex items-center gap-3 min-w-0">
+                <button onclick="window.abrirMenuEquipe()" class="md:hidden shrink-0 text-gray-500 hover:text-gray-900 text-2xl leading-none" aria-label="Abrir menu">☰</button>
+                <p class="text-gray-500 text-sm min-w-0 truncate">
+                    <span class="font-bold text-gray-800">${dados.nomeCompleto}</span>
+                    <span class="ml-2 text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">${dados.cargo}</span>
+                </p>
+            </div>
+            <button onclick="sairEquipe()" class="text-sm font-bold text-gray-500 hover:text-red-600 transition shrink-0">Sair</button>
         </header>
     `;
 }
