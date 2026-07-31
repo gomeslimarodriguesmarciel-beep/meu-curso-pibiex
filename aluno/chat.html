@@ -3,32 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIBIEX 2026 · Chat da Turma</title>
+    <title>PIBIEX 2026 · Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .balao-menu { opacity: 0; transition: opacity .12s; }
+        .linha-mensagem:hover .balao-menu,
+        .linha-mensagem:focus-within .balao-menu { opacity: 1; }
+        @media (hover: none) { .balao-menu { opacity: 1; } }
+    </style>
 </head>
 <body class="flex min-h-screen">
 
     <div id="sidebar-container"></div>
 
-    <div class="flex-1 min-w-0 flex flex-col">
+    <div class="flex-1 min-w-0">
         <div id="topo-pagina"></div>
 
-        <main class="flex-1 flex flex-col p-9 max-w-3xl mx-auto w-full min-h-0">
-            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Chat da Turma</h1>
-            <p class="text-sm mb-5" style="color: var(--pibiex-texto-suave);">Tire dúvidas, compartilhe prompts e converse com a turma.</p>
+        <main class="p-6 md:p-9 max-w-3xl mx-auto">
 
-            <div id="lista-mensagens" class="flex-1 min-h-0 overflow-y-auto space-y-3 bg-white rounded-lg border p-4 mb-4" style="border-color: var(--pibiex-borda);">
-                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            <div class="flex items-center gap-2 mb-5">
+                <button id="aba-turma" onclick="trocarAba('turma')"
+                        class="px-4 py-2 rounded-full text-sm font-semibold transition"></button>
+                <button id="aba-privado" onclick="trocarAba('privado')"
+                        class="px-4 py-2 rounded-full text-sm font-semibold transition flex items-center gap-2"></button>
             </div>
 
-            <form id="form-chat" class="flex gap-2">
-                <input id="input-mensagem" type="text" placeholder="Escreva uma mensagem..."
-                       class="flex-1 border rounded-full px-4 py-2.5 text-sm outline-none" style="border-color: var(--pibiex-borda);">
-                <button type="submit" class="text-white rounded-full px-5 py-2.5 text-sm font-semibold" style="background: var(--pibiex-tinta);">Enviar</button>
-            </form>
+            <!-- ===== Chat da turma ===== -->
+            <section id="painel-turma" class="bg-white border rounded-lg overflow-hidden flex flex-col"
+                     style="border-color: var(--pibiex-borda); height: 68vh;">
+                <div class="px-5 py-3 border-b flex items-center justify-between" style="border-color: var(--pibiex-borda);">
+                    <div>
+                        <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Chat da turma</p>
+                        <p class="text-xs" style="color: var(--pibiex-texto-suave);">Todo mundo da turma vê o que você escrever aqui.</p>
+                    </div>
+                    <button onclick="carregarTurma()" title="Atualizar"
+                            class="text-xs font-semibold" style="color: var(--pibiex-texto-suave);">Atualizar</button>
+                </div>
+                <div id="lista-turma" class="flex-1 overflow-y-auto p-4 space-y-1" style="background: var(--pibiex-papel);"></div>
+                <div id="area-envio-turma"></div>
+            </section>
+
+            <!-- ===== Conversas privadas ===== -->
+            <section id="painel-privado" class="hidden">
+                <!-- lista de conversas -->
+                <div id="tela-conversas" class="bg-white border rounded-lg overflow-hidden"
+                     style="border-color: var(--pibiex-borda);">
+                    <div class="px-5 py-3 border-b flex items-center justify-between" style="border-color: var(--pibiex-borda);">
+                        <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Conversas</p>
+                        <button onclick="abrirNovaConversa()"
+                                class="text-xs font-bold border rounded-full px-3 py-1.5 transition hover:bg-black/5"
+                                style="color: var(--pibiex-tinta); border-color: var(--pibiex-borda);">+ Nova conversa</button>
+                    </div>
+                    <div id="lista-conversas" class="divide-y" style="border-color: var(--pibiex-borda);"></div>
+                </div>
+
+                <!-- escolher com quem falar -->
+                <div id="tela-contatos" class="hidden bg-white border rounded-lg overflow-hidden"
+                     style="border-color: var(--pibiex-borda);">
+                    <div class="px-5 py-3 border-b flex items-center gap-3" style="border-color: var(--pibiex-borda);">
+                        <button onclick="voltarParaConversas()" class="text-lg leading-none" style="color: var(--pibiex-texto-suave);">←</button>
+                        <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Falar com quem?</p>
+                    </div>
+                    <input id="busca-contato" oninput="renderizarContatos()" placeholder="Buscar pelo nome..."
+                           class="w-full px-5 py-3 text-sm outline-none border-b" style="border-color: var(--pibiex-borda);">
+                    <div id="lista-contatos" class="divide-y max-h-[55vh] overflow-y-auto" style="border-color: var(--pibiex-borda);"></div>
+                </div>
+
+                <!-- conversa aberta -->
+                <div id="tela-conversa" class="hidden bg-white border rounded-lg overflow-hidden flex flex-col"
+                     style="border-color: var(--pibiex-borda); height: 68vh;">
+                    <div class="px-5 py-3 border-b flex items-center gap-3" style="border-color: var(--pibiex-borda);">
+                        <button onclick="voltarParaConversas()" class="text-lg leading-none" style="color: var(--pibiex-texto-suave);">←</button>
+                        <div class="min-w-0">
+                            <p id="titulo-conversa" class="font-semibold text-[15px] truncate" style="color: var(--pibiex-texto);"></p>
+                            <p id="subtitulo-conversa" class="text-xs" style="color: var(--pibiex-texto-suave);"></p>
+                        </div>
+                    </div>
+                    <div id="lista-privada" class="flex-1 overflow-y-auto p-4 space-y-1" style="background: var(--pibiex-papel);"></div>
+                    <div id="area-envio-privado"></div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -36,76 +93,534 @@
 
     <script src="shell.js"></script>
     <script>
-        let TOKEN_ALUNO = null;
+        // ============================================================
+        // Estado
+        // ============================================================
+        let ALUNO = null;
+        let ABA = 'turma';
+        let MEMBROS = [];          // para o "@" do chat da turma
+        let CONTATOS = [];
+        let CONVERSA_ABERTA = null;
+        let EDITANDO = null;       // { escopo, id, textoOriginal }
+        let RELOGIO = null;
 
-        function formatarHora(dataIso) {
-            return new Date(dataIso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const EMOJIS_RAPIDOS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+        const EMOJIS = [
+            '😀','😃','😄','😁','😅','😂','🙂','😉','😊','😍','😘','😜','🤪','🤗','🤔','🤨',
+            '😐','😴','😪','😮','😲','😢','😭','😤','😠','🥺','😳','🤯','😇','🥳','😎','🤓',
+            '👍','👎','👏','🙌','🙏','💪','🤝','✌️','👋','🤞','👌','☝️',
+            '❤️','🧡','💛','💚','💙','💜','🖤','💯','✨','🔥','⭐','🎉',
+            '✅','❌','⚠️','❓','❗','💡','📌','📚','📝','🎯','🚀','⏰',
+        ];
+
+        // ============================================================
+        // Utilidades
+        // ============================================================
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
         }
 
-        function renderizarMensagens(mensagens) {
-            const container = document.getElementById('lista-mensagens');
+        function horaCurta(iso) {
+            const d = new Date(iso);
+            const hoje = new Date();
+            const mesmoDia = d.toDateString() === hoje.toDateString();
+            const hora = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            if (mesmoDia) return hora;
+            return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + ' ' + hora;
+        }
 
-            if (!mensagens || mensagens.length === 0) {
-                container.innerHTML = `<p class="text-sm" style="color: var(--pibiex-texto-suave);">Nenhuma mensagem ainda. Seja o primeiro a escrever!</p>`;
-                return;
+        async function chamar(funcao, corpo) {
+            const token = localStorage.getItem('pibiex_aluno_token');
+            const { data, error } = await window.supabaseClient.functions.invoke(funcao, {
+                body: { token, ...corpo },
+            });
+            if (error || !data || data.erro) {
+                return { erro: (data && data.erro) || 'Não foi possível completar a ação. Tente novamente.' };
             }
+            return data;
+        }
 
-            container.innerHTML = mensagens.map(m => {
-                const deEquipe = m.autor_tipo === 'equipe';
-                const alinhamento = m.souEu ? 'ml-auto' : '';
-                const cor = m.souEu
-                    ? 'background: var(--pibiex-tinta); color: white;'
-                    : deEquipe
-                        ? 'background: #FBF3DC; color: var(--pibiex-texto);'
-                        : 'background: var(--pibiex-papel); color: var(--pibiex-texto);';
+        // Destaca "@Nome" quando o nome bate com alguém da turma. Comparar com a
+        // lista de membros (do maior nome para o menor) evita cortar "@Ana Paula"
+        // no meio e transformar em "@Ana".
+        function destacarMencoes(textoEscapado) {
+            if (MEMBROS.length === 0) return textoEscapado;
 
+            const nomes = MEMBROS.map(m => m.nome).sort((a, b) => b.length - a.length);
+            let saida = textoEscapado;
+
+            for (const nome of nomes) {
+                const alvo = '@' + escaparHtml(nome);
+                if (!saida.includes(alvo)) continue;
+                const euMesmo = ALUNO && nome === ALUNO.nomeCompleto;
+                const estilo = euMesmo
+                    ? 'background: var(--pibiex-dourado); color: var(--pibiex-tinta);'
+                    : 'color: var(--pibiex-tinta); background: rgba(11,18,32,.08);';
+                saida = saida.split(alvo).join(
+                    `<span class="font-semibold rounded px-1" style="${estilo}">${alvo}</span>`
+                );
+            }
+            return saida;
+        }
+
+        // ============================================================
+        // Balão de mensagem
+        // ============================================================
+        function balaoMensagem(m, escopo, mostrarAutor) {
+            const meu = m.souEu;
+
+            if (m.apagada) {
                 return `
-                    <div class="max-w-[75%] w-fit ${alinhamento}">
-                        <p class="text-[10px] font-bold uppercase tracking-wide mb-0.5 px-1" style="color: var(--pibiex-texto-suave);">
-                            ${m.autorNome || (deEquipe ? 'Equipe' : 'Aluno')} · ${formatarHora(m.criado_em)}
-                        </p>
-                        <div class="rounded-lg px-3.5 py-2 text-sm" style="${cor}">${m.mensagem}</div>
+                    <div class="flex ${meu ? 'justify-end' : 'justify-start'}">
+                        <div class="rounded-lg px-4 py-2 max-w-[85%] italic text-[13px] border"
+                             style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda); background: #fff;">
+                            Esta mensagem foi apagada.
+                        </div>
                     </div>
                 `;
-            }).join('');
-            container.scrollTop = container.scrollHeight;
+            }
+
+            const corpo = destacarMencoes(escaparHtml(m.mensagem));
+
+            const reacoes = (m.reacoes || []).map(r => `
+                <button onclick="reagir('${escopo}', '${m.id}', '${r.emoji}')"
+                        class="text-[12px] rounded-full px-2 py-0.5 border transition"
+                        style="border-color: ${r.souEu ? 'var(--pibiex-dourado)' : 'var(--pibiex-borda)'};
+                               background: ${r.souEu ? 'rgba(201,162,75,.15)' : '#fff'};">
+                    ${r.emoji} ${r.total}
+                </button>
+            `).join('');
+
+            const acoes = [];
+            acoes.push(`<button onclick="abrirReacoes('${escopo}', '${m.id}', this)" title="Reagir" class="px-1">🙂</button>`);
+            if (m.podeEditar) acoes.push(`<button onclick="comecarEdicao('${escopo}', '${m.id}')" title="Editar" class="px-1">✏️</button>`);
+            if (m.podeApagar) acoes.push(`<button onclick="apagar('${escopo}', '${m.id}')" title="Apagar" class="px-1">🗑️</button>`);
+
+            return `
+                <div class="linha-mensagem flex ${meu ? 'justify-end' : 'justify-start'} gap-1 items-start">
+                    ${meu ? `<div class="balao-menu flex items-center gap-0.5 text-[13px] self-center">${acoes.join('')}</div>` : ''}
+                    <div class="max-w-[85%]">
+                        <div class="rounded-lg px-4 py-2 ${meu ? 'text-white rounded-br-sm' : 'border rounded-bl-sm'}"
+                             style="${meu ? 'background: var(--pibiex-tinta);' : 'background:#fff; border-color: var(--pibiex-borda);'}">
+                            ${mostrarAutor && !meu ? `<p class="text-[11.5px] font-bold mb-0.5" style="color: var(--pibiex-dourado);">${escaparHtml(m.autorNome)}${m.autorTipo === 'equipe' ? ' · professor' : ''}</p>` : ''}
+                            <p class="text-[13.5px] whitespace-pre-wrap break-words">${corpo}</p>
+                            <p class="text-[10.5px] mt-1 ${meu ? 'text-white/60' : ''}" style="${meu ? '' : 'color: var(--pibiex-texto-suave);'}">
+                                ${horaCurta(m.criadoEm)}${m.editada ? ' · editada' : ''}
+                            </p>
+                        </div>
+                        ${reacoes ? `<div class="flex flex-wrap gap-1 mt-1 ${meu ? 'justify-end' : ''}">${reacoes}</div>` : ''}
+                    </div>
+                    ${!meu ? `<div class="balao-menu flex items-center gap-0.5 text-[13px] self-center">${acoes.join('')}</div>` : ''}
+                </div>
+            `;
         }
 
-        async function carregarMensagens() {
-            const { data, error } = await window.supabaseClient.functions.invoke('chat-turma', {
-                body: { token: TOKEN_ALUNO, acao: 'listar' },
-            });
-            if (error || !data || data.erro) {
-                document.getElementById('lista-mensagens').innerHTML =
-                    `<p class="text-sm text-red-600">Não foi possível carregar o chat.</p>`;
+        function desenharMensagens(idContainer, mensagens, escopo, mostrarAutor, vazio) {
+            const box = document.getElementById(idContainer);
+            const estavaNoFim = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+
+            if (!mensagens || mensagens.length === 0) {
+                box.innerHTML = `<p class="text-center text-[13px] py-6" style="color: var(--pibiex-texto-suave);">${vazio}</p>`;
                 return;
             }
-            renderizarMensagens(data.mensagens);
+
+            box.innerHTML = mensagens.map(m => balaoMensagem(m, escopo, mostrarAutor)).join('');
+            if (estavaNoFim) box.scrollTop = box.scrollHeight;
         }
 
-        document.getElementById('form-chat').addEventListener('submit', async (e) => {
+        // ============================================================
+        // Caixa de escrever (usada nos dois chats)
+        // ============================================================
+        function montarAreaEnvio(idArea, escopo) {
+            document.getElementById(idArea).innerHTML = `
+                <div class="relative">
+                    <div id="sugestoes-${escopo}" class="hidden absolute bottom-full left-3 mb-1 w-64 max-h-52 overflow-y-auto bg-white border rounded-lg shadow-lg z-20"
+                         style="border-color: var(--pibiex-borda);"></div>
+
+                    <div id="emojis-${escopo}" class="hidden absolute bottom-full right-3 mb-1 w-72 bg-white border rounded-lg shadow-lg p-2 z-20"
+                         style="border-color: var(--pibiex-borda);">
+                        <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
+                            ${EMOJIS.map(e => `<button type="button" onclick="inserirEmoji('${escopo}', '${e}')" class="text-xl rounded hover:bg-black/5 leading-none py-1">${e}</button>`).join('')}
+                        </div>
+                    </div>
+
+                    <div id="aviso-edicao-${escopo}" class="hidden px-4 pt-2 text-[12px] flex items-center justify-between" style="color: var(--pibiex-texto-suave);">
+                        <span>Editando mensagem</span>
+                        <button onclick="cancelarEdicao('${escopo}')" class="font-semibold">Cancelar</button>
+                    </div>
+
+                    <form onsubmit="return enviar(event, '${escopo}')" class="p-3 border-t flex gap-2 items-end" style="border-color: var(--pibiex-borda);">
+                        <button type="button" onclick="alternarEmojis('${escopo}')" title="Emojis"
+                                class="text-xl shrink-0 leading-none px-1">🙂</button>
+                        <textarea id="campo-${escopo}" rows="1" placeholder="Escreva uma mensagem..."
+                                  oninput="aoDigitar('${escopo}')" onkeydown="atalhoEnviar(event, '${escopo}')"
+                                  class="flex-1 border rounded-2xl px-4 py-2 text-[13.5px] outline-none resize-none max-h-32"
+                                  style="border-color: var(--pibiex-borda);"></textarea>
+                        <button type="submit" class="text-white rounded-full w-10 h-10 flex items-center justify-center shrink-0"
+                                style="background: var(--pibiex-tinta);">➤</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        window.alternarEmojis = (escopo) => {
+            document.getElementById(`emojis-${escopo}`).classList.toggle('hidden');
+        };
+
+        window.inserirEmoji = (escopo, emoji) => {
+            const campo = document.getElementById(`campo-${escopo}`);
+            const pos = campo.selectionStart ?? campo.value.length;
+            campo.value = campo.value.slice(0, pos) + emoji + campo.value.slice(pos);
+            campo.focus();
+            campo.selectionStart = campo.selectionEnd = pos + emoji.length;
+            document.getElementById(`emojis-${escopo}`).classList.add('hidden');
+        };
+
+        window.atalhoEnviar = (e, escopo) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                enviar(e, escopo);
+            }
+        };
+
+        // ============================================================
+        // Menção com "@"
+        // ============================================================
+        // Pega o "@algo" que está sendo digitado logo antes do cursor. Aceita
+        // espaço no meio porque nome de gente tem espaço ("@Ana Paula").
+        function trechoDeMencao(campo) {
+            const antes = campo.value.slice(0, campo.selectionStart ?? 0);
+            const arroba = antes.lastIndexOf('@');
+            if (arroba < 0) return null;
+
+            const anterior = arroba > 0 ? antes[arroba - 1] : ' ';
+            if (anterior !== ' ' && anterior !== '\n') return null;
+
+            const digitado = antes.slice(arroba + 1);
+            if (digitado.includes('\n') || digitado.length > 40) return null;
+            return { inicio: arroba, digitado };
+        }
+
+        window.aoDigitar = (escopo) => {
+            const campo = document.getElementById(`campo-${escopo}`);
+            campo.style.height = 'auto';
+            campo.style.height = Math.min(campo.scrollHeight, 128) + 'px';
+
+            const caixa = document.getElementById(`sugestoes-${escopo}`);
+            if (escopo !== 'turma' || MEMBROS.length === 0) { caixa.classList.add('hidden'); return; }
+
+            const trecho = trechoDeMencao(campo);
+            if (!trecho) { caixa.classList.add('hidden'); return; }
+
+            const busca = trecho.digitado.toLowerCase();
+            const achados = MEMBROS
+                .filter(m => !m.souEu && m.nome.toLowerCase().includes(busca))
+                .slice(0, 6);
+
+            if (achados.length === 0) { caixa.classList.add('hidden'); return; }
+
+            caixa.innerHTML = achados.map(m => `
+                <button type="button" onclick="aplicarMencao('${escopo}', ${trecho.inicio}, '${escaparHtml(m.nome).replace(/'/g, "\\'")}')"
+                        class="w-full text-left px-3 py-2 hover:bg-black/5 text-[13px]">
+                    <span class="font-semibold" style="color: var(--pibiex-texto);">${escaparHtml(m.nome)}</span>
+                    <span class="text-[11px] ml-1" style="color: var(--pibiex-texto-suave);">${m.tipo === 'equipe' ? 'professor' : 'colega'}</span>
+                </button>
+            `).join('');
+            caixa.classList.remove('hidden');
+        };
+
+        window.aplicarMencao = (escopo, inicio, nome) => {
+            const campo = document.getElementById(`campo-${escopo}`);
+            const depois = campo.value.slice(campo.selectionStart ?? 0);
+            campo.value = campo.value.slice(0, inicio) + '@' + nome + ' ' + depois;
+            document.getElementById(`sugestoes-${escopo}`).classList.add('hidden');
+            campo.focus();
+            const pos = inicio + nome.length + 2;
+            campo.selectionStart = campo.selectionEnd = pos;
+        };
+
+        // ============================================================
+        // Ações nas mensagens
+        // ============================================================
+        window.abrirReacoes = (escopo, mensagemId, botao) => {
+            const antigo = document.getElementById('barra-reacoes');
+            if (antigo) antigo.remove();
+
+            const barra = document.createElement('div');
+            barra.id = 'barra-reacoes';
+            barra.className = 'fixed z-50 bg-white border rounded-full shadow-lg px-2 py-1 flex gap-1';
+            barra.style.borderColor = 'var(--pibiex-borda)';
+            barra.innerHTML = EMOJIS_RAPIDOS.map(e =>
+                `<button class="text-lg leading-none px-1 hover:scale-110 transition" onclick="reagir('${escopo}', '${mensagemId}', '${e}')">${e}</button>`
+            ).join('');
+
+            document.body.appendChild(barra);
+            const r = botao.getBoundingClientRect();
+            barra.style.top = Math.max(8, r.top - 44) + 'px';
+            barra.style.left = Math.max(8, Math.min(r.left - 60, window.innerWidth - barra.offsetWidth - 8)) + 'px';
+
+            setTimeout(() => {
+                document.addEventListener('click', function fechar(ev) {
+                    if (!barra.contains(ev.target)) { barra.remove(); document.removeEventListener('click', fechar); }
+                });
+            }, 0);
+        };
+
+        window.reagir = async (escopo, mensagemId, emoji) => {
+            const barra = document.getElementById('barra-reacoes');
+            if (barra) barra.remove();
+
+            const funcao = escopo === 'turma' ? 'chat-turma' : 'chat-privado';
+            const r = await chamar(funcao, { acao: 'reagir', mensagemId, emoji });
+            if (r.erro) { alert(r.erro); return; }
+            escopo === 'turma' ? carregarTurma() : carregarMensagensPrivadas();
+        };
+
+        window.comecarEdicao = (escopo, mensagemId) => {
+            const lista = escopo === 'turma' ? ULTIMAS_TURMA : ULTIMAS_PRIVADAS;
+            const m = lista.find(x => x.id === mensagemId);
+            if (!m) return;
+
+            EDITANDO = { escopo, id: mensagemId };
+            const campo = document.getElementById(`campo-${escopo}`);
+            campo.value = m.mensagem;
+            campo.focus();
+            document.getElementById(`aviso-edicao-${escopo}`).classList.remove('hidden');
+        };
+
+        window.cancelarEdicao = (escopo) => {
+            EDITANDO = null;
+            document.getElementById(`campo-${escopo}`).value = '';
+            document.getElementById(`aviso-edicao-${escopo}`).classList.add('hidden');
+        };
+
+        window.apagar = async (escopo, mensagemId) => {
+            if (!confirm('Apagar esta mensagem? Ela vira "mensagem apagada" para todo mundo.')) return;
+            const funcao = escopo === 'turma' ? 'chat-turma' : 'chat-privado';
+            const r = await chamar(funcao, { acao: 'apagar', mensagemId });
+            if (r.erro) { alert(r.erro); return; }
+            escopo === 'turma' ? carregarTurma() : carregarMensagensPrivadas();
+        };
+
+        window.enviar = async (e, escopo) => {
             e.preventDefault();
-            const input = document.getElementById('input-mensagem');
-            const mensagem = input.value.trim();
-            if (!mensagem) return;
+            const campo = document.getElementById(`campo-${escopo}`);
+            const texto = campo.value.trim();
+            if (!texto) return false;
 
-            input.value = '';
-            const { data, error } = await window.supabaseClient.functions.invoke('chat-turma', {
-                body: { token: TOKEN_ALUNO, acao: 'enviar', mensagem },
-            });
+            const funcao = escopo === 'turma' ? 'chat-turma' : 'chat-privado';
 
-            if (error || !data || data.erro) {
-                alert((data && data.erro) || 'Erro ao enviar mensagem.');
+            if (EDITANDO && EDITANDO.escopo === escopo) {
+                const r = await chamar(funcao, { acao: 'editar', mensagemId: EDITANDO.id, mensagem: texto });
+                cancelarEdicao(escopo);
+                if (r.erro) { alert(r.erro); return false; }
+            } else {
+                campo.value = '';
+                campo.style.height = 'auto';
+                const corpo = escopo === 'turma'
+                    ? { acao: 'enviar', mensagem: texto }
+                    : { acao: 'enviar', conversaId: CONVERSA_ABERTA, mensagem: texto };
+                const r = await chamar(funcao, corpo);
+                if (r.erro) { alert(r.erro); campo.value = texto; return false; }
+            }
+
+            escopo === 'turma' ? carregarTurma() : carregarMensagensPrivadas();
+            return false;
+        };
+
+        // ============================================================
+        // Chat da turma
+        // ============================================================
+        let ULTIMAS_TURMA = [];
+
+        window.carregarTurma = async () => {
+            const r = await chamar('chat-turma', { acao: 'listar' });
+            if (r.erro) {
+                document.getElementById('lista-turma').innerHTML =
+                    `<p class="text-center text-[13px] py-6" style="color:#b91c1c;">${r.erro}</p>`;
                 return;
             }
-            await carregarMensagens();
-        });
+            ULTIMAS_TURMA = r.mensagens || [];
+            desenharMensagens('lista-turma', ULTIMAS_TURMA, 'turma', true,
+                'Nenhuma mensagem ainda. Diga oi para a turma.');
+        };
 
-        iniciarShellAluno('chat').then((dados) => {
+        async function carregarMembros() {
+            const r = await chamar('chat-turma', { acao: 'membros' });
+            if (!r.erro) MEMBROS = r.membros || [];
+        }
+
+        // ============================================================
+        // Conversas privadas
+        // ============================================================
+        let ULTIMAS_PRIVADAS = [];
+
+        window.carregarConversas = async () => {
+            const r = await chamar('chat-privado', { acao: 'conversas' });
+            const box = document.getElementById('lista-conversas');
+
+            if (r.erro) {
+                box.innerHTML = `<p class="px-5 py-6 text-[13px]" style="color:#b91c1c;">${r.erro}</p>`;
+                return;
+            }
+
+            const conversas = r.conversas || [];
+            atualizarSeloNaoLidas(conversas.reduce((s, c) => s + c.naoLidas, 0));
+
+            if (conversas.length === 0) {
+                box.innerHTML = `<p class="px-5 py-8 text-center text-[13px]" style="color: var(--pibiex-texto-suave);">
+                    Você ainda não tem conversas. Toque em <span class="font-semibold">+ Nova conversa</span> para falar com um colega ou com o professor.
+                </p>`;
+                return;
+            }
+
+            box.innerHTML = conversas.map(c => `
+                <button onclick="abrirConversa('${c.id}')" class="w-full text-left px-5 py-3 hover:bg-black/[.03] transition flex items-center gap-3">
+                    <div class="rounded-full w-10 h-10 flex items-center justify-center font-bold text-white shrink-0 text-sm"
+                         style="background: var(--pibiex-tinta);">${escaparHtml(c.com.nome.trim()[0] || '?')}</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-[14px] truncate" style="color: var(--pibiex-texto);">
+                            ${escaparHtml(c.com.nome)}${c.com.tipo === 'equipe' ? ' <span class="text-[11px] font-normal">· professor</span>' : ''}
+                        </p>
+                        <p class="text-[12.5px] truncate" style="color: var(--pibiex-texto-suave);">${c.previa ? escaparHtml(c.previa) : 'Conversa nova'}</p>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <p class="text-[11px]" style="color: var(--pibiex-texto-suave);">${horaCurta(c.ultimaEm)}</p>
+                        ${c.naoLidas > 0 ? `<span class="inline-block mt-1 text-[11px] font-bold text-white rounded-full px-2 py-0.5" style="background: var(--pibiex-dourado); color: var(--pibiex-tinta);">${c.naoLidas}</span>` : ''}
+                    </div>
+                </button>
+            `).join('');
+        };
+
+        window.abrirNovaConversa = async () => {
+            document.getElementById('tela-conversas').classList.add('hidden');
+            document.getElementById('tela-conversa').classList.add('hidden');
+            document.getElementById('tela-contatos').classList.remove('hidden');
+
+            if (CONTATOS.length === 0) {
+                const r = await chamar('chat-privado', { acao: 'contatos' });
+                CONTATOS = r.erro ? [] : (r.contatos || []);
+            }
+            renderizarContatos();
+        };
+
+        window.renderizarContatos = () => {
+            const busca = (document.getElementById('busca-contato').value || '').toLowerCase();
+            const achados = CONTATOS.filter(c => c.nome.toLowerCase().includes(busca));
+            const box = document.getElementById('lista-contatos');
+
+            if (achados.length === 0) {
+                box.innerHTML = `<p class="px-5 py-8 text-center text-[13px]" style="color: var(--pibiex-texto-suave);">Ninguém encontrado.</p>`;
+                return;
+            }
+
+            box.innerHTML = achados.map(c => `
+                <button onclick="iniciarConversa('${c.tipo}', '${c.id}')" class="w-full text-left px-5 py-3 hover:bg-black/[.03] transition flex items-center gap-3">
+                    <div class="rounded-full w-9 h-9 flex items-center justify-center font-bold text-white shrink-0 text-[13px]"
+                         style="background: var(--pibiex-tinta);">${escaparHtml(c.nome.trim()[0] || '?')}</div>
+                    <div class="min-w-0">
+                        <p class="font-semibold text-[14px] truncate" style="color: var(--pibiex-texto);">${escaparHtml(c.nome)}</p>
+                        <p class="text-[12px]" style="color: var(--pibiex-texto-suave);">${escaparHtml(c.detalhe || '')}</p>
+                    </div>
+                </button>
+            `).join('');
+        };
+
+        window.iniciarConversa = async (comTipo, comId) => {
+            const r = await chamar('chat-privado', { acao: 'abrir', comTipo, comId });
+            if (r.erro) { alert(r.erro); return; }
+            abrirConversa(r.conversaId);
+        };
+
+        window.abrirConversa = async (conversaId) => {
+            CONVERSA_ABERTA = conversaId;
+            document.getElementById('tela-conversas').classList.add('hidden');
+            document.getElementById('tela-contatos').classList.add('hidden');
+            document.getElementById('tela-conversa').classList.remove('hidden');
+            montarAreaEnvio('area-envio-privado', 'privado');
+            await carregarMensagensPrivadas();
+        };
+
+        window.voltarParaConversas = () => {
+            CONVERSA_ABERTA = null;
+            EDITANDO = null;
+            document.getElementById('tela-conversa').classList.add('hidden');
+            document.getElementById('tela-contatos').classList.add('hidden');
+            document.getElementById('tela-conversas').classList.remove('hidden');
+            carregarConversas();
+        };
+
+        window.carregarMensagensPrivadas = async () => {
+            if (!CONVERSA_ABERTA) return;
+            const r = await chamar('chat-privado', { acao: 'mensagens', conversaId: CONVERSA_ABERTA });
+            if (r.erro) {
+                document.getElementById('lista-privada').innerHTML =
+                    `<p class="text-center text-[13px] py-6" style="color:#b91c1c;">${r.erro}</p>`;
+                return;
+            }
+            ULTIMAS_PRIVADAS = r.mensagens || [];
+            document.getElementById('titulo-conversa').innerText = r.com.nome;
+            document.getElementById('subtitulo-conversa').innerText =
+                r.com.tipo === 'equipe' ? 'Professor · conversa privada' : 'Colega de turma · conversa privada';
+            desenharMensagens('lista-privada', ULTIMAS_PRIVADAS, 'privado', false,
+                'Conversa nova. Escreva a primeira mensagem.');
+        };
+
+        // ============================================================
+        // Abas
+        // ============================================================
+        function pintarAbas() {
+            const ativo = 'color: #fff; background: var(--pibiex-tinta);';
+            const inativo = 'color: var(--pibiex-texto); background: #fff; border: 1px solid var(--pibiex-borda);';
+            document.getElementById('aba-turma').style.cssText = ABA === 'turma' ? ativo : inativo;
+            document.getElementById('aba-privado').style.cssText = ABA === 'privado' ? ativo : inativo;
+        }
+
+        function atualizarSeloNaoLidas(total) {
+            const botao = document.getElementById('aba-privado');
+            botao.innerHTML = 'Conversas' + (total > 0
+                ? ` <span class="text-[11px] font-bold rounded-full px-1.5 py-0.5" style="background: var(--pibiex-dourado); color: var(--pibiex-tinta);">${total}</span>`
+                : '');
+        }
+
+        window.trocarAba = (aba) => {
+            ABA = aba;
+            EDITANDO = null;
+            pintarAbas();
+            document.getElementById('painel-turma').classList.toggle('hidden', aba !== 'turma');
+            document.getElementById('painel-privado').classList.toggle('hidden', aba !== 'privado');
+            if (aba === 'turma') carregarTurma();
+            else if (CONVERSA_ABERTA) carregarMensagensPrivadas();
+            else carregarConversas();
+        };
+
+        // ============================================================
+        // Início
+        // ============================================================
+        iniciarShellAluno('chat').then(async (dados) => {
             if (!dados) return;
-            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
-            carregarMensagens();
-            setInterval(carregarMensagens, 8000); // atualiza sozinho a cada 8s
+            ALUNO = dados;
+
+            document.getElementById('aba-turma').innerText = 'Chat da turma';
+            atualizarSeloNaoLidas(0);
+            pintarAbas();
+            montarAreaEnvio('area-envio-turma', 'turma');
+
+            await carregarMembros();
+            await carregarTurma();
+            await carregarConversas();
+
+            // Sem tempo real: uma recarga leve a cada 6 segundos dá conta de uma
+            // turma desse tamanho. Não recarrega enquanto o aluno está editando,
+            // para não trocar o texto embaixo do dedo dele.
+            RELOGIO = setInterval(() => {
+                if (EDITANDO) return;
+                if (ABA === 'turma') carregarTurma();
+                else if (CONVERSA_ABERTA) carregarMensagensPrivadas();
+                else carregarConversas();
+            }, 6000);
         });
     </script>
 </body>
