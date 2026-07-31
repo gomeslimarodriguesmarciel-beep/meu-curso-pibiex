@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Cronograma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-9 max-w-4xl mx-auto">
+
+            <div class="rounded-lg overflow-hidden mb-8" style="background: var(--pibiex-tinta);">
+                <div class="px-8 py-7">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.16em]" style="color: var(--pibiex-dourado);">Curso de Extensão · 2026</p>
+                    <h1 class="fonte-display text-white text-3xl font-semibold mt-1">Cronograma</h1>
+                    <p class="text-slate-400 text-sm mt-2 max-w-lg">Os módulos e as aulas do curso, na ordem em que o professor organizou.</p>
+                </div>
+                <div class="h-[3px]" style="background: var(--pibiex-dourado);"></div>
+            </div>
+
+            <div id="resumo" class="mb-7"></div>
+
+            <div id="lista-modulos" class="space-y-6">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando cronograma...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+        // A aula que vem a seguir é destacada; as que já passaram ficam esmaecidas.
+        // Guardamos o id em vez de comparar datas de novo na hora de desenhar.
+        let idProximaAula = null;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        // Data vem como 'AAAA-MM-DD'. Comparar como texto evita o problema de fuso
+        // horário que `new Date('2026-08-01')` causa (vira o dia anterior no Brasil).
+        function hojeIso() {
+            const agora = new Date();
+            const mes = String(agora.getMonth() + 1).padStart(2, '0');
+            const dia = String(agora.getDate()).padStart(2, '0');
+            return `${agora.getFullYear()}-${mes}-${dia}`;
+        }
+
+        function partesData(dataIso) {
+            if (!dataIso) return null;
+            const [ano, mes, dia] = dataIso.split('-');
+            return { dia, mes: MESES[Number(mes) - 1] || '', ano };
+        }
+
+        function dataCurta(dataIso) {
+            if (!dataIso) return '';
+            const [, mes, dia] = dataIso.split('-');
+            return `${dia}/${mes}`;
+        }
+
+        function faixaHorario(aula) {
+            if (!aula.horario_inicio) return '';
+            const inicio = aula.horario_inicio.slice(0, 5);
+            return aula.horario_fim ? `${inicio} às ${aula.horario_fim.slice(0, 5)}` : inicio;
+        }
+
+        function selecionarProximaAula(modulos) {
+            const hoje = hojeIso();
+            const futuras = [];
+            modulos.forEach(m => (m.aulas || []).forEach(a => {
+                if (a.data_aula && a.data_aula >= hoje) futuras.push(a);
+            }));
+            futuras.sort((a, b) => {
+                if (a.data_aula !== b.data_aula) return a.data_aula < b.data_aula ? -1 : 1;
+                return (a.horario_inicio || '').localeCompare(b.horario_inicio || '');
+            });
+            idProximaAula = futuras.length > 0 ? futuras[0].id : null;
+        }
+
+        function renderizarResumo(modulos) {
+            const totalAulas = modulos.reduce((soma, m) => soma + (m.aulas || []).length, 0);
+            const container = document.getElementById('resumo');
+
+            if (modulos.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let proxima = null;
+            modulos.forEach(m => (m.aulas || []).forEach(a => { if (a.id === idProximaAula) proxima = a; }));
+
+            const textoProxima = proxima
+                ? `Próxima aula: <span class="font-semibold" style="color: var(--pibiex-texto);">${escaparHtml(proxima.titulo)}</span> em ${dataCurta(proxima.data_aula)}`
+                : 'Nenhuma aula futura agendada no momento.';
+
+            container.innerHTML = `
+                <div class="bg-white border rounded-lg px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
+                     style="border-color: var(--pibiex-borda); color: var(--pibiex-texto-suave);">
+                    <span><span class="font-semibold" style="color: var(--pibiex-texto);">${modulos.length}</span> ${modulos.length === 1 ? 'módulo' : 'módulos'}</span>
+                    <span><span class="font-semibold" style="color: var(--pibiex-texto);">${totalAulas}</span> ${totalAulas === 1 ? 'aula' : 'aulas'}</span>
+                    <span>${textoProxima}</span>
+                </div>
+            `;
+        }
+
+        function renderizarAula(aula) {
+            const hoje = hojeIso();
+            const ehProxima = aula.id === idProximaAula;
+            const jaPassou = aula.data_aula && aula.data_aula < hoje;
+            const partes = partesData(aula.data_aula);
+
+            const badge = partes
+                ? `<div class="rounded-md px-3 py-2 text-center shrink-0 w-[58px]"
+                        style="background: ${ehProxima ? 'var(--pibiex-tinta)' : 'var(--pibiex-papel)'};">
+                       <p class="text-lg font-bold leading-none" style="color: ${ehProxima ? '#fff' : 'var(--pibiex-tinta)'};">${partes.dia}</p>
+                       <p class="text-[10px] font-bold uppercase tracking-wide mt-0.5" style="color: ${ehProxima ? 'var(--pibiex-dourado)' : 'var(--pibiex-texto-suave)'};">${partes.mes}</p>
+                   </div>`
+                : `<div class="rounded-md px-3 py-2 text-center shrink-0 w-[58px]" style="background: var(--pibiex-papel);">
+                       <p class="text-[10px] font-bold uppercase leading-tight" style="color: var(--pibiex-texto-suave);">Sem<br>data</p>
+                   </div>`;
+
+            const horario = faixaHorario(aula);
+
+            const selo = ehProxima
+                ? `<span class="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full shrink-0"
+                         style="background: var(--pibiex-dourado); color: var(--pibiex-tinta);">Próxima</span>`
+                : (jaPassou
+                    ? `<span class="text-[10px] font-bold uppercase tracking-wide shrink-0" style="color: var(--pibiex-texto-suave);">Realizada</span>`
+                    : '');
+
+            return `
+                <div class="flex items-center gap-4 px-6 py-4 border-t ${jaPassou ? 'opacity-60' : ''}" style="border-color: var(--pibiex-borda);">
+                    ${badge}
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-[14.5px]" style="color: var(--pibiex-texto);">${escaparHtml(aula.titulo)}</p>
+                        ${horario ? `<p class="text-xs mt-0.5" style="color: var(--pibiex-texto-suave);">${horario}</p>` : ''}
+                    </div>
+                    ${selo}
+                </div>
+            `;
+        }
+
+        function renderizarModulos(modulos) {
+            const container = document.getElementById('lista-modulos');
+
+            if (modulos.length === 0) {
+                container.innerHTML = `
+                    <p class="text-sm bg-white border rounded-lg p-6" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">
+                        O professor ainda não publicou o cronograma da sua turma. Assim que ele criar os módulos, eles aparecem aqui.
+                    </p>
+                `;
+                return;
+            }
+
+            container.innerHTML = modulos.map((modulo, indice) => {
+                const aulasHtml = (modulo.aulas || []).length === 0
+                    ? `<p class="px-6 py-4 border-t text-sm" style="border-color: var(--pibiex-borda); color: var(--pibiex-texto-suave);">Nenhuma aula marcada neste módulo ainda.</p>`
+                    : modulo.aulas.map(renderizarAula).join('');
+
+                return `
+                    <article class="bg-white border rounded-lg overflow-hidden" style="border-color: var(--pibiex-borda);">
+                        <div class="px-6 py-5" style="background: var(--pibiex-tinta);">
+                            <p class="text-[11px] font-bold uppercase tracking-[0.16em]" style="color: var(--pibiex-dourado);">Módulo ${indice + 1}</p>
+                            <h2 class="fonte-display text-white text-xl font-semibold mt-0.5">${escaparHtml(modulo.titulo)}</h2>
+                            ${modulo.descricao ? `<p class="text-slate-400 text-sm mt-1.5">${escaparHtml(modulo.descricao)}</p>` : ''}
+                        </div>
+                        ${aulasHtml}
+                    </article>
+                `;
+            }).join('');
+        }
+
+        async function carregarCronograma(dadosAluno) {
+            const { data: modulos, error } = await window.supabaseClient
+                .from('modulos')
+                .select('id, titulo, descricao, ordem, aulas(id, titulo, data_aula, horario_inicio, horario_fim, ordem)')
+                .eq('turma_id', dadosAluno.turmaId)
+                .order('ordem', { ascending: true });
+
+            if (error) {
+                document.getElementById('lista-modulos').innerHTML = `
+                    <p class="text-sm bg-white border rounded-lg p-6" style="color: #b91c1c; border-color: var(--pibiex-borda);">
+                        Não foi possível carregar o cronograma. Tente recarregar a página.
+                    </p>
+                `;
+                console.error(error);
+                return;
+            }
+
+            // As aulas seguem a ordem que o professor definiu, não a data — é ele
+            // quem decide a sequência do módulo.
+            const lista = modulos || [];
+            lista.forEach(m => (m.aulas || []).sort((a, b) => a.ordem - b.ordem));
+
+            selecionarProximaAula(lista);
+            renderizarResumo(lista);
+            renderizarModulos(lista);
+        }
+
+        iniciarShellAluno('cronograma').then((dados) => {
+            if (dados) carregarCronograma(dados);
+        });
+    </script>
+</body>
+</html>
