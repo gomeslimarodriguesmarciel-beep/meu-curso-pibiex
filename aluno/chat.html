@@ -24,7 +24,7 @@
 
         <main class="p-6 md:p-9 max-w-3xl mx-auto">
 
-            <div class="flex items-center gap-2 mb-5">
+            <div class="flex flex-wrap items-center gap-2 mb-5">
                 <button id="aba-turma" onclick="trocarAba('turma')"
                         class="px-4 py-2 rounded-full text-sm font-semibold transition"></button>
                 <button id="aba-privado" onclick="trocarAba('privado')"
@@ -273,10 +273,10 @@
         function montarAreaEnvio(idArea, escopo) {
             document.getElementById(idArea).innerHTML = `
                 <div class="relative">
-                    <div id="sugestoes-${escopo}" class="hidden absolute bottom-full left-3 mb-1 w-64 max-h-52 overflow-y-auto bg-white border rounded-lg shadow-lg z-20"
+                    <div id="sugestoes-${escopo}" class="hidden absolute bottom-full left-3 mb-1 w-64 max-w-[85vw] max-h-52 overflow-y-auto bg-white border rounded-lg shadow-lg z-20"
                          style="border-color: var(--pibiex-borda);"></div>
 
-                    <div id="emojis-${escopo}" class="hidden absolute bottom-full right-3 mb-1 w-72 bg-white border rounded-lg shadow-lg p-2 z-20"
+                    <div id="emojis-${escopo}" class="hidden absolute bottom-full right-3 mb-1 w-72 max-w-[85vw] bg-white border rounded-lg shadow-lg p-2 z-20"
                          style="border-color: var(--pibiex-borda);">
                         <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
                             ${EMOJIS.map(e => `<button type="button" onclick="inserirEmoji('${escopo}', '${e}')" class="text-xl rounded hover:bg-black/5 leading-none py-1">${e}</button>`).join('')}
