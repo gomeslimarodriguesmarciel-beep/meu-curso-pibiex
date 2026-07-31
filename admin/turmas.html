@@ -83,7 +83,7 @@
             partes.push(`${v.alunos} aluno${v.alunos === 1 ? '' : 's'}`);
             if (v.modulos > 0) partes.push(`${v.modulos} módulo${v.modulos === 1 ? '' : 's'}`);
             if (v.avisos > 0) partes.push(`${v.avisos} aviso${v.avisos === 1 ? '' : 's'}`);
-            if (v.mensagens > 0) partes.push(`${v.mensagens} mensagem${v.mensagens === 1 ? '' : 'ns'}`);
+            if (v.mensagens > 0) partes.push(`${v.mensagens} ${v.mensagens === 1 ? 'mensagem' : 'mensagens'}`);
             return partes.join(' · ');
         }
 
