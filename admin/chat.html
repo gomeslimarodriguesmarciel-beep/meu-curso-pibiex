@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIBIEX 2026 · Chat da Turma</title>
+    <title>PIBIEX 2026 · Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .balao-menu { opacity: 0; transition: opacity .12s; }
+        .linha-mensagem:hover .balao-menu,
+        .linha-mensagem:focus-within .balao-menu { opacity: 1; }
+        @media (hover: none) { .balao-menu { opacity: 1; } }
+    </style>
 </head>
 <body class="flex min-h-screen bg-gray-50">
 
@@ -17,25 +23,80 @@
         <div id="topo-pagina"></div>
 
         <main class="p-8 max-w-4xl mx-auto">
-            <h1 class="text-2xl font-black text-gray-800 mb-1">💬 Chat da Turma</h1>
-            <p class="text-gray-500 mb-6">Acompanhe a conversa, responda como equipe e exclua mensagens inadequadas.</p>
+            <h1 class="text-2xl font-black text-gray-800 mb-1">💬 Chat</h1>
+            <p class="text-gray-500 mb-6">Converse com a turma, fale no privado com um aluno e modere o que for preciso.</p>
 
             <div id="seletor-turma" class="mb-6"></div>
 
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div id="lista-mensagens" class="p-5 space-y-3 max-h-[55vh] overflow-y-auto">
-                    <p class="text-gray-400 text-sm">Carregando...</p>
-                </div>
-                <form id="form-mensagem" class="flex gap-2 p-4 border-t border-gray-100 bg-gray-50">
-                    <input id="nova-mensagem" required placeholder="Escreva uma mensagem como equipe..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm shrink-0">Enviar</button>
-                </form>
+            <div class="flex flex-wrap items-center gap-2 mb-5">
+                <button id="aba-turma" onclick="trocarAba('turma')" class="px-4 py-2 rounded-full text-sm font-bold transition">Chat da turma</button>
+                <button id="aba-privado" onclick="trocarAba('privado')" class="px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2">Minhas conversas</button>
+                <button id="aba-moderacao" onclick="trocarAba('moderacao')" class="px-4 py-2 rounded-full text-sm font-bold transition">Conversas da turma</button>
             </div>
 
-            <p class="text-xs text-gray-400 mt-3">O chat não atualiza sozinho — use o botão
-                <button onclick="carregarMensagens()" class="underline font-semibold text-gray-600">recarregar</button>
-                para ver novas mensagens.
-            </p>
+            <!-- ===== Chat da turma ===== -->
+            <section id="painel-turma" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col" style="height: 64vh;">
+                <div id="lista-turma" class="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50"></div>
+                <div id="area-envio-turma"></div>
+            </section>
+
+            <!-- ===== Minhas conversas privadas ===== -->
+            <section id="painel-privado" class="hidden">
+                <div id="tela-conversas" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                        <p class="font-bold text-gray-800 text-sm">Conversas em que você participa</p>
+                        <button onclick="abrirNovaConversa()" class="text-xs font-bold border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50">+ Falar com um aluno</button>
+                    </div>
+                    <div id="lista-conversas" class="divide-y divide-gray-100"></div>
+                </div>
+
+                <div id="tela-contatos" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
+                        <button onclick="voltarParaConversas()" class="text-lg leading-none text-gray-400">←</button>
+                        <p class="font-bold text-gray-800 text-sm">Falar com qual aluno?</p>
+                    </div>
+                    <input id="busca-contato" oninput="renderizarContatos()" placeholder="Buscar pelo nome..."
+                           class="w-full px-5 py-3 text-sm outline-none border-b border-gray-100">
+                    <div id="lista-contatos" class="divide-y divide-gray-100 max-h-[55vh] overflow-y-auto"></div>
+                </div>
+
+                <div id="tela-conversa" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col" style="height: 64vh;">
+                    <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
+                        <button onclick="voltarParaConversas()" class="text-lg leading-none text-gray-400">←</button>
+                        <div class="min-w-0">
+                            <p id="titulo-conversa" class="font-bold text-gray-800 text-sm truncate"></p>
+                            <p id="subtitulo-conversa" class="text-xs text-gray-400"></p>
+                        </div>
+                    </div>
+                    <div id="lista-privada" class="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50"></div>
+                    <div id="area-envio-privado"></div>
+                </div>
+            </section>
+
+            <!-- ===== Moderação de conversas privadas ===== -->
+            <section id="painel-moderacao" class="hidden">
+                <div id="tela-moderacao-lista" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-100">
+                        <p class="font-bold text-gray-800 text-sm">Conversas privadas desta turma</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Abrir uma conversa da qual você não participa fica registrado, com data e hora.
+                            Use quando houver motivo — a data do último acesso aparece na lista.
+                        </p>
+                    </div>
+                    <div id="lista-moderacao" class="divide-y divide-gray-100"></div>
+                </div>
+
+                <div id="tela-moderacao-conversa" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col" style="height: 64vh;">
+                    <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
+                        <button onclick="voltarParaModeracao()" class="text-lg leading-none text-gray-400">←</button>
+                        <div>
+                            <p id="titulo-moderacao" class="font-bold text-gray-800 text-sm"></p>
+                            <p class="text-xs text-amber-600 font-semibold">Somente leitura · este acesso foi registrado</p>
+                        </div>
+                    </div>
+                    <div id="lista-moderacao-mensagens" class="flex-1 overflow-y-auto p-4 space-y-1 bg-gray-50"></div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -43,100 +104,536 @@
     <script>
         let TOKEN_EQUIPE = null;
         let TURMA_ATUAL = null;
+        let ABA = 'turma';
+        let MEMBROS = [];
+        let CONTATOS = [];
+        let CONVERSA_ABERTA = null;
+        let EDITANDO = null;
+        let RELOGIO = null;
+        let ULTIMAS_TURMA = [];
+        let ULTIMAS_PRIVADAS = [];
 
-        function escaparHtml(texto) {
-            const div = document.createElement('div');
-            div.innerText = texto ?? '';
-            return div.innerHTML;
+        const EMOJIS_RAPIDOS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+        const EMOJIS = [
+            '😀','😃','😄','😁','😅','😂','🙂','😉','😊','😍','😘','😜','🤪','🤗','🤔','🤨',
+            '😐','😴','😪','😮','😲','😢','😭','😤','😠','🥺','😳','🤯','😇','🥳','😎','🤓',
+            '👍','👎','👏','🙌','🙏','💪','🤝','✌️','👋','🤞','👌','☝️',
+            '❤️','🧡','💛','💚','💙','💜','🖤','💯','✨','🔥','⭐','🎉',
+            '✅','❌','⚠️','❓','❗','💡','📌','📚','📝','🎯','🚀','⏰',
+        ];
+
+        function horaCurta(iso) {
+            const d = new Date(iso);
+            const mesmoDia = d.toDateString() === new Date().toDateString();
+            const hora = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            if (mesmoDia) return hora;
+            return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + ' ' + hora;
         }
 
-        function formatarData(dataIso) {
-            if (!dataIso) return '';
-            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-        }
-
-        async function chamarModerarChat(acao, dados) {
+        async function chamar(corpo) {
             const { data, error } = await window.supabaseClient.functions.invoke('moderar-chat', {
-                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+                body: { tokenEquipe: TOKEN_EQUIPE, ...corpo },
             });
             if (error || !data || data.erro) {
-                alert((data && data.erro) ? data.erro : 'Erro ao executar a ação. Tente novamente.');
-                return null;
+                return { erro: (data && data.erro) || 'Não foi possível completar a ação. Tente novamente.' };
             }
             return data;
         }
 
-        window.carregarMensagens = async () => {
-            const resultado = await chamarModerarChat('listar', { turmaId: TURMA_ATUAL });
-            if (!resultado) {
-                document.getElementById('lista-mensagens').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar o chat.</p>';
-                return;
+        function destacarMencoes(textoEscapado) {
+            if (MEMBROS.length === 0) return textoEscapado;
+            const nomes = MEMBROS.map(m => m.nome).sort((a, b) => b.length - a.length);
+            let saida = textoEscapado;
+            for (const nome of nomes) {
+                const alvo = '@' + escaparHtml(nome);
+                if (!saida.includes(alvo)) continue;
+                saida = saida.split(alvo).join(`<span class="font-semibold text-red-700 bg-red-50 rounded px-1">${alvo}</span>`);
             }
-            renderizarMensagens(resultado.mensagens || []);
-        };
-
-        function renderizarMensagens(mensagens) {
-            const container = document.getElementById('lista-mensagens');
-
-            if (mensagens.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm">Nenhuma mensagem no chat ainda.</p>';
-                return;
-            }
-
-            container.innerHTML = mensagens.map((m) => {
-                const daEquipe = m.autor_tipo === 'equipe';
-                return `
-                    <div class="flex items-start gap-3 ${daEquipe ? 'flex-row-reverse' : ''}">
-                        <div class="max-w-[75%] rounded-xl px-4 py-2.5 ${daEquipe ? 'bg-red-50' : 'bg-gray-100'}">
-                            <div class="flex items-center gap-2 mb-0.5">
-                                <p class="text-xs font-bold ${daEquipe ? 'text-red-700' : 'text-gray-700'}">${escaparHtml(m.autorNome)}</p>
-                                <p class="text-[10px] text-gray-400">${formatarData(m.criado_em)}</p>
-                            </div>
-                            <p class="text-sm text-gray-800 whitespace-pre-wrap">${escaparHtml(m.mensagem)}</p>
-                        </div>
-                        <button onclick="excluirMensagem('${m.id}')" title="Excluir mensagem" class="text-gray-300 hover:text-red-600 text-xs mt-1 shrink-0">🗑️</button>
-                    </div>
-                `;
-            }).join('');
-
-            container.scrollTop = container.scrollHeight;
+            return saida;
         }
 
-        document.getElementById('form-mensagem').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('nova-mensagem');
-            const mensagem = input.value.trim();
-            if (!mensagem) return;
+        // ============================================================
+        // Balão
+        // ============================================================
+        function balaoMensagem(m, escopo, mostrarAutor, somenteLeitura) {
+            const meu = m.souEu;
 
-            const resultado = await chamarModerarChat('enviar', { turmaId: TURMA_ATUAL, mensagem });
-            if (resultado) {
-                input.value = '';
-                carregarMensagens();
+            if (m.apagada) {
+                return `
+                    <div class="flex ${meu ? 'justify-end' : 'justify-start'}">
+                        <div class="rounded-xl px-4 py-2 max-w-[85%] italic text-xs text-gray-400 bg-white border border-gray-100">
+                            Esta mensagem foi apagada.
+                        </div>
+                    </div>
+                `;
             }
-        });
 
-        window.excluirMensagem = async (mensagemId) => {
-            if (!confirm('Excluir esta mensagem do chat?')) return;
-            const resultado = await chamarModerarChat('excluir', { mensagemId });
-            if (resultado) carregarMensagens();
+            const corpo = destacarMencoes(escaparHtml(m.mensagem));
+
+            const reacoes = (m.reacoes || []).map(r => `
+                <button ${somenteLeitura ? 'disabled' : `onclick="reagir('${escopo}', '${m.id}', '${r.emoji}')"`}
+                        class="text-[12px] rounded-full px-2 py-0.5 border ${r.souEu ? 'border-gray-900 bg-gray-100' : 'border-gray-200 bg-white'}">
+                    ${r.emoji} ${r.total}
+                </button>
+            `).join('');
+
+            const acoes = [];
+            if (!somenteLeitura) {
+                acoes.push(`<button onclick="abrirReacoes('${escopo}', '${m.id}', this)" title="Reagir" class="px-1">🙂</button>`);
+                if (m.podeEditar) acoes.push(`<button onclick="comecarEdicao('${escopo}', '${m.id}')" title="Editar" class="px-1">✏️</button>`);
+                if (m.podeApagar) acoes.push(`<button onclick="apagar('${escopo}', '${m.id}')" title="Apagar" class="px-1">🗑️</button>`);
+                if (m.podeModerar && !m.souEu) acoes.push(`<button onclick="excluirModeracao('${m.id}')" title="Remover (moderação)" class="px-1">🚫</button>`);
+            }
+
+            return `
+                <div class="linha-mensagem flex ${meu ? 'justify-end' : 'justify-start'} gap-1 items-start">
+                    ${meu ? `<div class="balao-menu flex items-center gap-0.5 text-[13px] self-center">${acoes.join('')}</div>` : ''}
+                    <div class="max-w-[85%]">
+                        <div class="rounded-xl px-4 py-2 ${meu ? 'bg-gray-900 text-white rounded-br-sm' : 'bg-white border border-gray-100 rounded-bl-sm'}">
+                            ${mostrarAutor && !meu ? `<p class="text-[11.5px] font-bold mb-0.5 ${m.autorTipo === 'equipe' ? 'text-red-600' : 'text-gray-500'}">${escaparHtml(m.autorNome)}${m.autorTipo === 'equipe' ? ' · equipe' : ''}</p>` : ''}
+                            <p class="text-[13.5px] whitespace-pre-wrap break-words">${corpo}</p>
+                            <p class="text-[10.5px] mt-1 ${meu ? 'text-white/60' : 'text-gray-400'}">
+                                ${horaCurta(m.criadoEm)}${m.editada ? ' · editada' : ''}
+                            </p>
+                        </div>
+                        ${reacoes ? `<div class="flex flex-wrap gap-1 mt-1 ${meu ? 'justify-end' : ''}">${reacoes}</div>` : ''}
+                    </div>
+                    ${!meu ? `<div class="balao-menu flex items-center gap-0.5 text-[13px] self-center">${acoes.join('')}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function desenharMensagens(idContainer, mensagens, escopo, mostrarAutor, vazio, somenteLeitura) {
+            const box = document.getElementById(idContainer);
+            const estavaNoFim = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+
+            if (!mensagens || mensagens.length === 0) {
+                box.innerHTML = `<p class="text-center text-xs text-gray-400 py-6">${vazio}</p>`;
+                return;
+            }
+
+            box.innerHTML = mensagens.map(m => balaoMensagem(m, escopo, mostrarAutor, somenteLeitura)).join('');
+            if (estavaNoFim) box.scrollTop = box.scrollHeight;
+        }
+
+        // ============================================================
+        // Caixa de escrever
+        // ============================================================
+        function montarAreaEnvio(idArea, escopo) {
+            document.getElementById(idArea).innerHTML = `
+                <div class="relative">
+                    <div id="sugestoes-${escopo}" class="hidden absolute bottom-full left-3 mb-1 w-64 max-h-52 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-20"></div>
+
+                    <div id="emojis-${escopo}" class="hidden absolute bottom-full right-3 mb-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20">
+                        <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
+                            ${EMOJIS.map(e => `<button type="button" onclick="inserirEmoji('${escopo}', '${e}')" class="text-xl rounded hover:bg-gray-100 leading-none py-1">${e}</button>`).join('')}
+                        </div>
+                    </div>
+
+                    <div id="aviso-edicao-${escopo}" class="hidden px-4 pt-2 text-xs text-gray-500 flex items-center justify-between">
+                        <span>Editando mensagem</span>
+                        <button onclick="cancelarEdicao('${escopo}')" class="font-bold">Cancelar</button>
+                    </div>
+
+                    <form onsubmit="return enviar(event, '${escopo}')" class="p-3 border-t border-gray-100 bg-white flex gap-2 items-end">
+                        <button type="button" onclick="alternarEmojis('${escopo}')" title="Emojis" class="text-xl shrink-0 leading-none px-1">🙂</button>
+                        <textarea id="campo-${escopo}" rows="1" placeholder="Escreva uma mensagem..."
+                                  oninput="aoDigitar('${escopo}')" onkeydown="atalhoEnviar(event, '${escopo}')"
+                                  class="flex-1 border border-gray-200 rounded-2xl px-4 py-2 text-sm outline-none resize-none max-h-32"></textarea>
+                        <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white rounded-full w-10 h-10 flex items-center justify-center shrink-0">➤</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        window.alternarEmojis = (escopo) => document.getElementById(`emojis-${escopo}`).classList.toggle('hidden');
+
+        window.inserirEmoji = (escopo, emoji) => {
+            const campo = document.getElementById(`campo-${escopo}`);
+            const pos = campo.selectionStart ?? campo.value.length;
+            campo.value = campo.value.slice(0, pos) + emoji + campo.value.slice(pos);
+            campo.focus();
+            campo.selectionStart = campo.selectionEnd = pos + emoji.length;
+            document.getElementById(`emojis-${escopo}`).classList.add('hidden');
         };
 
+        window.atalhoEnviar = (e, escopo) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(e, escopo); }
+        };
+
+        function trechoDeMencao(campo) {
+            const antes = campo.value.slice(0, campo.selectionStart ?? 0);
+            const arroba = antes.lastIndexOf('@');
+            if (arroba < 0) return null;
+            const anterior = arroba > 0 ? antes[arroba - 1] : ' ';
+            if (anterior !== ' ' && anterior !== '\n') return null;
+            const digitado = antes.slice(arroba + 1);
+            if (digitado.includes('\n') || digitado.length > 40) return null;
+            return { inicio: arroba, digitado };
+        }
+
+        window.aoDigitar = (escopo) => {
+            const campo = document.getElementById(`campo-${escopo}`);
+            campo.style.height = 'auto';
+            campo.style.height = Math.min(campo.scrollHeight, 128) + 'px';
+
+            const caixa = document.getElementById(`sugestoes-${escopo}`);
+            if (escopo !== 'turma' || MEMBROS.length === 0) { caixa.classList.add('hidden'); return; }
+
+            const trecho = trechoDeMencao(campo);
+            if (!trecho) { caixa.classList.add('hidden'); return; }
+
+            const busca = trecho.digitado.toLowerCase();
+            const achados = MEMBROS.filter(m => !m.souEu && m.nome.toLowerCase().includes(busca)).slice(0, 6);
+            if (achados.length === 0) { caixa.classList.add('hidden'); return; }
+
+            caixa.innerHTML = achados.map(m => `
+                <button type="button" onclick="aplicarMencao('${escopo}', ${trecho.inicio}, '${escaparHtml(m.nome).replace(/'/g, "\\'")}')"
+                        class="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm">
+                    <span class="font-bold text-gray-800">${escaparHtml(m.nome)}</span>
+                    <span class="text-[11px] text-gray-400 ml-1">${m.tipo === 'equipe' ? 'equipe' : 'aluno'}</span>
+                </button>
+            `).join('');
+            caixa.classList.remove('hidden');
+        };
+
+        window.aplicarMencao = (escopo, inicio, nome) => {
+            const campo = document.getElementById(`campo-${escopo}`);
+            const depois = campo.value.slice(campo.selectionStart ?? 0);
+            campo.value = campo.value.slice(0, inicio) + '@' + nome + ' ' + depois;
+            document.getElementById(`sugestoes-${escopo}`).classList.add('hidden');
+            campo.focus();
+            const pos = inicio + nome.length + 2;
+            campo.selectionStart = campo.selectionEnd = pos;
+        };
+
+        // ============================================================
+        // Ações
+        // ============================================================
+        window.abrirReacoes = (escopo, mensagemId, botao) => {
+            const antigo = document.getElementById('barra-reacoes');
+            if (antigo) antigo.remove();
+
+            const barra = document.createElement('div');
+            barra.id = 'barra-reacoes';
+            barra.className = 'fixed z-50 bg-white border border-gray-200 rounded-full shadow-lg px-2 py-1 flex gap-1';
+            barra.innerHTML = EMOJIS_RAPIDOS.map(e =>
+                `<button class="text-lg leading-none px-1 hover:scale-110 transition" onclick="reagir('${escopo}', '${mensagemId}', '${e}')">${e}</button>`
+            ).join('');
+
+            document.body.appendChild(barra);
+            const r = botao.getBoundingClientRect();
+            barra.style.top = Math.max(8, r.top - 44) + 'px';
+            barra.style.left = Math.max(8, Math.min(r.left - 60, window.innerWidth - barra.offsetWidth - 8)) + 'px';
+
+            setTimeout(() => {
+                document.addEventListener('click', function fechar(ev) {
+                    if (!barra.contains(ev.target)) { barra.remove(); document.removeEventListener('click', fechar); }
+                });
+            }, 0);
+        };
+
+        window.reagir = async (escopo, mensagemId, emoji) => {
+            const barra = document.getElementById('barra-reacoes');
+            if (barra) barra.remove();
+            if (escopo !== 'turma') return; // reação em privado só pelo aluno e por quem participa
+            const r = await chamar({ acao: 'reagir', mensagemId, emoji });
+            if (r.erro) { alert(r.erro); return; }
+            carregarTurma();
+        };
+
+        window.comecarEdicao = (escopo, mensagemId) => {
+            const lista = escopo === 'turma' ? ULTIMAS_TURMA : ULTIMAS_PRIVADAS;
+            const m = lista.find(x => x.id === mensagemId);
+            if (!m) return;
+            EDITANDO = { escopo, id: mensagemId };
+            const campo = document.getElementById(`campo-${escopo}`);
+            campo.value = m.mensagem;
+            campo.focus();
+            document.getElementById(`aviso-edicao-${escopo}`).classList.remove('hidden');
+        };
+
+        window.cancelarEdicao = (escopo) => {
+            EDITANDO = null;
+            document.getElementById(`campo-${escopo}`).value = '';
+            document.getElementById(`aviso-edicao-${escopo}`).classList.add('hidden');
+        };
+
+        window.apagar = async (escopo, mensagemId) => {
+            if (!confirm('Apagar esta mensagem? Ela vira "mensagem apagada" para todo mundo.')) return;
+            const acao = escopo === 'turma' ? 'apagar' : 'apagar_privado';
+            const r = await chamar({ acao, mensagemId });
+            if (r.erro) { alert(r.erro); return; }
+            escopo === 'turma' ? carregarTurma() : carregarMensagensPrivadas();
+        };
+
+        // Moderação: some de vez, e vale para mensagem de qualquer pessoa.
+        window.excluirModeracao = async (mensagemId) => {
+            if (!confirm('Remover esta mensagem do chat da turma? Isso apaga de vez, sem deixar o aviso de "mensagem apagada".')) return;
+            const r = await chamar({ acao: 'excluir', mensagemId });
+            if (r.erro) { alert(r.erro); return; }
+            carregarTurma();
+        };
+
+        window.enviar = async (e, escopo) => {
+            e.preventDefault();
+            const campo = document.getElementById(`campo-${escopo}`);
+            const texto = campo.value.trim();
+            if (!texto) return false;
+
+            if (EDITANDO && EDITANDO.escopo === escopo) {
+                const acao = escopo === 'turma' ? 'editar' : 'editar_privado';
+                const r = await chamar({ acao, mensagemId: EDITANDO.id, mensagem: texto });
+                cancelarEdicao(escopo);
+                if (r.erro) { alert(r.erro); return false; }
+            } else {
+                campo.value = '';
+                campo.style.height = 'auto';
+                const corpo = escopo === 'turma'
+                    ? { acao: 'enviar', turmaId: TURMA_ATUAL, mensagem: texto }
+                    : { acao: 'enviar_privado', conversaId: CONVERSA_ABERTA, mensagem: texto };
+                const r = await chamar(corpo);
+                if (r.erro) { alert(r.erro); campo.value = texto; return false; }
+            }
+
+            escopo === 'turma' ? carregarTurma() : carregarMensagensPrivadas();
+            return false;
+        };
+
+        // ============================================================
+        // Chat da turma
+        // ============================================================
+        window.carregarTurma = async () => {
+            if (!TURMA_ATUAL) return;
+            const r = await chamar({ acao: 'listar', turmaId: TURMA_ATUAL });
+            if (r.erro) {
+                document.getElementById('lista-turma').innerHTML = `<p class="text-center text-xs text-red-500 py-6">${r.erro}</p>`;
+                return;
+            }
+            ULTIMAS_TURMA = r.mensagens || [];
+            desenharMensagens('lista-turma', ULTIMAS_TURMA, 'turma', true, 'Nenhuma mensagem nesta turma ainda.', false);
+        };
+
+        async function carregarMembros() {
+            const r = await chamar({ acao: 'membros', turmaId: TURMA_ATUAL });
+            MEMBROS = r.erro ? [] : (r.membros || []);
+        }
+
+        // ============================================================
+        // Minhas conversas privadas
+        // ============================================================
+        window.carregarConversas = async () => {
+            const r = await chamar({ acao: 'conversas' });
+            const box = document.getElementById('lista-conversas');
+
+            if (r.erro) { box.innerHTML = `<p class="px-5 py-6 text-xs text-red-500">${r.erro}</p>`; return; }
+
+            const conversas = r.conversas || [];
+            atualizarSeloNaoLidas(conversas.reduce((s, c) => s + c.naoLidas, 0));
+
+            if (conversas.length === 0) {
+                box.innerHTML = `<p class="px-5 py-8 text-center text-xs text-gray-400">
+                    Nenhuma conversa ainda. Use <span class="font-bold">+ Falar com um aluno</span> para começar.
+                </p>`;
+                return;
+            }
+
+            box.innerHTML = conversas.map(c => `
+                <button onclick="abrirConversa('${c.id}')" class="w-full text-left px-5 py-3 hover:bg-gray-50 transition flex items-center gap-3">
+                    <div class="rounded-full w-10 h-10 flex items-center justify-center font-bold text-white bg-gray-900 shrink-0 text-sm">${escaparHtml(c.com.nome.trim()[0] || '?')}</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-gray-800 text-sm truncate">${escaparHtml(c.com.nome)}</p>
+                        <p class="text-xs text-gray-500 truncate">${c.previa ? escaparHtml(c.previa) : 'Conversa nova'}</p>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <p class="text-[11px] text-gray-400">${horaCurta(c.ultimaEm)}</p>
+                        ${c.naoLidas > 0 ? `<span class="inline-block mt-1 text-[11px] font-bold text-white bg-red-600 rounded-full px-2 py-0.5">${c.naoLidas}</span>` : ''}
+                    </div>
+                </button>
+            `).join('');
+        };
+
+        window.abrirNovaConversa = async () => {
+            document.getElementById('tela-conversas').classList.add('hidden');
+            document.getElementById('tela-conversa').classList.add('hidden');
+            document.getElementById('tela-contatos').classList.remove('hidden');
+
+            const r = await chamar({ acao: 'contatos', turmaId: TURMA_ATUAL });
+            CONTATOS = r.erro ? [] : (r.contatos || []);
+            renderizarContatos();
+        };
+
+        window.renderizarContatos = () => {
+            const busca = (document.getElementById('busca-contato').value || '').toLowerCase();
+            const achados = CONTATOS.filter(c => c.nome.toLowerCase().includes(busca));
+            const box = document.getElementById('lista-contatos');
+
+            if (achados.length === 0) {
+                box.innerHTML = `<p class="px-5 py-8 text-center text-xs text-gray-400">Nenhum aluno encontrado.</p>`;
+                return;
+            }
+
+            box.innerHTML = achados.map(c => `
+                <button onclick="iniciarConversa('${c.tipo}', '${c.id}')" class="w-full text-left px-5 py-3 hover:bg-gray-50 transition flex items-center gap-3">
+                    <div class="rounded-full w-9 h-9 flex items-center justify-center font-bold text-white bg-gray-900 shrink-0 text-xs">${escaparHtml(c.nome.trim()[0] || '?')}</div>
+                    <p class="font-bold text-gray-800 text-sm truncate">${escaparHtml(c.nome)}</p>
+                </button>
+            `).join('');
+        };
+
+        window.iniciarConversa = async (comTipo, comId) => {
+            const r = await chamar({ acao: 'abrir', comTipo, comId, turmaId: TURMA_ATUAL });
+            if (r.erro) { alert(r.erro); return; }
+            abrirConversa(r.conversaId);
+        };
+
+        window.abrirConversa = async (conversaId) => {
+            CONVERSA_ABERTA = conversaId;
+            document.getElementById('tela-conversas').classList.add('hidden');
+            document.getElementById('tela-contatos').classList.add('hidden');
+            document.getElementById('tela-conversa').classList.remove('hidden');
+            montarAreaEnvio('area-envio-privado', 'privado');
+            await carregarMensagensPrivadas();
+        };
+
+        window.voltarParaConversas = () => {
+            CONVERSA_ABERTA = null;
+            EDITANDO = null;
+            document.getElementById('tela-conversa').classList.add('hidden');
+            document.getElementById('tela-contatos').classList.add('hidden');
+            document.getElementById('tela-conversas').classList.remove('hidden');
+            carregarConversas();
+        };
+
+        window.carregarMensagensPrivadas = async () => {
+            if (!CONVERSA_ABERTA) return;
+            const r = await chamar({ acao: 'mensagens', conversaId: CONVERSA_ABERTA });
+            if (r.erro) {
+                document.getElementById('lista-privada').innerHTML = `<p class="text-center text-xs text-red-500 py-6">${r.erro}</p>`;
+                return;
+            }
+            ULTIMAS_PRIVADAS = r.mensagens || [];
+            document.getElementById('titulo-conversa').innerText = r.com.nome;
+            document.getElementById('subtitulo-conversa').innerText = 'Conversa privada';
+            desenharMensagens('lista-privada', ULTIMAS_PRIVADAS, 'privado', false, 'Conversa nova. Escreva a primeira mensagem.', false);
+        };
+
+        // ============================================================
+        // Moderação
+        // ============================================================
+        window.carregarModeracao = async () => {
+            if (!TURMA_ATUAL) return;
+            const r = await chamar({ acao: 'conversas_turma', turmaId: TURMA_ATUAL });
+            const box = document.getElementById('lista-moderacao');
+
+            if (r.erro) { box.innerHTML = `<p class="px-5 py-6 text-xs text-red-500">${r.erro}</p>`; return; }
+
+            const conversas = r.conversas || [];
+            if (conversas.length === 0) {
+                box.innerHTML = `<p class="px-5 py-8 text-center text-xs text-gray-400">Nenhuma conversa privada nesta turma ainda.</p>`;
+                return;
+            }
+
+            box.innerHTML = conversas.map(c => `
+                <div class="px-5 py-3 flex items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-gray-800 text-sm truncate">
+                            ${escaparHtml(c.entre[0].nome)} <span class="text-gray-400 font-normal">e</span> ${escaparHtml(c.entre[1].nome)}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            ${c.totalMensagens} ${c.totalMensagens === 1 ? 'mensagem' : 'mensagens'} ·
+                            última em ${horaCurta(c.atualizadoEm)}
+                            ${c.souParticipante ? ' · <span class="text-gray-700 font-semibold">você participa</span>' : ''}
+                            ${c.ultimoAcesso ? ` · <span class="text-amber-600">aberta por você em ${horaCurta(c.ultimoAcesso)}</span>` : ''}
+                        </p>
+                    </div>
+                    <button onclick="lerConversa('${c.id}')" class="text-xs font-bold border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 shrink-0">Abrir</button>
+                </div>
+            `).join('');
+        };
+
+        window.lerConversa = async (conversaId) => {
+            if (!confirm('Abrir esta conversa? O acesso fica registrado com data e hora.')) return;
+
+            const r = await chamar({ acao: 'ler_conversa', conversaId });
+            if (r.erro) { alert(r.erro); return; }
+
+            document.getElementById('tela-moderacao-lista').classList.add('hidden');
+            document.getElementById('tela-moderacao-conversa').classList.remove('hidden');
+            document.getElementById('titulo-moderacao').innerText = `${r.entre[0].nome} e ${r.entre[1].nome}`;
+            desenharMensagens('lista-moderacao-mensagens', r.mensagens, 'moderacao', true, 'Nenhuma mensagem nesta conversa.', true);
+        };
+
+        window.voltarParaModeracao = () => {
+            document.getElementById('tela-moderacao-conversa').classList.add('hidden');
+            document.getElementById('tela-moderacao-lista').classList.remove('hidden');
+            carregarModeracao();
+        };
+
+        // ============================================================
+        // Abas
+        // ============================================================
+        function pintarAbas() {
+            for (const [id, nome] of [['aba-turma', 'turma'], ['aba-privado', 'privado'], ['aba-moderacao', 'moderacao']]) {
+                const b = document.getElementById(id);
+                b.className = 'px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2 ' +
+                    (ABA === nome ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50');
+            }
+        }
+
+        function atualizarSeloNaoLidas(total) {
+            document.getElementById('aba-privado').innerHTML = 'Minhas conversas' +
+                (total > 0 ? ` <span class="text-[11px] font-bold text-white bg-red-600 rounded-full px-1.5 py-0.5">${total}</span>` : '');
+        }
+
+        window.trocarAba = (aba) => {
+            ABA = aba;
+            EDITANDO = null;
+            pintarAbas();
+            document.getElementById('painel-turma').classList.toggle('hidden', aba !== 'turma');
+            document.getElementById('painel-privado').classList.toggle('hidden', aba !== 'privado');
+            document.getElementById('painel-moderacao').classList.toggle('hidden', aba !== 'moderacao');
+
+            if (aba === 'turma') carregarTurma();
+            else if (aba === 'moderacao') carregarModeracao();
+            else if (CONVERSA_ABERTA) carregarMensagensPrivadas();
+            else carregarConversas();
+        };
+
+        // ============================================================
+        // Início
+        // ============================================================
         iniciarShellEquipe('chat').then(async (sessao) => {
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
 
-            TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
+            TURMA_ATUAL = await montarSeletorTurma('seletor-turma', async (turmaId) => {
                 TURMA_ATUAL = turmaId;
-                document.getElementById('lista-mensagens').innerHTML = '<p class="text-gray-400 text-sm">Carregando...</p>';
-                carregarMensagens();
+                CONVERSA_ABERTA = null;
+                await carregarMembros();
+                if (ABA === 'turma') carregarTurma();
+                else if (ABA === 'moderacao') carregarModeracao();
             });
 
+            pintarAbas();
+            atualizarSeloNaoLidas(0);
+            montarAreaEnvio('area-envio-turma', 'turma');
+
             if (!TURMA_ATUAL) {
-                document.getElementById('lista-mensagens').innerHTML = '';
+                document.getElementById('lista-turma').innerHTML = '';
                 return;
             }
 
-            carregarMensagens();
+            await carregarMembros();
+            await carregarTurma();
+            await carregarConversas();
+
+            RELOGIO = setInterval(() => {
+                if (EDITANDO) return;
+                if (ABA === 'turma') carregarTurma();
+                else if (ABA === 'privado' && CONVERSA_ABERTA) carregarMensagensPrivadas();
+                else if (ABA === 'privado') carregarConversas();
+            }, 6000);
         });
     </script>
 </body>
