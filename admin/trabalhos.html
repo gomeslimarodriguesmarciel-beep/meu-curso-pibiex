@@ -23,6 +23,8 @@
                 O aluno vê a correção na página <span class="font-semibold">Meus Trabalhos</span>.
             </p>
 
+            <div id="seletor-turma" class="mb-6"></div>
+
             <div id="lista-atividades" class="space-y-4">
                 <p class="text-gray-400 text-sm">Carregando...</p>
             </div>
@@ -152,11 +154,14 @@
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
 
-            const { data: turmas } = await window.supabaseClient.from('turmas').select('id, nome').order('ano', { ascending: false }).limit(1);
-            TURMA_ATUAL = turmas && turmas[0] ? turmas[0].id : null;
+            TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
+                TURMA_ATUAL = turmaId;
+                document.getElementById('lista-atividades').innerHTML = '<p class="text-gray-400 text-sm">Carregando...</p>';
+                carregarTrabalhos();
+            });
 
             if (!TURMA_ATUAL) {
-                document.getElementById('lista-atividades').innerHTML = '<p class="text-red-500 text-sm">Nenhuma turma cadastrada ainda.</p>';
+                document.getElementById('lista-atividades').innerHTML = '';
                 return;
             }
 
