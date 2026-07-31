@@ -122,6 +122,13 @@
             return div.innerHTML;
         }
 
+        function formatarTamanho(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+        }
+
         function horaCurta(iso) {
             const d = new Date(iso);
             const hoje = new Date();
@@ -145,7 +152,10 @@
         // Destaca "@Nome" quando o nome bate com alguém da turma. Comparar com a
         // lista de membros (do maior nome para o menor) evita cortar "@Ana Paula"
         // no meio e transformar em "@Ana".
-        function destacarMencoes(textoEscapado) {
+        // `emBalaoEscuro` diz se a menção vai dentro de uma mensagem minha, que
+        // tem fundo escuro. Sem isso a menção saía escura sobre escuro e
+        // desaparecia dentro das próprias mensagens do aluno.
+        function destacarMencoes(textoEscapado, emBalaoEscuro) {
             if (MEMBROS.length === 0) return textoEscapado;
 
             const nomes = MEMBROS.map(m => m.nome).sort((a, b) => b.length - a.length);
@@ -154,10 +164,18 @@
             for (const nome of nomes) {
                 const alvo = '@' + escaparHtml(nome);
                 if (!saida.includes(alvo)) continue;
+
                 const euMesmo = ALUNO && nome === ALUNO.nomeCompleto;
-                const estilo = euMesmo
-                    ? 'background: var(--pibiex-dourado); color: var(--pibiex-tinta);'
-                    : 'color: var(--pibiex-tinta); background: rgba(11,18,32,.08);';
+                let estilo;
+                if (euMesmo) {
+                    // Dourado com texto escuro: legível nos dois fundos.
+                    estilo = 'background: var(--pibiex-dourado); color: var(--pibiex-tinta);';
+                } else if (emBalaoEscuro) {
+                    estilo = 'background: rgba(255,255,255,.18); color: #fff;';
+                } else {
+                    estilo = 'background: rgba(11,18,32,.08); color: var(--pibiex-tinta);';
+                }
+
                 saida = saida.split(alvo).join(
                     `<span class="font-semibold rounded px-1" style="${estilo}">${alvo}</span>`
                 );
@@ -182,7 +200,25 @@
                 `;
             }
 
-            const corpo = destacarMencoes(escaparHtml(m.mensagem));
+            const corpo = m.mensagem ? destacarMencoes(escaparHtml(m.mensagem), meu) : '';
+
+            let anexo = '';
+            if (m.anexo) {
+                anexo = m.anexo.ehImagem
+                    ? `<a href="${m.anexo.url}" target="_blank" rel="noopener" class="block mb-1">
+                           <img src="${m.anexo.url}" alt="${escaparHtml(m.anexo.nome)}"
+                                class="rounded-md max-h-64 w-auto" loading="lazy">
+                       </a>`
+                    : `<a href="${m.anexo.url}" target="_blank" rel="noopener"
+                          class="flex items-center gap-2 mb-1 rounded-md px-3 py-2 ${meu ? 'bg-white/10' : 'bg-black/[.04]'}">
+                           <span class="text-xl shrink-0">📎</span>
+                           <span class="min-w-0">
+                               <span class="block text-[13px] font-semibold truncate">${escaparHtml(m.anexo.nome)}</span>
+                               <span class="block text-[11px] ${meu ? 'text-white/60' : ''}"
+                                     style="${meu ? '' : 'color: var(--pibiex-texto-suave);'}">${formatarTamanho(m.anexo.tamanho)}</span>
+                           </span>
+                       </a>`;
+            }
 
             const reacoes = (m.reacoes || []).map(r => `
                 <button onclick="reagir('${escopo}', '${m.id}', '${r.emoji}')"
@@ -205,7 +241,8 @@
                         <div class="rounded-lg px-4 py-2 ${meu ? 'text-white rounded-br-sm' : 'border rounded-bl-sm'}"
                              style="${meu ? 'background: var(--pibiex-tinta);' : 'background:#fff; border-color: var(--pibiex-borda);'}">
                             ${mostrarAutor && !meu ? `<p class="text-[11.5px] font-bold mb-0.5" style="color: var(--pibiex-dourado);">${escaparHtml(m.autorNome)}${m.autorTipo === 'equipe' ? ' · professor' : ''}</p>` : ''}
-                            <p class="text-[13.5px] whitespace-pre-wrap break-words">${corpo}</p>
+                            ${anexo}
+                            ${corpo ? `<p class="text-[13.5px] whitespace-pre-wrap break-words">${corpo}</p>` : ''}
                             <p class="text-[10.5px] mt-1 ${meu ? 'text-white/60' : ''}" style="${meu ? '' : 'color: var(--pibiex-texto-suave);'}">
                                 ${horaCurta(m.criadoEm)}${m.editada ? ' · editada' : ''}
                             </p>
@@ -251,9 +288,17 @@
                         <button onclick="cancelarEdicao('${escopo}')" class="font-semibold">Cancelar</button>
                     </div>
 
+                    <div id="anexo-${escopo}" class="hidden px-3 pt-3"></div>
+
+                    <input type="file" id="arquivo-${escopo}" class="hidden"
+                           accept="image/*,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                           onchange="aoEscolherArquivo('${escopo}')">
+
                     <form onsubmit="return enviar(event, '${escopo}')" class="p-3 border-t flex gap-2 items-end" style="border-color: var(--pibiex-borda);">
                         <button type="button" onclick="alternarEmojis('${escopo}')" title="Emojis"
                                 class="text-xl shrink-0 leading-none px-1">🙂</button>
+                        <button type="button" onclick="document.getElementById('arquivo-${escopo}').click()" title="Anexar imagem ou arquivo"
+                                class="text-xl shrink-0 leading-none px-1">📎</button>
                         <textarea id="campo-${escopo}" rows="1" placeholder="Escreva uma mensagem..."
                                   oninput="aoDigitar('${escopo}')" onkeydown="atalhoEnviar(event, '${escopo}')"
                                   class="flex-1 border rounded-2xl px-4 py-2 text-[13.5px] outline-none resize-none max-h-32"
@@ -284,6 +329,86 @@
                 enviar(e, escopo);
             }
         };
+
+        // ============================================================
+        // Anexo
+        // ============================================================
+        const ARQUIVO = { turma: null, privado: null };
+        const MAX_ARQUIVO = 10 * 1024 * 1024;
+
+        window.aoEscolherArquivo = (escopo) => {
+            const campo = document.getElementById(`arquivo-${escopo}`);
+            const arquivo = campo.files && campo.files[0];
+            if (!arquivo) return;
+
+            if (arquivo.size > MAX_ARQUIVO) {
+                alert('O arquivo passa de 10 MB. Escolha um menor.');
+                campo.value = '';
+                return;
+            }
+
+            ARQUIVO[escopo] = arquivo;
+
+            const caixa = document.getElementById(`anexo-${escopo}`);
+            const ehImagem = arquivo.type.startsWith('image/');
+            // A miniatura sai do próprio arquivo escolhido, antes de subir.
+            const previa = ehImagem
+                ? `<img src="${URL.createObjectURL(arquivo)}" class="rounded-md h-14 w-14 object-cover shrink-0">`
+                : `<span class="text-2xl shrink-0">📎</span>`;
+
+            caixa.innerHTML = `
+                <div class="flex items-center gap-3 border rounded-lg px-3 py-2" style="border-color: var(--pibiex-borda);">
+                    ${previa}
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[13px] font-semibold truncate" style="color: var(--pibiex-texto);">${escaparHtml(arquivo.name)}</p>
+                        <p class="text-[11px]" style="color: var(--pibiex-texto-suave);">${formatarTamanho(arquivo.size)}</p>
+                    </div>
+                    <button type="button" onclick="removerArquivo('${escopo}')" class="text-sm font-bold shrink-0"
+                            style="color: var(--pibiex-texto-suave);">✕</button>
+                </div>
+            `;
+            caixa.classList.remove('hidden');
+        };
+
+        window.removerArquivo = (escopo) => {
+            ARQUIVO[escopo] = null;
+            document.getElementById(`arquivo-${escopo}`).value = '';
+            const caixa = document.getElementById(`anexo-${escopo}`);
+            caixa.innerHTML = '';
+            caixa.classList.add('hidden');
+        };
+
+        // Sobe o arquivo em duas etapas: a função devolve um endereço temporário
+        // (o bucket é privado) e o navegador manda o arquivo direto para lá.
+        async function subirArquivo(escopo, arquivo) {
+            const funcao = escopo === 'turma' ? 'chat-turma' : 'chat-privado';
+            const pedido = {
+                acao: 'preparar_anexo',
+                nome: arquivo.name,
+                tipo: arquivo.type,
+                tamanho: arquivo.size,
+            };
+            if (escopo === 'privado') pedido.conversaId = CONVERSA_ABERTA;
+
+            const preparo = await chamar(funcao, pedido);
+            if (preparo.erro) return { erro: preparo.erro };
+
+            const { error } = await window.supabaseClient.storage
+                .from('chat-arquivos')
+                .uploadToSignedUrl(preparo.caminho, preparo.token, arquivo);
+
+            if (error) {
+                console.error(error);
+                return { erro: 'Não consegui enviar o arquivo. Tente novamente.' };
+            }
+
+            return {
+                caminho: preparo.caminho,
+                nome: arquivo.name,
+                tipo: arquivo.type,
+                tamanho: arquivo.size,
+            };
+        }
 
         // ============================================================
         // Menção com "@"
@@ -408,7 +533,10 @@
             e.preventDefault();
             const campo = document.getElementById(`campo-${escopo}`);
             const texto = campo.value.trim();
-            if (!texto) return false;
+            const arquivo = ARQUIVO[escopo];
+
+            // Sem texto e sem arquivo não há o que mandar.
+            if (!texto && !arquivo) return false;
 
             const funcao = escopo === 'turma' ? 'chat-turma' : 'chat-privado';
 
@@ -419,9 +547,19 @@
             } else {
                 campo.value = '';
                 campo.style.height = 'auto';
-                const corpo = escopo === 'turma'
-                    ? { acao: 'enviar', mensagem: texto }
-                    : { acao: 'enviar', conversaId: CONVERSA_ABERTA, mensagem: texto };
+
+                let anexo = null;
+                if (arquivo) {
+                    const enviando = await subirArquivo(escopo, arquivo);
+                    if (enviando.erro) { alert(enviando.erro); campo.value = texto; return false; }
+                    anexo = enviando;
+                    removerArquivo(escopo);
+                }
+
+                const corpo = { acao: 'enviar', mensagem: texto };
+                if (escopo === 'privado') corpo.conversaId = CONVERSA_ABERTA;
+                if (anexo) corpo.arquivo = anexo;
+
                 const r = await chamar(funcao, corpo);
                 if (r.erro) { alert(r.erro); campo.value = texto; return false; }
             }
