@@ -18,50 +18,85 @@
 
         <main class="p-8 max-w-4xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">🏆 Desafios Semanais</h1>
-            <p class="text-gray-500 mb-6">Crie desafios e acompanhe os envios dos alunos. Desafios inativos ficam ocultos para a turma.</p>
+            <p class="text-gray-500 mb-6">Crie desafios com pontos, corrija os envios e acompanhe o ranking da turma.</p>
 
-            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
-                <div class="flex flex-wrap gap-3">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
-                        <input id="novo-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    </div>
-                    <div class="w-28">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Semana</label>
-                        <input id="novo-semana" type="number" min="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Descrição</label>
-                    <textarea id="novo-descricao" required rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
-                </div>
-                <label class="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" id="novo-ativo" checked class="rounded border-gray-300">
-                    Visível para os alunos
-                </label>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo desafio</button>
-            </form>
+            <div id="seletor-turma" class="mb-6"></div>
 
-            <div id="lista-desafios" class="space-y-4">
-                <p class="text-gray-400 text-sm">Carregando...</p>
+            <div class="flex flex-wrap items-center gap-2 mb-5">
+                <button id="aba-desafios" onclick="trocarAba('desafios')" class="px-4 py-2 rounded-full text-sm font-bold transition">Desafios e correção</button>
+                <button id="aba-ranking" onclick="trocarAba('ranking')" class="px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2">Ranking</button>
             </div>
+
+            <!-- ===== Desafios e correção ===== -->
+            <section id="painel-desafios">
+                <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                    <div class="flex flex-wrap gap-3">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
+                            <input id="novo-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                        <div class="w-28">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Semana</label>
+                            <input id="novo-semana" type="number" min="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                        <div class="w-28">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Vale pontos</label>
+                            <input id="novo-pontos" type="number" min="1" max="1000" value="10" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Descrição</label>
+                        <textarea id="novo-descricao" required rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Prazo (opcional)</label>
+                            <input id="novo-prazo" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" id="novo-ativo" checked class="rounded border-gray-300">
+                        Visível para os alunos
+                    </label>
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo desafio</button>
+                </form>
+
+                <div id="lista-desafios" class="space-y-4">
+                    <p class="text-gray-400 text-sm">Carregando...</p>
+                </div>
+            </section>
+
+            <!-- ===== Ranking ===== -->
+            <section id="painel-ranking" class="hidden">
+                <div class="flex items-center gap-2 mb-4">
+                    <button id="sub-aba-semana" onclick="trocarSubAbaRanking('semana')" class="px-4 py-1.5 rounded-full text-xs font-bold transition">Semana</button>
+                    <button id="sub-aba-geral" onclick="trocarSubAbaRanking('geral')" class="px-4 py-1.5 rounded-full text-xs font-bold transition">Geral</button>
+                </div>
+                <div id="tabela-ranking" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <p class="text-gray-400 text-sm p-5">Carregando ranking...</p>
+                </div>
+            </section>
         </main>
     </div>
 
     <script src="shell.js"></script>
     <script>
         let TOKEN_EQUIPE = null;
+        let TURMA_ATUAL = null;
         let idEmEdicao = null;
-
-        function escaparHtml(texto) {
-            const div = document.createElement('div');
-            div.innerText = texto ?? '';
-            return div.innerHTML;
-        }
+        let ABA = 'desafios';
+        let SUB_ABA_RANKING = 'semana';
+        let ULTIMO_RANKING = null;
 
         function formatarData(dataIso) {
             if (!dataIso) return '';
             return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function dataCurta(dataIso) {
+            if (!dataIso) return '';
+            const [ano, mes, dia] = dataIso.split('-');
+            return `${dia}/${mes}/${ano}`;
         }
 
         async function chamarGerenciarDesafios(acao, dados) {
@@ -75,13 +110,64 @@
             return data;
         }
 
+        // ============================================================
+        // Desafios e correção
+        // ============================================================
         async function carregarDesafios() {
-            const resultado = await chamarGerenciarDesafios('listar', {});
+            if (!TURMA_ATUAL) return;
+            const resultado = await chamarGerenciarDesafios('listar', { turmaId: TURMA_ATUAL });
             if (!resultado) {
                 document.getElementById('lista-desafios').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar desafios.</p>';
                 return;
             }
             renderizarDesafios(resultado.desafios || []);
+        }
+
+        function linhaEnvio(e, desafio) {
+            if (e.avaliado) {
+                return `
+                    <div class="px-5 py-3 border-t border-gray-100 flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
+                            <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
+                            <a href="${escaparHtml(e.link_ou_arquivo)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline">Abrir resposta →</a>
+                            ${e.feedback ? `<p class="text-xs text-gray-600 mt-1 bg-gray-50 rounded px-2 py-1">${escaparHtml(e.feedback)}</p>` : ''}
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-sm font-black text-green-700">${e.pontos} / ${desafio.pontos} pts</p>
+                            <button onclick="reabrirEnvio('${e.id}')" class="text-[11px] font-bold text-gray-400 hover:text-gray-700">Reabrir</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="px-5 py-3 border-t border-gray-100">
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
+                            <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
+                            <a href="${escaparHtml(e.link_ou_arquivo)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline">Abrir resposta →</a>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 shrink-0">Pendente</span>
+                    </div>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <div class="w-24">
+                            <label class="block text-[10px] font-bold text-gray-500 mb-1">Nota (0–${desafio.pontos})</label>
+                            <input type="number" id="nota-${e.id}" min="0" max="${desafio.pontos}" value="${desafio.pontos}"
+                                   class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm">
+                        </div>
+                        <div class="flex-1 min-w-[160px]">
+                            <label class="block text-[10px] font-bold text-gray-500 mb-1">Comentário (opcional)</label>
+                            <input type="text" id="feedback-${e.id}" placeholder="Ex.: Ótimo, faltou explicar o passo 2"
+                                   class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm">
+                        </div>
+                        <button onclick="avaliarEnvio('${e.id}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-lg shrink-0">
+                            Dar nota
+                        </button>
+                    </div>
+                </div>
+            `;
         }
 
         function renderizarDesafios(desafios) {
@@ -100,6 +186,8 @@
                             <textarea id="edit-descricao-${d.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(d.descricao)}</textarea>
                             <div class="flex items-center gap-3 flex-wrap">
                                 <input id="edit-semana-${d.id}" type="number" min="1" value="${d.semana ?? ''}" placeholder="Semana" class="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <input id="edit-pontos-${d.id}" type="number" min="1" max="1000" value="${d.pontos}" placeholder="Pontos" class="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <input id="edit-prazo-${d.id}" type="date" value="${d.data_fim ?? ''}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" id="edit-ativo-${d.id}" class="rounded border-gray-300" ${d.ativo ? 'checked' : ''}>
                                     Visível para os alunos
@@ -114,17 +202,11 @@
                 }
 
                 const envios = d.envios || [];
-                const enviosHtml = envios.length === 0
+                // Pendentes primeiro: é o que o professor precisa ver logo ao abrir.
+                const ordenados = envios.slice().sort((a, b) => (a.avaliado === b.avaliado ? 0 : a.avaliado ? 1 : -1));
+                const enviosHtml = ordenados.length === 0
                     ? '<p class="text-xs text-gray-400 px-5 pb-4">Nenhum envio ainda.</p>'
-                    : envios.map(e => `
-                        <div class="px-5 py-2.5 border-t border-gray-100 flex items-center justify-between gap-3">
-                            <div class="min-w-0">
-                                <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
-                                <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
-                            </div>
-                            <a href="${escaparHtml(e.link_ou_arquivo)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir resposta →</a>
-                        </div>
-                    `).join('');
+                    : ordenados.map(e => linhaEnvio(e, d)).join('');
 
                 return `
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -133,10 +215,13 @@
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                                         ${d.semana ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">Semana ${d.semana}</span>` : ''}
+                                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">🏆 ${d.pontos} pts</span>
                                         <p class="font-bold text-gray-800 text-sm">${escaparHtml(d.titulo)}</p>
                                         ${!d.ativo ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inativo</span>' : ''}
+                                        ${d.pendentes > 0 ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-600">${d.pendentes} para corrigir</span>` : ''}
                                     </div>
                                     <p class="text-sm text-gray-600">${escaparHtml(d.descricao)}</p>
+                                    ${d.data_fim ? `<p class="text-xs text-gray-400 mt-1">Prazo: ${dataCurta(d.data_fim)}</p>` : ''}
                                 </div>
                                 <div class="flex gap-2 shrink-0">
                                     <button onclick="editarDesafio('${d.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
@@ -159,12 +244,15 @@
             const descricao = document.getElementById('novo-descricao').value.trim();
             const semanaBruta = document.getElementById('novo-semana').value;
             const semana = semanaBruta ? parseInt(semanaBruta, 10) : null;
+            const pontos = parseInt(document.getElementById('novo-pontos').value, 10) || 10;
+            const dataFim = document.getElementById('novo-prazo').value || null;
             const ativo = document.getElementById('novo-ativo').checked;
             if (!titulo || !descricao) return;
 
-            const resultado = await chamarGerenciarDesafios('criar', { titulo, descricao, semana, ativo });
+            const resultado = await chamarGerenciarDesafios('criar', { titulo, descricao, semana, pontos, dataFim, ativo });
             if (resultado) {
                 document.getElementById('form-novo').reset();
+                document.getElementById('novo-pontos').value = 10;
                 document.getElementById('novo-ativo').checked = true;
                 carregarDesafios();
             }
@@ -178,10 +266,12 @@
             const descricao = document.getElementById(`edit-descricao-${desafioId}`).value.trim();
             const semanaBruta = document.getElementById(`edit-semana-${desafioId}`).value;
             const semana = semanaBruta ? parseInt(semanaBruta, 10) : null;
+            const pontos = parseInt(document.getElementById(`edit-pontos-${desafioId}`).value, 10) || 10;
+            const dataFim = document.getElementById(`edit-prazo-${desafioId}`).value || null;
             const ativo = document.getElementById(`edit-ativo-${desafioId}`).checked;
             if (!titulo || !descricao) return;
 
-            const resultado = await chamarGerenciarDesafios('atualizar', { desafioId, titulo, descricao, semana, ativo });
+            const resultado = await chamarGerenciarDesafios('atualizar', { desafioId, titulo, descricao, semana, pontos, dataFim, ativo });
             if (resultado) { idEmEdicao = null; carregarDesafios(); }
         };
 
@@ -191,9 +281,122 @@
             if (resultado) carregarDesafios();
         };
 
-        iniciarShellEquipe('desafios').then((sessao) => {
+        window.avaliarEnvio = async (envioId) => {
+            const pontos = document.getElementById(`nota-${envioId}`).value;
+            const feedback = document.getElementById(`feedback-${envioId}`).value.trim();
+            if (pontos === '') { alert('Informe a nota.'); return; }
+
+            const resultado = await chamarGerenciarDesafios('avaliar', { envioId, pontos: Number(pontos), feedback: feedback || null });
+            if (resultado) carregarDesafios();
+        };
+
+        window.reabrirEnvio = async (envioId) => {
+            if (!confirm('Reabrir este envio? A nota some e ele volta para a fila de correção.')) return;
+            const resultado = await chamarGerenciarDesafios('reabrir_envio', { envioId });
+            if (resultado) carregarDesafios();
+        };
+
+        // ============================================================
+        // Ranking
+        // ============================================================
+        async function carregarRanking() {
+            if (!TURMA_ATUAL) return;
+            const tabela = document.getElementById('tabela-ranking');
+            tabela.innerHTML = '<p class="text-gray-400 text-sm p-5">Carregando ranking...</p>';
+
+            const resultado = await chamarGerenciarDesafios('ranking', { turmaId: TURMA_ATUAL });
+            if (!resultado) { tabela.innerHTML = '<p class="text-red-500 text-sm p-5">Erro ao carregar o ranking.</p>'; return; }
+
+            ULTIMO_RANKING = resultado;
+            renderizarRanking();
+        }
+
+        function renderizarRanking() {
+            const tabela = document.getElementById('tabela-ranking');
+            if (!ULTIMO_RANKING) return;
+
+            const linhas = SUB_ABA_RANKING === 'semana' ? ULTIMO_RANKING.semana : ULTIMO_RANKING.geral;
+            const semNinguem = linhas.every(l => l.pontos === 0);
+
+            if (linhas.length === 0) {
+                tabela.innerHTML = '<p class="text-gray-400 text-sm p-5">Nenhum aluno nesta turma ainda.</p>';
+                return;
+            }
+
+            const medalha = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+            tabela.innerHTML = `
+                ${semNinguem ? '<p class="text-xs text-amber-700 bg-amber-50 px-5 py-2">Ninguém pontuou ainda nesta visão.</p>' : ''}
+                <div class="divide-y divide-gray-100">
+                    ${linhas.map(l => `
+                        <div class="px-5 py-3 flex items-center justify-between gap-3 ${l.pontos === 0 ? 'opacity-50' : ''}">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="w-8 text-center text-sm font-black text-gray-700 shrink-0">${medalha[l.posicao] || l.posicao + 'º'}</span>
+                                <p class="text-sm font-semibold text-gray-800 truncate">${escaparHtml(l.nome)}</p>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <p class="text-sm font-black text-gray-800">${l.pontos} pts</p>
+                                <p class="text-[11px] text-gray-400">${l.desafiosFeitos} ${l.desafiosFeitos === 1 ? 'desafio' : 'desafios'}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        window.trocarSubAbaRanking = (sub) => {
+            SUB_ABA_RANKING = sub;
+            pintarSubAbasRanking();
+            renderizarRanking();
+        };
+
+        function pintarSubAbasRanking() {
+            const ativo = 'background: #111827; color: #fff;';
+            const inativo = 'background: #fff; color: #374151; border: 1px solid #E5E7EB;';
+            document.getElementById('sub-aba-semana').style.cssText = SUB_ABA_RANKING === 'semana' ? ativo : inativo;
+            document.getElementById('sub-aba-geral').style.cssText = SUB_ABA_RANKING === 'geral' ? ativo : inativo;
+        }
+
+        // ============================================================
+        // Abas principais
+        // ============================================================
+        function pintarAbas() {
+            for (const [id, nome] of [['aba-desafios', 'desafios'], ['aba-ranking', 'ranking']]) {
+                const b = document.getElementById(id);
+                b.className = 'px-4 py-2 rounded-full text-sm font-bold transition ' +
+                    (ABA === nome ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50');
+            }
+        }
+
+        window.trocarAba = (aba) => {
+            ABA = aba;
+            pintarAbas();
+            document.getElementById('painel-desafios').classList.toggle('hidden', aba !== 'desafios');
+            document.getElementById('painel-ranking').classList.toggle('hidden', aba !== 'ranking');
+            if (aba === 'ranking') carregarRanking();
+        };
+
+        // ============================================================
+        // Início
+        // ============================================================
+        iniciarShellEquipe('desafios').then(async (sessao) => {
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
+            pintarAbas();
+            pintarSubAbasRanking();
+
+            TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
+                TURMA_ATUAL = turmaId;
+                idEmEdicao = null;
+                if (ABA === 'desafios') carregarDesafios();
+                else carregarRanking();
+            });
+
+            if (!TURMA_ATUAL) {
+                document.getElementById('lista-desafios').innerHTML = '';
+                return;
+            }
+
             carregarDesafios();
         });
     </script>
