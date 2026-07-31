@@ -285,12 +285,39 @@ async function enviarMensagemAssistente(e) {
     adicionarMensagemNaTela('ia', data.resposta);
 }
 
+// Confere no servidor se a sessão ainda vale. O token no localStorage não basta:
+// se o professor pausar a turma, a sessão é derrubada no banco e o aluno perde o
+// acesso, mas o navegador dele continuaria achando que está logado.
+async function sessaoAindaValida(token) {
+    try {
+        const { data, error } = await window.supabaseClient.functions.invoke('validar-sessao-aluno', {
+            body: { token },
+        });
+        if (error || !data || data.erro) return false;
+        return data.ok === true;
+    } catch (e) {
+        // Se a checagem falhar por rede, não expulsa o aluno — deixa a página seguir.
+        return true;
+    }
+}
+
+function encerrarSessaoLocal(motivo) {
+    localStorage.removeItem('pibiex_aluno_token');
+    localStorage.removeItem('pibiex_aluno_dados');
+    window.location.href = '../index.html?sessao=' + motivo;
+}
+
 // ============================================================
 // Ponto de entrada — cada página chama isso passando seu próprio id
 // ============================================================
 async function iniciarShellAluno(paginaAtivaId) {
     const sessao = protegerPaginaAluno();
     if (!sessao) return null;
+
+    if (!(await sessaoAindaValida(sessao.token))) {
+        encerrarSessaoLocal('encerrada');
+        return null;
+    }
 
     montarMenuLateral(paginaAtivaId);
     montarTopo(sessao.dados.nomeCompleto);
