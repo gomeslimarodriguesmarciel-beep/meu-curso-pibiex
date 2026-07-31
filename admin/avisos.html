@@ -20,6 +20,8 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">📢 Gerenciar Avisos</h1>
             <p class="text-gray-500 mb-6">Publique avisos para a turma. Avisos fixados aparecem primeiro no início do aluno.</p>
 
+            <div id="seletor-turma" class="mb-6"></div>
+
             <form id="form-novo-aviso" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
@@ -159,11 +161,15 @@
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
 
-            const { data: turmas } = await window.supabaseClient.from('turmas').select('id, nome').order('ano', { ascending: false }).limit(1);
-            TURMA_ATUAL = turmas && turmas[0] ? turmas[0].id : null;
+            TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
+                TURMA_ATUAL = turmaId;
+                idEmEdicao = null;
+                document.getElementById('lista-avisos').innerHTML = '<p class="text-gray-400 text-sm">Carregando...</p>';
+                carregarAvisos();
+            });
 
             if (!TURMA_ATUAL) {
-                document.getElementById('lista-avisos').innerHTML = '<p class="text-red-500 text-sm">Nenhuma turma cadastrada ainda.</p>';
+                document.getElementById('lista-avisos').innerHTML = '';
                 return;
             }
 
