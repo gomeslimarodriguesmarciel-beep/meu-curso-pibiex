@@ -36,34 +36,61 @@
     <div id="modal-cadastro" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7 relative">
             <button onclick="fecharModalCadastro()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg">✖</button>
-            <h2 class="text-xl font-black text-gray-900 mb-1">Cadastrar novo aluno</h2>
-            <p class="text-sm text-gray-500 mb-6">O sistema gera uma senha provisória e envia por e-mail automaticamente.</p>
+            <div id="cadastro-formulario">
+                <h2 class="text-xl font-black text-gray-900 mb-1">Cadastrar novo aluno</h2>
+                <p class="text-sm text-gray-500 mb-6">O sistema gera uma senha provisória de 5 dígitos. Não existe e-mail de boas-vindas: o aluno cadastra o próprio e-mail depois, na primeira vez que recuperar a senha.</p>
 
-            <form id="form-cadastro" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Nome completo</label>
-                    <input type="text" id="novo-nome" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Data de nascimento</label>
-                    <input type="date" id="novo-nascimento" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Nome de usuário</label>
-                    <input type="text" id="novo-usuario" required placeholder="ex: joao.silva" class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
-                    <p class="text-[11px] text-gray-400 mt-1">O e-mail de acesso será gerado automaticamente como <span class="font-mono">usuario@pibiex.com</span>.</p>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Turma</label>
-                    <select id="novo-turma" class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none"></select>
+                <form id="form-cadastro" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Nome completo</label>
+                        <input type="text" id="novo-nome" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Data de nascimento</label>
+                        <input type="date" id="novo-nascimento" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Nome de usuário</label>
+                        <input type="text" id="novo-usuario" required placeholder="ex: joao.silva" class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Turma</label>
+                        <select id="novo-turma" class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none"></select>
+                    </div>
+
+                    <p id="msg-cadastro" class="hidden text-sm font-semibold p-3 rounded-lg"></p>
+
+                    <button type="submit" id="btn-cadastrar" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">
+                        Cadastrar aluno
+                    </button>
+                </form>
+            </div>
+
+            <!-- Aparece só depois de cadastrar: a senha provisória em texto legível, -->
+            <!-- porque é a ÚNICA vez que ela fica visível — não há e-mail que a repita. -->
+            <div id="cadastro-sucesso" class="hidden text-center">
+                <div class="text-4xl mb-2">✅</div>
+                <h2 class="text-lg font-black text-gray-900 mb-1">Aluno cadastrado!</h2>
+                <p class="text-sm text-gray-500 mb-5">Repasse estes dados ao aluno (pessoalmente, WhatsApp, etc). Esta senha só aparece aqui — anote antes de fechar.</p>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-3 mb-5">
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 uppercase">Usuário</p>
+                        <p id="sucesso-usuario" class="font-mono font-bold text-gray-900 text-lg"></p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-gray-500 uppercase">Senha provisória</p>
+                        <div class="flex items-center gap-2">
+                            <p id="sucesso-senha" class="font-mono font-bold text-gray-900 text-lg tracking-widest"></p>
+                            <button onclick="copiarSenhaProvisoria()" id="btn-copiar-senha" class="text-[11px] font-bold text-red-600 hover:text-red-700">Copiar</button>
+                        </div>
+                    </div>
                 </div>
 
-                <p id="msg-cadastro" class="hidden text-sm font-semibold p-3 rounded-lg"></p>
-
-                <button type="submit" id="btn-cadastrar" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">
-                    Cadastrar e enviar acesso
+                <button onclick="fecharModalCadastro()" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition shadow-lg">
+                    Já anotei, fechar
                 </button>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -132,8 +159,11 @@
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
                                 <p class="text-sm font-bold text-gray-800">${escaparHtml(a.nome_completo)}</p>
-                                <p class="text-xs text-gray-500">
-                                    <span class="font-mono">${escaparHtml(a.usuario)}</span> · ${escaparHtml(a.email)}
+                                <p class="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-mono">${escaparHtml(a.usuario)}</span>
+                                    ${a.email_confirmado
+                                        ? `· ${escaparHtml(a.email)} <span class="text-green-600 font-bold">✓ cadastrado pelo aluno</span>`
+                                        : `· <span class="text-gray-400 italic">e-mail ainda não cadastrado</span>`}
                                 </p>
                             </div>
                             <div class="text-right shrink-0">
@@ -151,6 +181,11 @@
                             <button onclick="moverAluno('${a.id}')" class="bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg shrink-0">
                                 Mover
                             </button>
+                            ${a.email_confirmado
+                                ? `<button onclick="liberarEmail('${a.id}', '${escaparHtml(a.nome_completo).replace(/'/g, "\\'")}')" class="border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold px-4 py-2 rounded-lg shrink-0">
+                                       Liberar e-mail
+                                   </button>`
+                                : ''}
                         </div>
                     </div>
                 `).join('');
@@ -180,11 +215,36 @@
         };
 
         window.abrirModalCadastro = () => {
+            document.getElementById('cadastro-formulario').classList.remove('hidden');
+            document.getElementById('cadastro-sucesso').classList.add('hidden');
             document.getElementById('modal-cadastro').classList.remove('hidden');
         };
         window.fecharModalCadastro = () => {
             document.getElementById('modal-cadastro').classList.add('hidden');
             document.getElementById('msg-cadastro').classList.add('hidden');
+        };
+
+        window.copiarSenhaProvisoria = () => {
+            const senha = document.getElementById('sucesso-senha').innerText;
+            navigator.clipboard.writeText(senha).then(() => {
+                const btn = document.getElementById('btn-copiar-senha');
+                btn.innerText = 'Copiado!';
+                setTimeout(() => { btn.innerText = 'Copiar'; }, 1500);
+            });
+        };
+
+        window.liberarEmail = async (alunoId, nome) => {
+            if (!confirm(`Liberar o e-mail de ${nome}? Ele vai poder cadastrar um e-mail novo na próxima vez que recuperar a senha.`)) return;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'liberar_email', alunoId },
+            });
+
+            if (error || !data || data.erro) {
+                alert((data && data.erro) || 'Erro ao liberar o e-mail.');
+                return;
+            }
+            await carregarAlunos();
         };
 
         document.getElementById('form-cadastro').addEventListener('submit', async (e) => {
@@ -205,7 +265,7 @@
                 body: { tokenEquipe: TOKEN_EQUIPE, acao: 'cadastrar', nomeCompleto, dataNascimento, usuario, turmaId },
             });
 
-            btn.innerText = 'Cadastrar e enviar acesso';
+            btn.innerText = 'Cadastrar aluno';
             btn.disabled = false;
 
             if (error || !data || data.erro) {
@@ -215,14 +275,11 @@
                 return;
             }
 
-            if (data.aviso) {
-                msg.innerText = data.aviso;
-                msg.className = 'text-sm font-semibold p-3 rounded-lg bg-amber-50 text-amber-700';
-                msg.classList.remove('hidden');
-            } else {
-                document.getElementById('form-cadastro').reset();
-                fecharModalCadastro();
-            }
+            document.getElementById('form-cadastro').reset();
+            document.getElementById('sucesso-usuario').innerText = data.aluno.usuario;
+            document.getElementById('sucesso-senha').innerText = data.senhaProvisoria;
+            document.getElementById('cadastro-formulario').classList.add('hidden');
+            document.getElementById('cadastro-sucesso').classList.remove('hidden');
 
             await carregarAlunos();
         });
