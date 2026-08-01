@@ -28,20 +28,33 @@
                 <div>
                     <label class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Senha provisória (recebida por e-mail)</label>
                     <input type="text" id="senha-atual" required inputmode="numeric"
+                           autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore
                            class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 </div>
 
                 <div>
                     <label class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Nova senha</label>
-                    <input type="password" id="nova-senha" required
-                           class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                    <div class="relative">
+                        <input type="password" id="nova-senha" required autocomplete="new-password"
+                               class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 pr-12 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        <button type="button" onclick="window.alternarSenha('nova-senha', this)"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition text-xs font-bold uppercase">
+                            Ver
+                        </button>
+                    </div>
                     <p class="text-xs text-gray-400 mt-1 ml-1">Mínimo 5 caracteres, com pelo menos 1 letra maiúscula.</p>
                 </div>
 
                 <div>
                     <label class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Confirmar nova senha</label>
-                    <input type="password" id="confirmar-senha" required
-                           class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                    <div class="relative">
+                        <input type="password" id="confirmar-senha" required autocomplete="new-password"
+                               class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 pr-12 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        <button type="button" onclick="window.alternarSenha('confirmar-senha', this)"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition text-xs font-bold uppercase">
+                            Ver
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" id="btn-salvar" class="w-full bg-blue-600 text-white font-extrabold py-3 px-8 rounded-full hover:bg-blue-700 transition shadow-lg text-lg">
@@ -61,6 +74,13 @@
         if (!tokenAluno) {
             window.location.href = 'index.html';
         }
+
+        window.alternarSenha = (idInput, botao) => {
+            const input = document.getElementById(idInput);
+            const mostrando = input.type === 'text';
+            input.type = mostrando ? 'password' : 'text';
+            botao.innerText = mostrando ? 'Ver' : 'Ocultar';
+        };
 
         async function extrairMensagemErro(error, data, mensagemPadrao) {
             if (data && data.erro) return data.erro;
