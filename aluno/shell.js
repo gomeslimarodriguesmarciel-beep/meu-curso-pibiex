@@ -8,9 +8,9 @@
 //      <div id="topo-pagina"></div>, <div id="assistente-flutuante"></div>
 //   3) Chamar `iniciarShellAluno('id-da-pagina')` dentro de um <script> próprio.
 //
-// Identidade visual: tinta-marinho (#0B1220) + dourado discreto (#C9A24B) sobre
-// papel claro (#F7F5F1). Ícones são SVG de linha (sem emoji), tipografia usa
-// Fraunces para títulos institucionais + Inter para o resto.
+// Identidade visual: gradiente azul-marinho (#0B1B4A → #1E3A8A → #3B82F6) com
+// acento lima (#A3E635) sobre cinza claro (#F9FAFB). Ícones são SVG de linha
+// (sem emoji), tipografia usa Inter em peso pesado para títulos e para o resto.
 
 const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbGNzZ3F2dW51dGJ2cGF6Z3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1Njc5MTQsImV4cCI6MjEwMDE0MzkxNH0.T87bJPVYiYO9vyJtaB6_n9CREO6f-mNGumGK0phtaYk';
@@ -21,24 +21,31 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
 // 0) Identidade visual: fonte + tokens de cor injetados uma vez
 // ============================================================
 (function injetarIdentidadeVisual() {
-    const linkFonte = document.createElement('link');
-    linkFonte.rel = 'stylesheet';
-    linkFonte.href = 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap';
-    document.head.appendChild(linkFonte);
-
     const estilo = document.createElement('style');
     estilo.textContent = `
         :root {
-            --pibiex-tinta: #0B1220;
-            --pibiex-tinta-suave: #16213A;
-            --pibiex-dourado: #C9A24B;
-            --pibiex-papel: #F7F5F1;
-            --pibiex-texto: #1B1F27;
+            --pibiex-tinta: #1E3A8A;
+            --pibiex-tinta-suave: #1E40AF;
+            --pibiex-gradiente: linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 50%, #1E40AF 100%);
+            --pibiex-dourado: #A3E635;
+            --pibiex-dourado-profundo: #4D7C0F;
+            --pibiex-papel: #F9FAFB;
+            --pibiex-texto: #111827;
             --pibiex-texto-suave: #6B7280;
-            --pibiex-borda: #E8E4DA;
+            --pibiex-borda: #E5E7EB;
         }
-        .fonte-display { font-family: 'Fraunces', serif; }
+        .fonte-display { font-family: 'Inter', sans-serif; font-weight: 800; }
         body { background: var(--pibiex-papel); }
+        .pibiex-textura-grade {
+            position: absolute; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000 30%, transparent 100%);
+        }
+        .pibiex-pulso { width: 7px; height: 7px; border-radius: 50%; background: var(--pibiex-dourado); box-shadow: 0 0 0 0 rgba(163,230,53,.7); animation: pibiexPulso 2s infinite; flex-shrink: 0; }
+        @keyframes pibiexPulso { 0% { box-shadow: 0 0 0 0 rgba(163,230,53,.6); } 70% { box-shadow: 0 0 0 8px rgba(163,230,53,0); } 100% { box-shadow: 0 0 0 0 rgba(163,230,53,0); } }
     `;
     document.head.appendChild(estilo);
 })();
@@ -156,21 +163,22 @@ function montarMenuLateral(paginaAtivaId) {
     container.outerHTML = `
         <div id="sidebar-fundo" onclick="window.fecharMenuAluno()"
              class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
-        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-[17rem] shrink-0 py-6 z-40 flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-200"
-               style="background: var(--pibiex-tinta);">
-            <div class="px-5 pb-6 mb-2 flex items-center justify-between gap-3 border-b border-white/10">
+        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-[17rem] shrink-0 py-6 z-40 flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-200 relative overflow-hidden"
+               style="background: var(--pibiex-gradiente);">
+            <div class="pibiex-textura-grade"></div>
+            <div class="px-5 pb-6 mb-2 flex items-center justify-between gap-3 border-b border-white/10 relative">
                 <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-sm border border-[var(--pibiex-dourado)] flex items-center justify-center shrink-0">
-                        <span class="fonte-display text-[var(--pibiex-dourado)] font-semibold text-sm">P26</span>
+                    <div class="w-9 h-9 rounded-[10px] shrink-0 flex items-center justify-center" style="background: linear-gradient(135deg, #0B1B4A, #3B82F6); box-shadow: 0 4px 10px -3px rgba(0,0,0,.4);">
+                        <span class="fonte-display text-white text-[11px] leading-none">P26</span>
                     </div>
                     <div class="min-w-0">
-                        <p class="fonte-display text-white font-semibold text-[17px] leading-tight truncate">PIBIEX</p>
-                        <p class="text-[10.5px] font-bold uppercase tracking-[0.14em] text-[var(--pibiex-dourado)]">Inteligência Artificial</p>
+                        <p class="fonte-display text-white text-[15px] leading-tight truncate">PIBIEX</p>
+                        <p class="text-[9.5px] font-bold uppercase tracking-[0.14em] text-[var(--pibiex-dourado)]">Inteligência Artificial</p>
                     </div>
                 </div>
                 <button onclick="window.fecharMenuAluno()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">✕</button>
             </div>
-            <nav class="px-3 overflow-y-auto flex-1">${gruposHtml}</nav>
+            <nav class="px-3 overflow-y-auto flex-1 relative">${gruposHtml}</nav>
         </aside>
     `;
 }
