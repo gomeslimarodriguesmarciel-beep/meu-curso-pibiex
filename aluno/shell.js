@@ -168,8 +168,9 @@ function montarMenuLateral(paginaAtivaId) {
             <div class="pibiex-textura-grade"></div>
             <div class="px-5 pb-6 mb-2 flex items-center justify-between gap-3 border-b border-white/10 relative">
                 <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-9 h-9 rounded-[10px] shrink-0 flex items-center justify-center" style="background: linear-gradient(135deg, #0B1B4A, #3B82F6); box-shadow: 0 4px 10px -3px rgba(0,0,0,.4);">
-                        <span class="fonte-display text-white text-[11px] leading-none">P26</span>
+                    <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-dourado);">
+                        <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(163,230,53,.35);"></div>
+                        <span class="fonte-display text-[var(--pibiex-dourado)] text-[10px] leading-none relative">P26</span>
                     </div>
                     <div class="min-w-0">
                         <p class="fonte-display text-white text-[15px] leading-tight truncate">PIBIEX</p>
