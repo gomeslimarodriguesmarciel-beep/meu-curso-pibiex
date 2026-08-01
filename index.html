@@ -349,7 +349,25 @@ window.location.href = 'admin/inicio.html';
 // ============================================================
 let ticketRecuperacao = null;
 
+// Limpa tudo que a etapa 1/2 possa ter guardado: nome, data de nascimento,
+// e-mail digitado e o ticket da busca. Sem isso, quem usa um computador
+// compartilhado (ex: da sala de aula) e sai sem fechar a aba deixa os dados
+// de outra pessoa visíveis pro próximo que abrir "Esqueci minha senha".
+function limparFormularioRecuperar() {
+document.getElementById('form-recuperar').reset();
+document.getElementById('form-recuperar-email').reset();
+document.getElementById('msg-recuperar-1').classList.add('hidden');
+document.getElementById('msg-recuperar-2').classList.add('hidden');
+document.getElementById('recuperar-usuario-mascarado').innerText = '';
+document.getElementById('recuperar-email-instrucao').innerText = '';
+ticketRecuperacao = null;
+if (widgetRecuperar !== null) grecaptcha.reset(widgetRecuperar);
+tokenRecuperar = null;
+atualizarBotao('btn-recuperar-buscar', false);
+}
+
 window.abrirModalRecuperar = () => {
+limparFormularioRecuperar();
 document.getElementById('modal-recuperar').classList.remove('hidden');
 document.getElementById('recuperar-etapa-1').classList.remove('hidden');
 document.getElementById('recuperar-etapa-2').classList.add('hidden');
@@ -362,7 +380,10 @@ callback: (token) => { tokenRecuperar = token; atualizarBotao('btn-recuperar-bus
 });
 }
 };
-window.fecharModalRecuperar = () => document.getElementById('modal-recuperar').classList.add('hidden');
+window.fecharModalRecuperar = () => {
+document.getElementById('modal-recuperar').classList.add('hidden');
+limparFormularioRecuperar();
+};
 window.voltarEtapa1Recuperar = () => {
 document.getElementById('recuperar-etapa-1').classList.remove('hidden');
 document.getElementById('recuperar-etapa-2').classList.add('hidden');
