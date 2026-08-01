@@ -66,18 +66,18 @@
     <script src="shell.js"></script>
     <script>
         const ATALHOS = [
-            { id: 'cronograma',     label: 'Cronograma',        href: 'cronograma.html',     gradiente: 'linear-gradient(135deg, #3b82f6, #4f46e5)' },
-            { id: 'trabalhos',      label: 'Meus Trabalhos',    href: 'trabalhos.html',      gradiente: 'linear-gradient(135deg, #a855f7, #d946ef)' },
-            { id: 'chat',           label: 'Chat da Turma',     href: 'chat.html',           gradiente: 'linear-gradient(135deg, #22c55e, #059669)' },
-            { id: 'ferramentas-ia', label: 'Ferramentas de IA', href: 'ferramentas-ia.html', gradiente: 'linear-gradient(135deg, #f97316, #ef4444)' },
+            { id: 'cronograma',     label: 'Cronograma',        href: 'cronograma.html',     tom: '#2563EB', fundo: '#EFF6FF' },
+            { id: 'trabalhos',      label: 'Meus Trabalhos',    href: 'trabalhos.html',      tom: '#9333EA', fundo: '#FAF5FF' },
+            { id: 'chat',           label: 'Chat da Turma',     href: 'chat.html',           tom: '#059669', fundo: '#ECFDF5' },
+            { id: 'ferramentas-ia', label: 'Ferramentas de IA', href: 'ferramentas-ia.html', tom: '#C2410C', fundo: '#FFF7ED' },
         ];
 
         function montarAtalhos() {
             document.getElementById('grade-atalhos').innerHTML = ATALHOS.map(a => `
-                <a href="${a.href}" class="bg-white border rounded-2xl px-4 py-4 flex flex-col gap-3 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
+                <a href="${a.href}" class="bg-white border rounded-2xl px-4 py-4 flex flex-col gap-3 hover:-translate-y-1 hover:shadow-md transition-all duration-300 group"
                    style="border-color: var(--pibiex-borda);">
-                    <span class="w-9 h-9 rounded-[11px] flex items-center justify-center shrink-0" style="background: ${a.gradiente}; box-shadow: 0 8px 16px -6px rgba(0,0,0,.25);">
-                        <span class="w-[18px] h-[18px] text-white">${ICONES[a.id]}</span>
+                    <span class="w-9 h-9 rounded-[11px] flex items-center justify-center shrink-0" style="background: ${a.fundo};">
+                        <span class="w-[18px] h-[18px]" style="color: ${a.tom};">${ICONES[a.id]}</span>
                     </span>
                     <span class="text-[13.5px] font-semibold" style="color: var(--pibiex-texto);">${a.label}</span>
                 </a>
