@@ -25,8 +25,9 @@
             <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Cumpra os desafios, ganhe pontos e suba no ranking da turma.</p>
 
             <!-- Meu progresso -->
-            <div id="cartao-progresso" class="rounded-lg overflow-hidden mb-7" style="background: var(--pibiex-tinta);">
-                <p class="text-center text-sm py-8" style="color: var(--pibiex-dourado);">Carregando seu progresso...</p>
+            <div id="cartao-progresso" class="rounded-2xl overflow-hidden mb-7 relative" style="background: var(--pibiex-gradiente);">
+                <div class="pibiex-textura-grade"></div>
+                <p class="text-center text-sm py-8 relative" style="color: var(--pibiex-dourado);">Carregando seu progresso...</p>
             </div>
 
             <!-- Ranking -->
@@ -83,11 +84,12 @@
             const percentual = proximo === null ? 100 : Math.max(8, Math.min(92, 100 - proximo));
 
             document.getElementById('cartao-progresso').innerHTML = `
-                <div class="px-7 py-6 flex flex-wrap items-center justify-between gap-5">
+                <div class="pibiex-textura-grade"></div>
+                <div class="px-7 py-6 flex flex-wrap items-center justify-between gap-5 relative">
                     <div>
-                        <p class="text-[11px] font-bold uppercase tracking-[0.16em]" style="color: var(--pibiex-dourado);">Nível ${nivel.faixa} · ${escaparHtml(nivel.nome)}</p>
-                        <p class="fonte-display text-white text-3xl font-semibold mt-1">${eu.pontos} pontos</p>
-                        <p class="text-slate-400 text-xs mt-1">${eu.desafiosFeitos} ${eu.desafiosFeitos === 1 ? 'desafio avaliado' : 'desafios avaliados'}</p>
+                        <p class="text-[11px] font-black uppercase tracking-[0.16em]" style="color: var(--pibiex-dourado);">Nível ${nivel.faixa} · ${escaparHtml(nivel.nome)}</p>
+                        <p class="fonte-display text-white text-3xl mt-1">${eu.pontos} pontos</p>
+                        <p class="text-blue-100/70 text-xs mt-1">${eu.desafiosFeitos} ${eu.desafiosFeitos === 1 ? 'desafio avaliado' : 'desafios avaliados'}</p>
                     </div>
                     <div class="w-full sm:w-56">
                         <div class="h-2 rounded-full overflow-hidden" style="background: rgba(255,255,255,.12);">
