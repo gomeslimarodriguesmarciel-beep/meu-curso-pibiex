@@ -194,12 +194,13 @@
                                     · <span id="senha-texto-${a.id}" class="font-mono">••••••</span>
                                     <button onclick="alternarSenhaVisivel('${a.id}')" id="senha-botao-${a.id}" class="font-bold text-blue-700 hover:underline">Ver senha</button>
                                 </p>
-                                <p class="text-xs mt-1.5">
+                                <p class="text-xs mt-2 flex items-center gap-2 flex-wrap">
                                     ${a.termoAceito
-                                        ? `<span class="text-gray-500">Termo de uso aceito em ${formatarDataHora(a.termoAceito.aceitoEm)}</span>
-                                           <button onclick="visualizarTermo('${a.id}')" class="ml-2 font-bold text-blue-700 hover:underline">Visualizar</button>
-                                           <button onclick="baixarTermoPdf('${a.id}')" class="ml-2 font-bold text-blue-700 hover:underline">Baixar PDF</button>`
-                                        : `<span class="text-gray-400 italic">Termo de uso ainda não aceito</span>`}
+                                        ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700 shrink-0">✓ Termo assinado</span>
+                                           <span class="text-gray-500">em ${formatarDataHora(a.termoAceito.aceitoEm)}</span>
+                                           <button onclick="visualizarTermo('${a.id}')" class="font-bold text-blue-700 hover:underline">Visualizar</button>
+                                           <button onclick="baixarTermoPdf('${a.id}')" class="font-bold text-blue-700 hover:underline">Baixar PDF</button>`
+                                        : `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-700 shrink-0">Termo não assinado</span>`}
                                 </p>
                             </div>
                             <div class="text-right shrink-0">
