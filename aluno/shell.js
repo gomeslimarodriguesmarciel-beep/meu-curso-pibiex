@@ -121,6 +121,14 @@ function protegerPaginaAluno() {
         return null;
     }
 
+    // Checagem rápida (a partir do que foi salvo no login). A checagem que
+    // realmente vale — porque consulta o banco de novo — acontece logo a
+    // seguir, em sessaoAindaValida, toda vez que uma página carrega.
+    if (dados.precisaAceitarTermos) {
+        window.location.href = '../termos.html';
+        return null;
+    }
+
     return { token, dados };
 }
 
@@ -358,19 +366,24 @@ async function enviarMensagemAssistente(e) {
     adicionarMensagemNaTela('ia', data.resposta);
 }
 
-// Confere no servidor se a sessão ainda vale. O token no localStorage não basta:
-// se o professor pausar a turma, a sessão é derrubada no banco e o aluno perde o
-// acesso, mas o navegador dele continuaria achando que está logado.
-async function sessaoAindaValida(token) {
+// Confere no servidor se a sessão ainda vale — e de quebra traz o estado
+// atual do aluno direto do banco (turma ativa? aceitou o termo de uso?). O
+// token e os dados no localStorage não bastam sozinhos: se o professor pausar
+// a turma, ou se a versão do termo de uso mudar, isso só é refletido aqui.
+//
+// Devolve os dados do aluno se a sessão vale, ou null se não vale (turma
+// pausada, sessão expirada, etc.). Se a rede falhar, devolve um objeto
+// "neutro" — não expulsa o aluno nem força o termo de uso à toa por causa de
+// uma falha de conexão.
+async function conferirSessaoNoServidor(token) {
     try {
         const { data, error } = await window.supabaseClient.functions.invoke('validar-sessao-aluno', {
             body: { token },
         });
-        if (error || !data || data.erro) return false;
-        return data.ok === true;
+        if (error || !data || data.erro || data.ok !== true) return null;
+        return data.aluno;
     } catch (e) {
-        // Se a checagem falhar por rede, não expulsa o aluno — deixa a página seguir.
-        return true;
+        return { precisaAceitarTermos: false };
     }
 }
 
@@ -387,8 +400,14 @@ async function iniciarShellAluno(paginaAtivaId) {
     const sessao = protegerPaginaAluno();
     if (!sessao) return null;
 
-    if (!(await sessaoAindaValida(sessao.token))) {
+    const alunoNoServidor = await conferirSessaoNoServidor(sessao.token);
+    if (!alunoNoServidor) {
         encerrarSessaoLocal('encerrada');
+        return null;
+    }
+
+    if (alunoNoServidor.precisaAceitarTermos) {
+        window.location.href = '../termos.html';
         return null;
     }
 
