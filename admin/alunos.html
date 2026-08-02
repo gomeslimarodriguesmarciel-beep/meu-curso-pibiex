@@ -191,6 +191,8 @@
                                     ${a.email_confirmado
                                         ? `· ${escaparHtml(a.email)} <span class="text-green-600 font-bold">✓ cadastrado pelo aluno</span>`
                                         : `· <span class="text-gray-400 italic">e-mail ainda não cadastrado</span>`}
+                                    · <span id="senha-texto-${a.id}" class="font-mono">••••••</span>
+                                    <button onclick="alternarSenhaVisivel('${a.id}')" id="senha-botao-${a.id}" class="font-bold text-blue-700 hover:underline">Ver senha</button>
                                 </p>
                                 <p class="text-xs mt-1.5">
                                     ${a.termoAceito
@@ -282,6 +284,43 @@
                 return;
             }
             await carregarAlunos();
+        };
+
+        // Senhas reveladas ficam guardadas aqui (por aluno) só para não pedir
+        // de novo ao servidor toda vez que o professor mostra/esconde a mesma
+        // senha nesta mesma visita à página.
+        const senhasReveladas = {};
+
+        window.alternarSenhaVisivel = async (alunoId) => {
+            const span = document.getElementById(`senha-texto-${alunoId}`);
+            const botao = document.getElementById(`senha-botao-${alunoId}`);
+
+            if (span.innerText !== '••••••') {
+                span.innerText = '••••••';
+                botao.innerText = 'Ver senha';
+                return;
+            }
+
+            if (senhasReveladas[alunoId]) {
+                span.innerText = senhasReveladas[alunoId];
+                botao.innerText = 'Ocultar';
+                return;
+            }
+
+            botao.innerText = 'Buscando...';
+            const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'ver_senha', alunoId },
+            });
+
+            if (error || !data || data.erro || !data.senha) {
+                alert((data && data.erro) || 'Não foi possível buscar a senha deste aluno.');
+                botao.innerText = 'Ver senha';
+                return;
+            }
+
+            senhasReveladas[alunoId] = data.senha;
+            span.innerText = data.senha;
+            botao.innerText = 'Ocultar';
         };
 
         // Guarda o último termo carregado (aluno + data do aceite) para tanto o
