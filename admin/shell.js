@@ -7,11 +7,48 @@
 //   2) Ter estes 2 elementos vazios no HTML: <div id="sidebar-container"></div>
 //      e <div id="topo-pagina"></div>
 //   3) Chamar `iniciarShellEquipe('id-da-pagina')` dentro de um <script> próprio.
+//
+// Identidade visual: mesmo gradiente azul-marinho da área do aluno, mas com
+// acento vermelho (em vez de lima) para marcar "zona da equipe/restrita".
 
 const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbGNzZ3F2dW51dGJ2cGF6Z3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1Njc5MTQsImV4cCI6MjEwMDE0MzkxNH0.T87bJPVYiYO9vyJtaB6_n9CREO6f-mNGumGK0phtaYk';
 
 window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// 0) Identidade visual: fonte + tokens de cor injetados uma vez
+// ============================================================
+(function injetarIdentidadeVisualEquipe() {
+    const linkFonte = document.createElement('link');
+    linkFonte.rel = 'stylesheet';
+    linkFonte.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap';
+    document.head.appendChild(linkFonte);
+
+    const estilo = document.createElement('style');
+    estilo.textContent = `
+        body { font-family: 'Inter', sans-serif; }
+        :root {
+            --pibiex-tinta: #1E3A8A;
+            --pibiex-gradiente: linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 50%, #1E40AF 100%);
+            --pibiex-acento: #EF4444;
+            --pibiex-acento-profundo: #B91C1C;
+            --pibiex-papel: #F9FAFB;
+            --pibiex-texto: #111827;
+            --pibiex-texto-suave: #6B7280;
+            --pibiex-borda: #E5E7EB;
+        }
+        .pibiex-textura-grade {
+            position: absolute; inset: 0; pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000 30%, transparent 100%);
+        }
+    `;
+    document.head.appendChild(estilo);
+})();
 
 // Itens do menu lateral do painel. Itens sem página construída ainda ficam
 // visíveis (mostrando o que vem por aí) mas podem não ter destino ainda.
@@ -57,10 +94,10 @@ function montarMenuLateralEquipe(paginaAtivaId) {
 
     const itensHtml = ITENS_MENU_EQUIPE.map((item) => {
         const ativo = item.id === paginaAtivaId;
-        const classesBase = 'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition';
+        const classesBase = 'flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-md text-sm font-semibold transition border-l-2 relative';
         const classesAtivo = ativo
-            ? 'bg-red-600 text-white shadow-sm'
-            : 'text-gray-300 hover:bg-gray-800 hover:text-white';
+            ? 'border-[var(--pibiex-acento)] bg-white/[0.06] text-white'
+            : 'border-transparent text-slate-400 hover:text-white hover:bg-white/[0.04]';
         return `
             <a href="${item.href}" class="${classesBase} ${classesAtivo}">
                 <span class="text-lg">${item.icone}</span>
@@ -75,15 +112,23 @@ function montarMenuLateralEquipe(paginaAtivaId) {
     container.outerHTML = `
         <div id="sidebar-fundo" onclick="window.fecharMenuEquipe()"
              class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
-        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-72 shrink-0 bg-gray-950 p-5 flex flex-col gap-1 z-40 -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-y-auto">
-            <div class="px-2 pb-5 mb-2 border-b border-gray-800 flex items-center justify-between">
-                <div>
-                    <p class="text-white font-black text-lg leading-tight">PIBIEX 2026</p>
-                    <p class="text-red-400 text-xs font-bold uppercase tracking-wide">Painel da equipe</p>
+        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-72 shrink-0 p-5 flex flex-col gap-1 z-40 -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-y-auto relative overflow-x-hidden"
+               style="background: var(--pibiex-gradiente);">
+            <div class="pibiex-textura-grade"></div>
+            <div class="px-2 pb-5 mb-2 border-b border-white/10 flex items-center justify-between relative">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-acento);">
+                        <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(239,68,68,.35);"></div>
+                        <span class="text-[var(--pibiex-acento)] text-[10px] font-black leading-none relative">P26</span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-white font-black text-[15px] leading-tight truncate">PIBIEX 2026</p>
+                        <p class="text-[var(--pibiex-acento)] text-[9.5px] font-bold uppercase tracking-wide">Painel da equipe</p>
+                    </div>
                 </div>
-                <button onclick="window.fecharMenuEquipe()" class="md:hidden text-gray-400 hover:text-white text-xl leading-none px-1" aria-label="Fechar menu">✕</button>
+                <button onclick="window.fecharMenuEquipe()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">✕</button>
             </div>
-            ${itensHtml}
+            <div class="relative flex flex-col gap-1">${itensHtml}</div>
         </aside>
     `;
 }
