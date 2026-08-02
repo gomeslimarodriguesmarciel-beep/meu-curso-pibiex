@@ -40,7 +40,7 @@
             <button onclick="fecharModalCadastro()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg">✖</button>
             <div id="cadastro-formulario">
                 <h2 class="text-xl font-black text-gray-900 mb-1">Cadastrar novo aluno</h2>
-                <p class="text-sm text-gray-500 mb-6">O sistema gera o usuário (a partir do nome) e uma senha provisória de 5 dígitos, automaticamente. Não existe e-mail de boas-vindas: o aluno cadastra o próprio e-mail depois, na primeira vez que recuperar a senha.</p>
+                <p class="text-sm text-gray-500 mb-6">O sistema gera o usuário (a partir do nome) e uma senha provisória de 5 dígitos, automaticamente. Se você informar o e-mail do aluno, a senha é enviada direto para ele — senão, ela aparece aqui para você repassar.</p>
 
                 <form id="form-cadastro" class="space-y-4">
                     <div>
@@ -50,6 +50,11 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Data de nascimento</label>
                         <input type="date" id="novo-nascimento" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">E-mail do aluno (opcional)</label>
+                        <input type="email" id="novo-email" placeholder="aluno@exemplo.com" class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                        <p class="text-[11px] text-gray-400 mt-1">Se preenchido, a senha provisória é enviada automaticamente para este e-mail.</p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Turma</label>
@@ -64,19 +69,20 @@
                 </form>
             </div>
 
-            <!-- Aparece só depois de cadastrar: a senha provisória em texto legível, -->
-            <!-- porque é a ÚNICA vez que ela fica visível — não há e-mail que a repita. -->
+            <!-- Aparece só depois de cadastrar. Se o e-mail foi enviado com sucesso, -->
+            <!-- a senha some do destaque (já foi entregue); senão, ela é a única -->
+            <!-- forma do professor conseguir repassar, então fica em destaque. -->
             <div id="cadastro-sucesso" class="hidden text-center">
                 <div class="text-4xl mb-2">✅</div>
                 <h2 class="text-lg font-black text-gray-900 mb-1">Aluno cadastrado!</h2>
-                <p class="text-sm text-gray-500 mb-5">Repasse estes dados ao aluno (pessoalmente, WhatsApp, etc). Esta senha só aparece aqui — anote antes de fechar.</p>
+                <p id="sucesso-instrucao" class="text-sm text-gray-500 mb-5"></p>
 
                 <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-3 mb-5">
                     <div>
                         <p class="text-[11px] font-bold text-gray-500 uppercase">Usuário</p>
                         <p id="sucesso-usuario" class="font-mono font-bold text-gray-900 text-lg"></p>
                     </div>
-                    <div>
+                    <div id="sucesso-bloco-senha">
                         <p class="text-[11px] font-bold text-gray-500 uppercase">Senha provisória</p>
                         <div class="flex items-center gap-2">
                             <p id="sucesso-senha" class="font-mono font-bold text-gray-900 text-lg tracking-widest"></p>
@@ -89,6 +95,37 @@
                     Já anotei, fechar
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: EDITAR ALUNO ================= -->
+    <div id="modal-editar" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7 relative">
+            <button onclick="fecharModalEditar()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg">✖</button>
+            <h2 class="text-xl font-black text-gray-900 mb-1">Editar dados do aluno</h2>
+            <p class="text-sm text-gray-500 mb-6">Corrija nome, data de nascimento ou e-mail. O usuário e a senha não mudam aqui.</p>
+
+            <form id="form-editar" class="space-y-4">
+                <input type="hidden" id="editar-id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Nome completo</label>
+                    <input type="text" id="editar-nome" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Data de nascimento</label>
+                    <input type="date" id="editar-nascimento" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">E-mail (opcional)</label>
+                    <input type="email" id="editar-email" placeholder="aluno@exemplo.com" class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+
+                <p id="msg-editar" class="hidden text-sm font-semibold p-3 rounded-lg"></p>
+
+                <button type="submit" id="btn-editar-salvar" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-lg">
+                    Salvar alterações
+                </button>
+            </form>
         </div>
     </div>
 
@@ -115,6 +152,7 @@
     <script>
         let TOKEN_EQUIPE = null;
         let TURMAS = [];
+        let ALUNOS_ATUAIS = [];
 
         function escaparHtml(texto) {
             const div = document.createElement('div');
@@ -213,6 +251,9 @@
                             </div>
                             <button onclick="moverAluno('${a.id}')" class="bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg shrink-0">
                                 Mover
+                            </button>
+                            <button onclick="abrirModalEditar('${a.id}')" class="border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold px-4 py-2 rounded-lg shrink-0">
+                                Editar dados
                             </button>
                             ${a.email_confirmado
                                 ? `<button onclick="liberarEmail('${a.id}', '${escaparHtml(a.nome_completo).replace(/'/g, "\\'")}')" class="border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold px-4 py-2 rounded-lg shrink-0">
@@ -426,6 +467,54 @@
 
         document.getElementById('btn-baixar-pdf-modal').addEventListener('click', gerarPdfTermo);
 
+        window.abrirModalEditar = (alunoId) => {
+            const aluno = ALUNOS_ATUAIS.find((a) => a.id === alunoId);
+            if (!aluno) return;
+
+            document.getElementById('editar-id').value = aluno.id;
+            document.getElementById('editar-nome').value = aluno.nome_completo;
+            document.getElementById('editar-nascimento').value = aluno.data_nascimento;
+            document.getElementById('editar-email').value = aluno.email || '';
+            document.getElementById('msg-editar').classList.add('hidden');
+            document.getElementById('modal-editar').classList.remove('hidden');
+        };
+
+        window.fecharModalEditar = () => {
+            document.getElementById('modal-editar').classList.add('hidden');
+        };
+
+        document.getElementById('form-editar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg-editar');
+            const btn = document.getElementById('btn-editar-salvar');
+            msg.classList.add('hidden');
+
+            const alunoId = document.getElementById('editar-id').value;
+            const nomeCompleto = document.getElementById('editar-nome').value.trim();
+            const dataNascimento = document.getElementById('editar-nascimento').value;
+            const email = document.getElementById('editar-email').value.trim();
+
+            btn.innerText = 'Salvando...';
+            btn.disabled = true;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'editar', alunoId, nomeCompleto, dataNascimento, email: email || null },
+            });
+
+            btn.innerText = 'Salvar alterações';
+            btn.disabled = false;
+
+            if (error || !data || data.erro) {
+                msg.innerText = (data && data.erro) || 'Erro ao salvar. Tente novamente.';
+                msg.className = 'text-sm font-semibold p-3 rounded-lg bg-red-50 text-red-600';
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            window.fecharModalEditar();
+            await carregarAlunos();
+        });
+
         window.excluirAluno = async (alunoId, nome) => {
             if (!confirm(`Excluir definitivamente o cadastro de ${nome}?\n\nIsso apaga TODOS os dados ligados a ele: trabalhos enviados, mensagens de chat, conversas com a IA, envios de desafios e laboratório, projetos na galeria e o termo de uso assinado. Não é possível desfazer.`)) return;
 
@@ -448,13 +537,14 @@
 
             const nomeCompleto = document.getElementById('novo-nome').value.trim();
             const dataNascimento = document.getElementById('novo-nascimento').value;
+            const email = document.getElementById('novo-email').value.trim();
             const turmaId = document.getElementById('novo-turma').value;
 
             btn.innerText = 'Cadastrando...';
             btn.disabled = true;
 
             const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
-                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'cadastrar', nomeCompleto, dataNascimento, turmaId },
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'cadastrar', nomeCompleto, dataNascimento, email: email || null, turmaId },
             });
 
             btn.innerText = 'Cadastrar aluno';
@@ -470,6 +560,20 @@
             document.getElementById('form-cadastro').reset();
             document.getElementById('sucesso-usuario').innerText = data.aluno.usuario;
             document.getElementById('sucesso-senha').innerText = data.senhaProvisoria;
+
+            const instrucao = document.getElementById('sucesso-instrucao');
+            const blocoSenha = document.getElementById('sucesso-bloco-senha');
+            if (data.emailEnviado === true) {
+                instrucao.innerText = `Enviamos o usuário e a senha provisória para ${data.aluno.email}. Não precisa repassar nada.`;
+                blocoSenha.classList.add('hidden');
+            } else if (data.emailEnviado === false) {
+                instrucao.innerText = 'O cadastro deu certo, mas não conseguimos enviar o e-mail agora. Repasse a senha abaixo por outro meio.';
+                blocoSenha.classList.remove('hidden');
+            } else {
+                instrucao.innerText = 'Repasse estes dados ao aluno (pessoalmente, WhatsApp, etc). Esta senha só aparece aqui — anote antes de fechar.';
+                blocoSenha.classList.remove('hidden');
+            }
+
             document.getElementById('cadastro-formulario').classList.add('hidden');
             document.getElementById('cadastro-sucesso').classList.remove('hidden');
 
@@ -488,6 +592,7 @@
             }
 
             TURMAS = data.turmas || [];
+            ALUNOS_ATUAIS = data.alunos || [];
             renderizarTurmasNoSelect();
             renderizarAlunos(data.alunos);
         }
