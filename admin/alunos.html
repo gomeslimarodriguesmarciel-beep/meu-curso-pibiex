@@ -40,7 +40,7 @@
             <button onclick="fecharModalCadastro()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg">✖</button>
             <div id="cadastro-formulario">
                 <h2 class="text-xl font-black text-gray-900 mb-1">Cadastrar novo aluno</h2>
-                <p class="text-sm text-gray-500 mb-6">O sistema gera uma senha provisória de 5 dígitos. Não existe e-mail de boas-vindas: o aluno cadastra o próprio e-mail depois, na primeira vez que recuperar a senha.</p>
+                <p class="text-sm text-gray-500 mb-6">O sistema gera o usuário (a partir do nome) e uma senha provisória de 5 dígitos, automaticamente. Não existe e-mail de boas-vindas: o aluno cadastra o próprio e-mail depois, na primeira vez que recuperar a senha.</p>
 
                 <form id="form-cadastro" class="space-y-4">
                     <div>
@@ -50,10 +50,6 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Data de nascimento</label>
                         <input type="date" id="novo-nascimento" required class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Nome de usuário</label>
-                        <input type="text" id="novo-usuario" required placeholder="ex: joao.silva" class="w-full border border-gray-200 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide">Turma</label>
@@ -452,14 +448,13 @@
 
             const nomeCompleto = document.getElementById('novo-nome').value.trim();
             const dataNascimento = document.getElementById('novo-nascimento').value;
-            const usuario = document.getElementById('novo-usuario').value.trim();
             const turmaId = document.getElementById('novo-turma').value;
 
             btn.innerText = 'Cadastrando...';
             btn.disabled = true;
 
             const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
-                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'cadastrar', nomeCompleto, dataNascimento, usuario, turmaId },
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'cadastrar', nomeCompleto, dataNascimento, turmaId },
             });
 
             btn.innerText = 'Cadastrar aluno';
