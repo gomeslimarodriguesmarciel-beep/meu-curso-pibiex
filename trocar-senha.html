@@ -134,7 +134,7 @@
             dados.precisaTrocarSenha = false;
             localStorage.setItem('pibiex_aluno_dados', JSON.stringify(dados));
 
-            window.location.href = 'aluno/inicio.html';
+            window.location.href = dados.precisaAceitarTermos ? 'termos.html' : 'aluno/inicio.html';
         });
     </script>
 </body>
