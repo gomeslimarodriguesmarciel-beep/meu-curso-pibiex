@@ -6,7 +6,6 @@
     <title>PIBIEX 2026 · Painel da Equipe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }</style>
 </head>
 <body class="flex min-h-screen bg-gray-50">
 
@@ -16,8 +15,14 @@
         <div id="topo-pagina"></div>
 
         <main class="p-4 md:p-8 max-w-6xl mx-auto">
-            <h1 class="text-2xl font-black text-gray-900 mb-1">Painel do Professor</h1>
-            <p class="text-sm text-gray-500 mb-8">Visão geral da turma PIBIEX 2026.</p>
+            <div class="rounded-2xl overflow-hidden mb-8 relative" style="background: var(--pibiex-gradiente);">
+                <div class="pibiex-textura-grade"></div>
+                <div class="px-8 py-7 relative">
+                    <p class="text-[11px] font-black uppercase tracking-[0.16em]" style="color: var(--pibiex-acento);">Área restrita · Equipe</p>
+                    <h1 class="text-white text-3xl font-black mt-1">Painel do Professor</h1>
+                    <p class="text-blue-100/80 text-sm mt-2">Visão geral da turma PIBIEX 2026.</p>
+                </div>
+            </div>
 
             <div id="cartoes-estatisticas" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                 <p class="text-sm text-gray-400 col-span-4">Carregando estatísticas...</p>
