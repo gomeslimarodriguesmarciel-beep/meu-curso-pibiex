@@ -17,28 +17,26 @@
             --pibiex-texto-suave: #6B7280;
             --pibiex-borda: #E5E7EB;
         }
-        .pibiex-textura-grade {
-            position: absolute; inset: 0; pointer-events: none;
+        body {
             background-image:
-                linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
-            background-size: 34px 34px;
-            mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000 30%, transparent 100%);
+                linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+                var(--pibiex-gradiente);
+            background-size: 34px 34px, 34px 34px, 100% 100%;
+            background-attachment: fixed, fixed, fixed;
         }
-        .passo { display: none; }
-        .passo.ativo { display: block; animation: surgir .25s ease both; }
-        @keyframes surgir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .ponto { width: 7px; height: 7px; border-radius: 999px; background: var(--pibiex-borda); transition: all .2s ease; }
-        .ponto.ativo { background: var(--pibiex-dourado-profundo); width: 20px; }
-        .ponto.feito { background: #A7C4F2; }
+        #barra-progresso { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: var(--pibiex-dourado); z-index: 50; transition: width .08s linear; }
+        .clausula + .clausula { margin-top: 1.75rem; padding-top: 1.75rem; border-top: 1px solid var(--pibiex-borda); }
+        .clausula p + p { margin-top: .6rem; }
+        #check-aceite:disabled + span { opacity: .55; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col" style="background: var(--pibiex-gradiente);">
+<body class="min-h-screen flex flex-col">
 
-    <div class="pibiex-textura-grade"></div>
+    <div id="barra-progresso"></div>
 
-    <main class="flex-1 flex items-center justify-center px-4 py-8 relative">
-        <div class="w-full max-w-xl">
+    <main class="flex-1 flex justify-center px-4 py-10">
+        <div class="w-full max-w-2xl">
 
             <div class="flex items-center gap-3 mb-5 px-1">
                 <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-dourado);">
@@ -51,117 +49,97 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div class="px-6 md:px-9 pt-7 pb-2">
-                    <div class="flex items-center gap-2 mb-6" id="pontos-progresso"></div>
-                </div>
+            <article class="bg-white rounded-2xl shadow-2xl px-6 md:px-10 py-8 md:py-10">
 
-                <div class="px-6 md:px-9 pb-2 min-h-[280px] md:min-h-[300px]">
+                <header class="mb-7 pb-6" style="border-bottom: 1px solid var(--pibiex-borda);">
+                    <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">Documento de acesso obrigatório</p>
+                    <h1 class="text-2xl md:text-[26px] font-black mt-2" style="color: var(--pibiex-texto);">Termo de Uso e Responsabilidade — PIBIEX 2026</h1>
+                    <p class="text-[14px] leading-relaxed mt-3" style="color: var(--pibiex-texto-suave);">
+                        Este Termo estabelece as condições para utilização da plataforma PIBIEX 2026 ("Plataforma"), disponibilizada no âmbito do curso de extensão em Inteligência Artificial, sob responsabilidade da instituição de ensino e do professor coordenador. O acesso à Plataforma está condicionado à leitura e ao aceite integral deste Termo.
+                    </p>
+                </header>
 
-                    <section class="passo ativo" data-passo="1">
-                        <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">1 de 7 · Antes de começar</p>
-                        <h1 class="text-2xl font-black mt-2 mb-4" style="color: var(--pibiex-texto);">Bem-vindo(a) à plataforma PIBIEX 2026</h1>
-                        <p class="text-[14.5px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                            Antes de acessar o painel do curso, é preciso ler e aceitar este termo. Ele explica como a plataforma deve ser usada,
-                            o que se espera de você como aluno(a), e em que situações o professor pode acompanhar mais de perto o que acontece por aqui.
-                        </p>
-                        <p class="text-[14.5px] leading-relaxed mt-3" style="color: var(--pibiex-texto-suave);">
-                            Leva menos de dois minutos. Você só verá esta tela uma vez — a não ser que o termo mude no futuro.
-                        </p>
-                    </section>
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">1. Objeto e finalidade</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p><strong style="color: var(--pibiex-texto);">1.1.</strong> A Plataforma destina-se exclusivamente a fins educacionais, sendo de uso restrito aos alunos regularmente matriculados no curso.</p>
+                        <p><strong style="color: var(--pibiex-texto);">1.2.</strong> A Plataforma compreende, entre outras funcionalidades: acompanhamento de conteúdo e cronograma; envio de trabalhos e atividades; participação em desafios semanais; utilização das ferramentas de inteligência artificial disponibilizadas pelo curso; e comunicação entre alunos e entre alunos e o professor sobre assuntos relacionados ao curso.</p>
+                        <p><strong style="color: var(--pibiex-texto);">1.3.</strong> O acesso é pessoal e intransferível. O aluno é responsável por manter sua senha em sigilo e não deve compartilhá-la com terceiros.</p>
+                    </div>
+                </section>
 
-                    <section class="passo" data-passo="2">
-                        <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">2 de 7 · Para que serve a plataforma</p>
-                        <h2 class="text-xl font-black mt-2 mb-4" style="color: var(--pibiex-texto);">Finalidade da plataforma</h2>
-                        <ul class="space-y-3 text-[14.5px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>A plataforma PIBIEX 2026 é uma ferramenta <strong style="color: var(--pibiex-texto);">educacional</strong>, de uso exclusivo dos alunos matriculados no curso de extensão, sob responsabilidade da instituição de ensino e do professor coordenador.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Ela deve ser usada para acompanhar conteúdo e cronograma, enviar trabalhos e atividades, participar dos desafios semanais, usar as ferramentas de IA do curso e se comunicar sobre assuntos relacionados ao curso.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>O acesso é pessoal e intransferível: sua conta e senha não devem ser compartilhadas com outras pessoas.</span></li>
-                        </ul>
-                    </section>
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">2. Conduta do usuário</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p><strong style="color: var(--pibiex-texto);">2.1.</strong> O aluno compromete-se a tratar colegas e o professor com respeito em todas as áreas da Plataforma.</p>
+                        <p><strong style="color: var(--pibiex-texto);">2.2.</strong> É vedado o uso de linguagem ofensiva, discriminatória, de assédio, ou que constranja qualquer pessoa.</p>
+                        <p><strong style="color: var(--pibiex-texto);">2.3.</strong> É vedado o compartilhamento de dados pessoais de terceiros — fotografias, números de telefone, endereços, entre outros — sem a devida autorização.</p>
+                        <p><strong style="color: var(--pibiex-texto);">2.4.</strong> A Plataforma tem finalidade estritamente educacional e não deve ser utilizada como espaço de convívio pessoal ou de relacionamento fora do contexto do curso.</p>
+                        <p><strong style="color: var(--pibiex-texto);">2.5.</strong> O descumprimento destas condutas poderá resultar em restrição ou suspensão do acesso, a critério do professor.</p>
+                    </div>
+                </section>
 
-                    <section class="passo" data-passo="3">
-                        <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">3 de 7 · Como usar</p>
-                        <h2 class="text-xl font-black mt-2 mb-4" style="color: var(--pibiex-texto);">Conduta esperada</h2>
-                        <ul class="space-y-3 text-[14.5px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Trate colegas e o professor com respeito, em qualquer área da plataforma.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Não use linguagem ofensiva, discriminatória, de assédio ou que constranja outra pessoa.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Não compartilhe dados pessoais de terceiros (fotos, números de telefone, endereços) sem autorização.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>A plataforma existe para apoiar o aprendizado — não é uma rede social pessoal. Assuntos particulares, de namoro ou de convívio fora do curso não são a finalidade dela.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>O uso indevido pode levar à restrição ou suspensão do seu acesso, a critério do professor.</span></li>
-                        </ul>
-                    </section>
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">3. Comunicação entre usuários</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p><strong style="color: var(--pibiex-texto);">3.1.</strong> A Plataforma disponibiliza canais de comunicação — chat da turma e mensagens privadas entre alunos, ou entre aluno e professor — destinados a facilitar a comunicação sobre o curso.</p>
+                        <p><strong style="color: var(--pibiex-texto);">3.2.</strong> Considerando que grande parte dos alunos é menor de idade, e que a instituição de ensino e o professor coordenador possuem responsabilidade legal por eles durante o uso da Plataforma, fica estabelecido que o professor poderá acessar e revisar o conteúdo das conversas, incluindo as privadas, sempre que houver motivo razoável para isso.</p>
+                        <p><strong style="color: var(--pibiex-texto);">3.3.</strong> Tal revisão não é realizada de forma rotineira, restringindo-se a situações excepcionais, tais como: suspeita de uso indevido; comportamento de risco; conflitos entre alunos; necessidade de contato com os responsáveis legais; ou exigência de autoridade competente.</p>
+                        <p><strong style="color: var(--pibiex-texto);">3.4.</strong> Ao aceitar este Termo, o aluno declara estar ciente e de acordo com a possibilidade de revisão prevista nesta cláusula.</p>
+                    </div>
+                </section>
 
-                    <section class="passo" data-passo="4">
-                        <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">4 de 7 · Importante</p>
-                        <h2 class="text-xl font-black mt-2 mb-4" style="color: var(--pibiex-texto);">Chat da turma e mensagens privadas</h2>
-                        <p class="text-[14.5px] leading-relaxed mb-3" style="color: var(--pibiex-texto-suave);">
-                            O chat — tanto o da turma quanto as conversas privadas entre alunos, ou entre aluno e professor — existe para facilitar a comunicação sobre o curso.
-                        </p>
-                        <div class="rounded-xl p-4" style="background: #FFFBEB; border: 1px solid #FDE68A;">
-                            <p class="text-[13.5px] leading-relaxed font-semibold" style="color: #92400E;">
-                                Como a maioria dos alunos é menor de idade, e o professor/instituição tem responsabilidade legal por eles durante o uso da plataforma, o professor pode acessar e revisar conversas — incluindo as privadas — sempre que houver motivo razoável para isso.
-                            </p>
-                        </div>
-                        <p class="text-[14.5px] leading-relaxed mt-3" style="color: var(--pibiex-texto-suave);">
-                            Isso não é feito por curiosidade nem de forma rotineira. Acontece apenas em situações excepcionais — por exemplo: suspeita de uso indevido, comportamento de risco, conflitos entre alunos, necessidade de contatar responsáveis, ou exigência de autoridade competente. O objetivo é sempre zelar pela segurança e pelo bem-estar dos alunos.
-                        </p>
-                        <p class="text-[14.5px] leading-relaxed mt-3" style="color: var(--pibiex-texto-suave);">
-                            Ao aceitar este termo, você concorda com essa possibilidade de revisão.
-                        </p>
-                    </section>
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">4. Conteúdo publicado</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p><strong style="color: var(--pibiex-texto);">4.1.</strong> Trabalhos, imagens, projetos, prompts e comentários publicados na Galeria ou em qualquer outra área da Plataforma devem ser de autoria do aluno, ou este deve possuir autorização para publicá-los, além de serem compatíveis com um ambiente educacional.</p>
+                        <p><strong style="color: var(--pibiex-texto);">4.2.</strong> É vedada a publicação de fotografias, textos ou trabalhos de terceiros sem o devido consentimento.</p>
+                        <p><strong style="color: var(--pibiex-texto);">4.3.</strong> Qualquer conteúdo inadequado, ofensivo ou que viole direitos de terceiros poderá ser removido pelo professor a qualquer momento, independentemente de aviso prévio.</p>
+                    </div>
+                </section>
 
-                    <section class="passo" data-passo="5">
-                        <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">5 de 7 · Conteúdo publicado</p>
-                        <h2 class="text-xl font-black mt-2 mb-4" style="color: var(--pibiex-texto);">Galeria, trabalhos e outros conteúdos</h2>
-                        <ul class="space-y-3 text-[14.5px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Trabalhos, imagens, projetos, prompts e comentários publicados na Galeria (ou em qualquer outra área da plataforma) devem ser de sua autoria — ou você deve ter autorização para publicá-los — e adequados a um ambiente educacional.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Não publique fotos, textos ou trabalhos de terceiros sem consentimento.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Qualquer conteúdo inadequado, ofensivo ou que viole direitos de outra pessoa pode ser removido pelo professor a qualquer momento, sem aviso prévio.</span></li>
-                        </ul>
-                    </section>
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">5. Proteção de dados pessoais</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p><strong style="color: var(--pibiex-texto);">5.1.</strong> O aluno é responsável pelo uso realizado por meio de sua conta.</p>
+                        <p><strong style="color: var(--pibiex-texto);">5.2.</strong> Os dados cadastrados — nome, data de nascimento e e-mail — são utilizados exclusivamente para o funcionamento do curso e para a recuperação de acesso, não sendo compartilhados com terceiros externos à instituição.</p>
+                        <p><strong style="color: var(--pibiex-texto);">5.3.</strong> Pais e responsáveis legais poderão, a qualquer momento, solicitar ao professor informações sobre o uso da Plataforma por aluno menor de idade.</p>
+                    </div>
+                </section>
 
-                    <section class="passo" data-passo="6">
-                        <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">6 de 7 · Dados e privacidade</p>
-                        <h2 class="text-xl font-black mt-2 mb-4" style="color: var(--pibiex-texto);">Responsabilidade e proteção de dados</h2>
-                        <ul class="space-y-3 text-[14.5px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Você é responsável pelo uso feito com a sua conta. Guarde sua senha e não a compartilhe.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Os dados cadastrados (nome, data de nascimento, e-mail) são usados apenas para o funcionamento do curso e para a recuperação de acesso — não são compartilhados com terceiros fora da instituição.</span></li>
-                            <li class="flex gap-2.5"><span style="color: var(--pibiex-dourado-profundo);">●</span><span>Pais e responsáveis podem, a qualquer momento, solicitar ao professor informações sobre o uso da plataforma por um aluno menor de idade.</span></li>
-                        </ul>
-                    </section>
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">6. Disposições finais</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p><strong style="color: var(--pibiex-texto);">6.1.</strong> Dúvidas sobre este Termo poderão ser esclarecidas diretamente com o professor responsável pela turma.</p>
+                        <p><strong style="color: var(--pibiex-texto);">6.2.</strong> Este Termo poderá ser atualizado. Em caso de alteração relevante de seu conteúdo, será solicitado novo aceite.</p>
+                    </div>
+                </section>
 
-                    <section class="passo" data-passo="7">
-                        <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">7 de 7 · Para concluir</p>
-                        <h2 class="text-xl font-black mt-2 mb-4" style="color: var(--pibiex-texto);">Aceite do termo</h2>
-                        <p class="text-[14.5px] leading-relaxed mb-5" style="color: var(--pibiex-texto-suave);">
-                            Para acessar a plataforma, confirme que leu e concorda com os pontos apresentados: a finalidade educacional da plataforma, a conduta esperada, a possibilidade de revisão de conversas em situações excepcionais, as regras sobre conteúdo publicado e o uso dos seus dados.
-                        </p>
-                        <label class="flex items-start gap-3 rounded-xl p-4 cursor-pointer transition" style="border: 1.5px solid var(--pibiex-borda);" id="rotulo-check">
-                            <input type="checkbox" id="check-aceite" class="mt-0.5 w-4 h-4 shrink-0">
-                            <span class="text-[13.5px] font-semibold" style="color: var(--pibiex-texto);">Li e compreendi todos os itens acima, e aceito as condições de uso da plataforma PIBIEX 2026.</span>
-                        </label>
-                        <p id="msg-erro-aceite" class="hidden text-[12.5px] font-bold text-red-600 mt-3"></p>
-                    </section>
+                <section class="clausula" id="secao-aceite">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">7. Aceite</h2>
+                    <p class="text-[14px] leading-relaxed mb-5" style="color: var(--pibiex-texto-suave);">
+                        Declaro que li e compreendi integralmente os termos apresentados neste documento e que aceito as condições de uso da Plataforma PIBIEX 2026.
+                    </p>
+                    <label class="flex items-start gap-3 rounded-xl p-4 cursor-pointer transition" style="border: 1.5px solid var(--pibiex-borda);" id="rotulo-check">
+                        <input type="checkbox" id="check-aceite" disabled class="mt-0.5 w-4 h-4 shrink-0">
+                        <span class="text-[13.5px] font-semibold" style="color: var(--pibiex-texto);">Li e compreendi todos os itens acima, e aceito as condições de uso da plataforma PIBIEX 2026.</span>
+                    </label>
+                    <p id="aviso-rolagem" class="text-[12px] font-semibold mt-2 ml-1" style="color: var(--pibiex-texto-suave);">Role o documento até o final para habilitar a caixa de aceite.</p>
+                    <p id="msg-erro-aceite" class="hidden text-[12.5px] font-bold text-red-600 mt-3"></p>
 
-                </div>
-
-                <div class="px-6 md:px-9 py-5 flex items-center justify-between gap-3 border-t mt-2" style="border-color: var(--pibiex-borda);">
-                    <button type="button" id="btn-voltar" class="text-[13.5px] font-bold px-4 py-2.5 rounded-full transition" style="color: var(--pibiex-texto-suave);">
-                        Voltar
-                    </button>
-                    <div class="flex items-center gap-2">
-                        <button type="button" id="btn-nao-aceito" class="hidden text-[13.5px] font-bold px-4 py-2.5 rounded-full transition" style="color: #B91C1C;">
+                    <div class="flex items-center justify-end gap-2 mt-6 pt-6" style="border-top: 1px solid var(--pibiex-borda);">
+                        <button type="button" id="btn-nao-aceito" class="text-[13.5px] font-bold px-4 py-2.5 rounded-full transition" style="color: #B91C1C;">
                             Não aceito
                         </button>
-                        <button type="button" id="btn-proximo" class="text-white text-[13.5px] font-bold px-6 py-2.5 rounded-full transition" style="background: #1E3A8A;">
-                            Próximo
+                        <button type="button" id="btn-aceitar" class="text-white text-[13.5px] font-bold px-6 py-2.5 rounded-full transition" style="background: #1E3A8A;">
+                            Aceitar e continuar
                         </button>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            <p class="text-center text-white/50 text-[11.5px] mt-5 px-4">
+            </article>
+
+            <p class="text-center text-white/50 text-[11.5px] mt-5 px-4 pb-6">
                 Dúvidas sobre este termo podem ser tiradas diretamente com o professor responsável pela turma.
             </p>
         </div>
@@ -177,56 +155,26 @@
             window.location.href = 'index.html';
         }
 
-        const TOTAL_PASSOS = 7;
-        let passoAtual = 1;
+        function alturaRolavel() {
+            return document.documentElement.scrollHeight - window.innerHeight;
+        }
 
-        function montarPontos() {
-            const container = document.getElementById('pontos-progresso');
-            container.innerHTML = '';
-            for (let i = 1; i <= TOTAL_PASSOS; i++) {
-                const ponto = document.createElement('span');
-                ponto.className = 'ponto';
-                ponto.dataset.ponto = i;
-                container.appendChild(ponto);
+        function atualizarBarraProgresso() {
+            const total = alturaRolavel();
+            const percentual = total > 0 ? Math.min(100, (window.scrollY / total) * 100) : 100;
+            document.getElementById('barra-progresso').style.width = percentual + '%';
+
+            const check = document.getElementById('check-aceite');
+            if (!check.disabled) return;
+            const chegouAoFim = total <= 0 || window.scrollY >= total - 30;
+            if (chegouAoFim) {
+                check.disabled = false;
+                document.getElementById('aviso-rolagem').classList.add('hidden');
             }
         }
 
-        function atualizarPontos() {
-            document.querySelectorAll('[data-ponto]').forEach((ponto) => {
-                const n = Number(ponto.dataset.ponto);
-                ponto.classList.remove('ativo', 'feito');
-                if (n === passoAtual) ponto.classList.add('ativo');
-                else if (n < passoAtual) ponto.classList.add('feito');
-            });
-        }
-
-        function irParaPasso(n) {
-            passoAtual = n;
-            document.querySelectorAll('.passo').forEach((secao) => {
-                secao.classList.toggle('ativo', Number(secao.dataset.passo) === n);
-            });
-            atualizarPontos();
-
-            document.getElementById('btn-voltar').classList.toggle('hidden', n === 1);
-
-            const ultimo = n === TOTAL_PASSOS;
-            document.getElementById('btn-nao-aceito').classList.toggle('hidden', !ultimo);
-            document.getElementById('btn-proximo').innerText = ultimo ? 'Aceitar e continuar' : 'Próximo';
-
-            document.querySelector('main').scrollTop = 0;
-        }
-
-        document.getElementById('btn-voltar').addEventListener('click', () => {
-            if (passoAtual > 1) irParaPasso(passoAtual - 1);
-        });
-
-        document.getElementById('btn-proximo').addEventListener('click', () => {
-            if (passoAtual < TOTAL_PASSOS) {
-                irParaPasso(passoAtual + 1);
-                return;
-            }
-            confirmarAceite();
-        });
+        window.addEventListener('scroll', atualizarBarraProgresso, { passive: true });
+        window.addEventListener('resize', atualizarBarraProgresso);
 
         document.getElementById('btn-nao-aceito').addEventListener('click', async () => {
             if (!confirm('Sem aceitar o termo, não é possível usar a plataforma. Deseja sair e voltar para a tela de acesso?')) return;
@@ -235,9 +183,19 @@
             window.location.href = 'index.html?sessao=termos-recusados';
         });
 
+        document.getElementById('btn-aceitar').addEventListener('click', confirmarAceite);
+
         async function confirmarAceite() {
             const check = document.getElementById('check-aceite');
             const msgErro = document.getElementById('msg-erro-aceite');
+            msgErro.classList.add('hidden');
+
+            if (check.disabled) {
+                msgErro.innerText = 'Role o documento até o final antes de aceitar.';
+                msgErro.classList.remove('hidden');
+                document.getElementById('secao-aceite').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                return;
+            }
 
             if (!check.checked) {
                 msgErro.innerText = 'Marque a caixa acima para confirmar que leu e concorda com o termo.';
@@ -246,7 +204,7 @@
                 return;
             }
 
-            const btn = document.getElementById('btn-proximo');
+            const btn = document.getElementById('btn-aceitar');
             const textoOriginal = btn.innerText;
             btn.innerText = 'Salvando...';
             btn.disabled = true;
@@ -270,8 +228,7 @@
             window.location.href = 'aluno/inicio.html';
         }
 
-        montarPontos();
-        irParaPasso(1);
+        atualizarBarraProgresso();
     </script>
 </body>
 </html>
