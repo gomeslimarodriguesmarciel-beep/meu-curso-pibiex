@@ -417,3 +417,4 @@ async function iniciarShellAluno(paginaAtivaId) {
 
     return sessao.dados;
 }
+
