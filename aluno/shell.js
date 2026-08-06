@@ -171,7 +171,7 @@ function montarMenuLateral(paginaAtivaId) {
     container.outerHTML = `
         <div id="sidebar-fundo" onclick="window.fecharMenuAluno()"
              class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
-        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-[17rem] shrink-0 py-6 z-40 flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-200 relative overflow-hidden"
+        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-[17rem] shrink-0 py-6 z-40 flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-hidden"
                style="background: var(--pibiex-gradiente);">
             <div class="pibiex-textura-grade"></div>
             <div class="px-5 pb-6 mb-2 flex items-center justify-between gap-3 border-b border-white/10 relative">
