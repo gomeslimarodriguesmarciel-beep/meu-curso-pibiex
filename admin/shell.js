@@ -112,7 +112,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
     container.outerHTML = `
         <div id="sidebar-fundo" onclick="window.fecharMenuEquipe()"
              class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
-        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-72 shrink-0 p-5 flex flex-col gap-1 z-40 -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-y-auto relative overflow-x-hidden"
+        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-72 shrink-0 p-5 flex flex-col gap-1 z-40 -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-y-auto overflow-x-hidden"
                style="background: var(--pibiex-gradiente);">
             <div class="pibiex-textura-grade"></div>
             <div class="px-2 pb-5 mb-2 border-b border-white/10 flex items-center justify-between relative">
