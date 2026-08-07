@@ -30,6 +30,15 @@
 
     <script src="shell.js"></script>
     <script>
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+        function urlSegura(url) {
+            return /^https?:\/\//i.test(url ?? '') ? url : '#';
+        }
+
         let TOKEN_ALUNO = null;
 
         const ROTULO_DIFICULDADE = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' };
@@ -50,24 +59,24 @@
                 return `
                     <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${lab.titulo}</p>
-                            ${lab.dificuldade ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: ${corDif};">${ROTULO_DIFICULDADE[lab.dificuldade] || lab.dificuldade}</span>` : ''}
+                            <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(lab.titulo)}</p>
+                            ${lab.dificuldade ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: ${corDif};">${escaparHtml(ROTULO_DIFICULDADE[lab.dificuldade] || lab.dificuldade)}</span>` : ''}
                         </div>
-                        <p class="text-sm mb-2" style="color: var(--pibiex-texto-suave);">${lab.problema}</p>
-                        ${lab.instrucoes ? `<p class="text-xs mb-4 italic" style="color: var(--pibiex-texto-suave);">${lab.instrucoes}</p>` : ''}
+                        <p class="text-sm mb-2" style="color: var(--pibiex-texto-suave);">${escaparHtml(lab.problema)}</p>
+                        ${lab.instrucoes ? `<p class="text-xs mb-4 italic" style="color: var(--pibiex-texto-suave);">${escaparHtml(lab.instrucoes)}</p>` : ''}
 
                         ${envio ? `
                             <div class="rounded-md p-3 mb-3 text-xs" style="background: var(--pibiex-papel); color: var(--pibiex-texto-suave);">
                                 Você já enviou uma resposta para este laboratório.
-                                ${envio.arquivo_url ? `<a href="${envio.arquivo_url}" target="_blank" rel="noopener" class="underline font-semibold ml-1" style="color: var(--pibiex-tinta);">abrir link</a>` : ''}
+                                ${envio.arquivo_url ? `<a href="${escaparHtml(urlSegura(envio.arquivo_url))}" target="_blank" rel="noopener" class="underline font-semibold ml-1" style="color: var(--pibiex-tinta);">abrir link</a>` : ''}
                             </div>
                         ` : ''}
 
                         <div class="space-y-2 pt-3 border-t" style="border-color: var(--pibiex-borda);">
                             <textarea id="texto-${lab.id}" rows="3" placeholder="Descreva sua solução (opcional se for enviar só um link)..."
-                                      class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">${envio ? (envio.resposta_texto || '') : ''}</textarea>
+                                      class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">${escaparHtml(envio ? (envio.resposta_texto || '') : '')}</textarea>
                             <div class="flex flex-wrap items-end gap-2">
-                                <input type="url" id="link-${lab.id}" placeholder="Link (opcional)" value="${envio ? (envio.arquivo_url || '') : ''}"
+                                <input type="url" id="link-${lab.id}" placeholder="Link (opcional)" value="${escaparHtml(envio ? (envio.arquivo_url || '') : '')}"
                                        class="flex-1 min-w-[200px] border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                                 <button onclick="enviarResposta('${lab.id}')" id="btn-${lab.id}"
                                         class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
