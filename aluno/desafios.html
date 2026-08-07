@@ -64,6 +64,9 @@
             div.innerText = texto ?? '';
             return div.innerHTML;
         }
+        function urlSegura(url) {
+            return /^https?:\/\//i.test(url ?? '') ? url : '#';
+        }
 
         function formatarData(dataIso) {
             if (!dataIso) return '';
@@ -208,7 +211,7 @@
 
                         ${envio ? `
                             <p class="text-xs mb-2" style="color: var(--pibiex-texto-suave);">
-                                Você enviou: <a href="${envio.linkOuArquivo}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir link</a>
+                                Você enviou: <a href="${escaparHtml(urlSegura(envio.linkOuArquivo))}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir link</a>
                             </p>
                         ` : ''}
 
@@ -220,8 +223,12 @@
 
                         ${(envio && envio.avaliado) || encerrado ? '' : `
                             <div class="flex flex-wrap items-end gap-2 pt-3 border-t" style="border-color: var(--pibiex-borda);">
-                                <div class="flex-1 min-w-[200px]">
-                                    <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">${envio ? 'Substituir link (a correção anterior é refeita)' : 'Link da sua resposta'}</label>
+                                <div class="flex-1 min-w-[160px]">
+                                    <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Enviar arquivo</label>
+                                    <input type="file" id="arquivo-${d.id}" class="text-xs w-full">
+                                </div>
+                                <div class="flex-1 min-w-[160px]">
+                                    <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">${envio ? 'Ou substituir link' : 'Ou cole um link'}</label>
                                     <input type="url" id="link-${d.id}" placeholder="https://..." value="${envio ? escaparHtml(envio.linkOuArquivo) : ''}"
                                            class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                                 </div>
@@ -238,13 +245,17 @@
         }
 
         window.enviarResposta = async (desafioId) => {
-            const input = document.getElementById(`link-${desafioId}`);
+            const inputArquivo = document.getElementById(`arquivo-${desafioId}`);
+            const inputLink = document.getElementById(`link-${desafioId}`);
             const btn = document.getElementById(`btn-${desafioId}`);
             const msg = document.getElementById(`msg-${desafioId}`);
+            msg.classList.add('hidden');
 
-            const link = input.value.trim();
-            if (!link) {
-                msg.innerText = 'Cole um link antes de enviar.';
+            const arquivo = inputArquivo.files[0];
+            const link = inputLink.value.trim();
+
+            if (!arquivo && !link) {
+                msg.innerText = 'Envie um arquivo ou cole um link antes de enviar.';
                 msg.className = 'text-xs mt-2 text-red-600';
                 msg.classList.remove('hidden');
                 return;
@@ -253,20 +264,38 @@
             btn.innerText = 'Enviando...';
             btn.disabled = true;
 
-            const { data, error } = await window.supabaseClient.functions.invoke('enviar-desafio', {
-                body: { token: TOKEN_ALUNO, acao: 'enviar', desafioId, linkOuArquivo: link },
-            });
+            try {
+                let linkOuArquivo = link;
 
-            if (error || !data || data.erro) {
-                msg.innerText = (data && data.erro) || 'Erro ao enviar. Tente novamente.';
+                // Arquivo tem prioridade sobre o link, se os dois vierem preenchidos.
+                if (arquivo) {
+                    const { data: urlDados, error: erroUrl } = await window.supabaseClient.functions.invoke('enviar-desafio', {
+                        body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', desafioId, nomeArquivo: arquivo.name },
+                    });
+                    if (erroUrl || !urlDados || urlDados.erro) throw new Error((urlDados && urlDados.erro) || 'Erro ao preparar envio do arquivo.');
+
+                    const { error: erroUpload } = await window.supabaseClient
+                        .storage.from('arquivos')
+                        .uploadToSignedUrl(urlDados.caminho, urlDados.token, arquivo);
+                    if (erroUpload) throw new Error('Erro ao enviar o arquivo.');
+
+                    const { data: urlPublica } = window.supabaseClient.storage.from('arquivos').getPublicUrl(urlDados.caminho);
+                    linkOuArquivo = urlPublica.publicUrl;
+                }
+
+                const { data, error } = await window.supabaseClient.functions.invoke('enviar-desafio', {
+                    body: { token: TOKEN_ALUNO, acao: 'enviar', desafioId, linkOuArquivo },
+                });
+                if (error || !data || data.erro) throw new Error((data && data.erro) || 'Erro ao enviar. Tente novamente.');
+
+                await carregarTudo();
+            } catch (erro) {
+                msg.innerText = erro.message || 'Erro ao enviar. Tente novamente.';
                 msg.className = 'text-xs mt-2 text-red-600';
                 msg.classList.remove('hidden');
                 btn.innerText = 'Enviar';
                 btn.disabled = false;
-                return;
             }
-
-            await carregarTudo();
         };
 
         // ============================================================
