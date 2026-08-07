@@ -70,7 +70,7 @@
         }
 
         function opcoesModulo(selecionado) {
-            return MODULOS.map(m => `<option value="${m.id}" ${m.id === selecionado ? 'selected' : ''}>${m.titulo}</option>`).join('');
+            return MODULOS.map(m => `<option value="${m.id}" ${m.id === selecionado ? 'selected' : ''}>${escaparHtml(m.titulo)}</option>`).join('');
         }
 
         async function chamarGerenciarAtividades(acao, dados) {
@@ -115,8 +115,8 @@
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
                             <select id="edit-modulo-${atv.id}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${opcoesModulo(atv.modulo_id)}</select>
-                            <input id="edit-titulo-${atv.id}" value="${atv.titulo}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <textarea id="edit-descricao-${atv.id}" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${atv.descricao || ''}</textarea>
+                            <input id="edit-titulo-${atv.id}" value="${escaparHtml(atv.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-descricao-${atv.id}" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(atv.descricao || '')}</textarea>
                             <input id="edit-prazo-${atv.id}" type="datetime-local" value="${paraDatetimeLocal(atv.data_entrega)}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
                             <div class="flex gap-2">
                                 <button onclick="salvarAtividade('${atv.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
@@ -131,9 +131,9 @@
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
-                                <p class="font-bold text-gray-800 text-sm">${atv.titulo}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">${atv.modulos ? atv.modulos.titulo : ''}</p>
-                                ${atv.descricao ? `<p class="text-sm text-gray-600 mt-2">${atv.descricao}</p>` : ''}
+                                <p class="font-bold text-gray-800 text-sm">${escaparHtml(atv.titulo)}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">${atv.modulos ? escaparHtml(atv.modulos.titulo) : ''}</p>
+                                ${atv.descricao ? `<p class="text-sm text-gray-600 mt-2">${escaparHtml(atv.descricao)}</p>` : ''}
                             </div>
                             <div class="flex flex-col items-end gap-2 shrink-0">
                                 ${prazo ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 whitespace-nowrap">Prazo: ${prazo}</span>` : ''}
