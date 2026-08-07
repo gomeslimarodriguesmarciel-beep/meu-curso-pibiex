@@ -130,7 +130,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
                             <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
-                            <a href="${escaparHtml(e.link_ou_arquivo)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline">Abrir resposta →</a>
+                            <a href="${escaparHtml(urlSegura(e.link_ou_arquivo))}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline">Abrir resposta →</a>
                             ${e.feedback ? `<p class="text-xs text-gray-600 mt-1 bg-gray-50 rounded px-2 py-1">${escaparHtml(e.feedback)}</p>` : ''}
                         </div>
                         <div class="text-right shrink-0">
@@ -147,7 +147,7 @@
                         <div class="min-w-0">
                             <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
                             <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
-                            <a href="${escaparHtml(e.link_ou_arquivo)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline">Abrir resposta →</a>
+                            <a href="${escaparHtml(urlSegura(e.link_ou_arquivo))}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline">Abrir resposta →</a>
                         </div>
                         <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 shrink-0">Pendente</span>
                     </div>
