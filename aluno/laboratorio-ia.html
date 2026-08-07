@@ -76,8 +76,9 @@
                             <textarea id="texto-${lab.id}" rows="3" placeholder="Descreva sua solução (opcional se for enviar só um link)..."
                                       class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">${escaparHtml(envio ? (envio.resposta_texto || '') : '')}</textarea>
                             <div class="flex flex-wrap items-end gap-2">
-                                <input type="url" id="link-${lab.id}" placeholder="Link (opcional)" value="${escaparHtml(envio ? (envio.arquivo_url || '') : '')}"
-                                       class="flex-1 min-w-[200px] border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                                <input type="file" id="arquivo-${lab.id}" class="flex-1 min-w-[160px] text-xs">
+                                <input type="url" id="link-${lab.id}" placeholder="Ou cole um link (opcional)" value="${escaparHtml(envio ? (envio.arquivo_url || '') : '')}"
+                                       class="flex-1 min-w-[160px] border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                                 <button onclick="enviarResposta('${lab.id}')" id="btn-${lab.id}"
                                         class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
                                     Enviar
@@ -92,15 +93,18 @@
 
         window.enviarResposta = async (laboratorioId) => {
             const textoEl = document.getElementById(`texto-${laboratorioId}`);
+            const arquivoEl = document.getElementById(`arquivo-${laboratorioId}`);
             const linkEl = document.getElementById(`link-${laboratorioId}`);
             const btn = document.getElementById(`btn-${laboratorioId}`);
             const msg = document.getElementById(`msg-${laboratorioId}`);
+            msg.classList.add('hidden');
 
             const respostaTexto = textoEl.value.trim();
-            const arquivoUrl = linkEl.value.trim();
+            const arquivo = arquivoEl.files[0];
+            const link = linkEl.value.trim();
 
-            if (!respostaTexto && !arquivoUrl) {
-                msg.innerText = 'Escreva uma resposta ou cole um link.';
+            if (!respostaTexto && !arquivo && !link) {
+                msg.innerText = 'Escreva uma resposta, envie um arquivo ou cole um link.';
                 msg.className = 'text-xs text-red-600';
                 msg.classList.remove('hidden');
                 return;
@@ -109,20 +113,37 @@
             btn.innerText = 'Enviando...';
             btn.disabled = true;
 
-            const { data, error } = await window.supabaseClient.functions.invoke('enviar-laboratorio', {
-                body: { token: TOKEN_ALUNO, acao: 'enviar', laboratorioId, respostaTexto, arquivoUrl },
-            });
+            try {
+                let arquivoUrl = link;
 
-            if (error || !data || data.erro) {
-                msg.innerText = (data && data.erro) || 'Erro ao enviar. Tente novamente.';
+                if (arquivo) {
+                    const { data: urlDados, error: erroUrl } = await window.supabaseClient.functions.invoke('enviar-laboratorio', {
+                        body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', laboratorioId, nomeArquivo: arquivo.name },
+                    });
+                    if (erroUrl || !urlDados || urlDados.erro) throw new Error((urlDados && urlDados.erro) || 'Erro ao preparar envio do arquivo.');
+
+                    const { error: erroUpload } = await window.supabaseClient
+                        .storage.from('arquivos')
+                        .uploadToSignedUrl(urlDados.caminho, urlDados.token, arquivo);
+                    if (erroUpload) throw new Error('Erro ao enviar o arquivo.');
+
+                    const { data: urlPublica } = window.supabaseClient.storage.from('arquivos').getPublicUrl(urlDados.caminho);
+                    arquivoUrl = urlPublica.publicUrl;
+                }
+
+                const { data, error } = await window.supabaseClient.functions.invoke('enviar-laboratorio', {
+                    body: { token: TOKEN_ALUNO, acao: 'enviar', laboratorioId, respostaTexto, arquivoUrl },
+                });
+                if (error || !data || data.erro) throw new Error((data && data.erro) || 'Erro ao enviar. Tente novamente.');
+
+                await carregarTudo();
+            } catch (erro) {
+                msg.innerText = erro.message || 'Erro ao enviar. Tente novamente.';
                 msg.className = 'text-xs text-red-600';
                 msg.classList.remove('hidden');
                 btn.innerText = 'Enviar';
                 btn.disabled = false;
-                return;
             }
-
-            await carregarTudo();
         };
 
         async function carregarTudo() {
