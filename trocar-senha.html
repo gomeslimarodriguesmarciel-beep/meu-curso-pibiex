@@ -72,7 +72,7 @@
         // Sem sessão de aluno? Volta pro login.
         const tokenAluno = localStorage.getItem('pibiex_aluno_token');
         if (!tokenAluno) {
-            window.location.href = 'index.html';
+            window.location.href = 'login.html';
         }
 
         window.alternarSenha = (idInput, botao) => {
