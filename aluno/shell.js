@@ -116,7 +116,7 @@ function protegerPaginaAluno() {
     const dadosBrutos = localStorage.getItem('pibiex_aluno_dados');
 
     if (!token || !dadosBrutos) {
-        window.location.href = '../index.html';
+        window.location.href = '../login.html';
         return null;
     }
 
@@ -241,7 +241,7 @@ async function sairAluno() {
     }
     localStorage.removeItem('pibiex_aluno_token');
     localStorage.removeItem('pibiex_aluno_dados');
-    window.location.href = '../index.html';
+    window.location.href = '../login.html';
 }
 
 // ============================================================
@@ -396,7 +396,7 @@ async function conferirSessaoNoServidor(token) {
 function encerrarSessaoLocal(motivo) {
     localStorage.removeItem('pibiex_aluno_token');
     localStorage.removeItem('pibiex_aluno_dados');
-    window.location.href = '../index.html?sessao=' + motivo;
+    window.location.href = '../login.html?sessao=' + motivo;
 }
 
 // ============================================================
