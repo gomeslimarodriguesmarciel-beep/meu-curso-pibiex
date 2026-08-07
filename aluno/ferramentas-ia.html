@@ -30,6 +30,15 @@
 
     <script src="shell.js"></script>
     <script>
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+        function urlSegura(url) {
+            return /^https?:\/\//i.test(url ?? '') ? url : '#';
+        }
+
         function agruparPorCategoria(ferramentas) {
             const grupos = {};
             ferramentas.forEach(f => {
@@ -51,13 +60,13 @@
 
             container.innerHTML = Object.keys(grupos).map((categoria) => `
                 <section>
-                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] mb-3" style="color: var(--pibiex-texto-suave);">${categoria}</p>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] mb-3" style="color: var(--pibiex-texto-suave);">${escaparHtml(categoria)}</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         ${grupos[categoria].map(f => `
-                            <a href="${f.url || '#'}" target="_blank" rel="noopener"
+                            <a href="${escaparHtml(urlSegura(f.url || '#'))}" target="_blank" rel="noopener"
                                class="bg-white rounded-lg p-4 border hover:shadow-sm transition block" style="border-color: var(--pibiex-borda);">
-                                <p class="font-semibold text-[14.5px] mb-1" style="color: var(--pibiex-texto);">${f.nome}</p>
-                                <p class="text-xs" style="color: var(--pibiex-texto-suave);">${f.descricao || ''}</p>
+                                <p class="font-semibold text-[14.5px] mb-1" style="color: var(--pibiex-texto);">${escaparHtml(f.nome)}</p>
+                                <p class="text-xs" style="color: var(--pibiex-texto-suave);">${escaparHtml(f.descricao || '')}</p>
                             </a>
                         `).join('')}
                     </div>
