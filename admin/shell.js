@@ -74,6 +74,7 @@ const ITENS_MENU_EQUIPE = [
     { id: 'laboratorio',  label: 'Laboratório de IA', href: 'laboratorio.html',  icone: '🧪' },
     { id: 'faq',          label: 'FAQ',               href: 'faq.html',          icone: '❓' },
     { id: 'recursos',     label: 'Recursos Extras',   href: 'recursos.html',     icone: '🔗' },
+    { id: 'equipe',       label: 'Equipe',            href: 'equipe.html',       icone: '👥', requerTotal: true },
 ];
 
 // ============================================================
@@ -98,7 +99,15 @@ function montarMenuLateralEquipe(paginaAtivaId) {
     const container = document.getElementById('sidebar-container');
     if (!container) return;
 
-    const itensHtml = ITENS_MENU_EQUIPE.map((item) => {
+    // "Equipe" (gerenciar outras contas) só aparece pra quem já tem acesso
+    // total — item com "requerTotal" fica escondido pra conta restrita, sem
+    // nem chegar a mostrar um botão que ia dar "sem permissão" ao clicar.
+    let nivelAcesso = 'restrito';
+    try {
+        nivelAcesso = (JSON.parse(localStorage.getItem('pibiex_equipe_dados') || '{}').nivelAcesso) || 'restrito';
+    } catch (e) { /* mantém 'restrito' se não der pra ler */ }
+
+    const itensHtml = ITENS_MENU_EQUIPE.filter((item) => !item.requerTotal || nivelAcesso === 'total').map((item) => {
         const ativo = item.id === paginaAtivaId;
         const classesBase = 'flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-md text-sm font-semibold transition border-l-2 relative';
         const classesAtivo = ativo
