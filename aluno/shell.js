@@ -15,7 +15,13 @@
 const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbGNzZ3F2dW51dGJ2cGF6Z3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1Njc5MTQsImV4cCI6MjEwMDE0MzkxNH0.T87bJPVYiYO9vyJtaB6_n9CREO6f-mNGumGK0phtaYk';
 
-window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// O token de sessão vai como header customizado em toda consulta feita por
+// este cliente — é isso que as policies de leitura das tabelas de conteúdo
+// exigem agora (antes eram públicas, qualquer um na internet lia direto pela
+// API). Setado aqui uma vez vale pra toda página que carrega este shell.
+window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { 'x-sessao-token': localStorage.getItem('pibiex_aluno_token') || '' } },
+});
 
 // ============================================================
 // 0) Identidade visual: fonte + tokens de cor injetados uma vez
@@ -417,4 +423,3 @@ async function iniciarShellAluno(paginaAtivaId) {
 
     return sessao.dados;
 }
-
