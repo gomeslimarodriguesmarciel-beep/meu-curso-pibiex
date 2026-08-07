@@ -92,7 +92,7 @@
             }
             container.innerHTML = avisos.map(a => `
                 <div class="flex items-center justify-between p-4">
-                    <p class="text-sm font-semibold text-gray-800">${a.titulo}</p>
+                    <p class="text-sm font-semibold text-gray-800">${escaparHtml(a.titulo)}</p>
                     <span class="text-xs text-gray-400 shrink-0">${formatarData(a.criado_em)}</span>
                 </div>
             `).join('');
