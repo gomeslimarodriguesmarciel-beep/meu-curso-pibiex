@@ -65,6 +65,12 @@
 
     <script src="shell.js"></script>
     <script>
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
         const ATALHOS = [
             { id: 'cronograma',     label: 'Cronograma',        href: 'cronograma.html',     tom: '#2563EB', fundo: '#EFF6FF' },
             { id: 'trabalhos',      label: 'Meus Trabalhos',    href: 'trabalhos.html',      tom: '#9333EA', fundo: '#FAF5FF' },
@@ -100,9 +106,9 @@
                 <div class="bg-white rounded-lg p-4 border" style="border-color: var(--pibiex-borda); ${a.fixado ? 'border-left: 3px solid var(--pibiex-dourado);' : ''}">
                     <div class="flex items-center gap-2 mb-1">
                         ${a.fixado ? `<span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style="color: var(--pibiex-tinta); background: var(--pibiex-papel);">Fixado</span>` : ''}
-                        <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${a.titulo}</p>
+                        <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${escaparHtml(a.titulo)}</p>
                     </div>
-                    <p class="text-sm" style="color: var(--pibiex-texto-suave);">${a.mensagem}</p>
+                    <p class="text-sm" style="color: var(--pibiex-texto-suave);">${escaparHtml(a.mensagem)}</p>
                 </div>
             `).join('');
         }
@@ -120,8 +126,8 @@
                         ${formatarData(aula.data_aula)}
                     </div>
                     <div>
-                        <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${aula.titulo}</p>
-                        <p class="text-xs" style="color: var(--pibiex-texto-suave);">${aula.modulos ? aula.modulos.titulo : ''}${aula.horario_inicio ? ' · ' + aula.horario_inicio.slice(0,5) : ''}</p>
+                        <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${escaparHtml(aula.titulo)}</p>
+                        <p class="text-xs" style="color: var(--pibiex-texto-suave);">${aula.modulos ? escaparHtml(aula.modulos.titulo) : ''}${aula.horario_inicio ? ' · ' + aula.horario_inicio.slice(0,5) : ''}</p>
                     </div>
                 </div>
             `).join('');
