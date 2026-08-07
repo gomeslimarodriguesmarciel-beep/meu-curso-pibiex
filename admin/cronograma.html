@@ -97,8 +97,8 @@
 
                 const cabecalho = editandoModulo ? `
                     <div class="p-4 space-y-2 bg-gray-50">
-                        <input id="edit-modulo-titulo-${modulo.id}" value="${modulo.titulo}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                        <input id="edit-modulo-descricao-${modulo.id}" value="${modulo.descricao || ''}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        <input id="edit-modulo-titulo-${modulo.id}" value="${escaparHtml(modulo.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                        <input id="edit-modulo-descricao-${modulo.id}" value="${escaparHtml(modulo.descricao || '')}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                         <div class="flex gap-2">
                             <input id="edit-modulo-ordem-${modulo.id}" type="number" value="${modulo.ordem}" class="w-20 border border-gray-200 rounded-lg px-3 py-2 text-sm">
                             <button onclick="salvarModulo('${modulo.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
@@ -108,8 +108,8 @@
                 ` : `
                     <div class="px-5 py-4 bg-gray-900 flex justify-between items-start">
                         <div>
-                            <p class="text-white font-black">${modulo.titulo}</p>
-                            ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${modulo.descricao}</p>` : ''}
+                            <p class="text-white font-black">${escaparHtml(modulo.titulo)}</p>
+                            ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${escaparHtml(modulo.descricao)}</p>` : ''}
                         </div>
                         <div class="flex gap-2 shrink-0">
                             <button onclick="editarModulo('${modulo.id}')" class="text-gray-300 hover:text-white text-xs">✏️</button>
@@ -124,7 +124,7 @@
                     if (editandoAula) {
                         return `
                             <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
-                                <input id="edit-aula-titulo-${aula.id}" value="${aula.titulo}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <input id="edit-aula-titulo-${aula.id}" value="${escaparHtml(aula.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                                 <div class="flex gap-2 flex-wrap">
                                     <input id="edit-aula-data-${aula.id}" type="date" value="${aula.data_aula || ''}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                                     <input id="edit-aula-inicio-${aula.id}" type="time" value="${(aula.horario_inicio || '').slice(0,5)}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
@@ -146,7 +146,7 @@
                                     ${formatarData(aula.data_aula) || 'Sem data'}
                                 </div>
                                 <div>
-                                    <p class="font-bold text-gray-800 text-sm">${aula.titulo}</p>
+                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(aula.titulo)}</p>
                                     ${aula.horario_inicio ? `<p class="text-gray-500 text-xs">${aula.horario_inicio.slice(0,5)}${aula.horario_fim ? ' às ' + aula.horario_fim.slice(0,5) : ''}</p>` : ''}
                                 </div>
                             </div>
