@@ -117,6 +117,9 @@ Ver
 <button type="submit" id="btn-admin" class="btn-desabilitado w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg mt-2">
 Verificar Acesso
 </button>
+<a onclick="window.abrirModalRecuperarEquipe()" class="block text-center text-sm text-gray-500 font-bold hover:text-red-700 cursor-pointer transition underline decoration-2 underline-offset-4 decoration-red-200 hover:decoration-red-700 mt-3">
+Esqueci minha senha
+</a>
 </form>
 </div>
 </div>
@@ -176,12 +179,95 @@ Voltar
 </button>
 </div>
 
+<!-- Etapa 2b: conta encontrada, mas sem e-mail cadastrado pelo professor -->
+<!-- ainda. Não deixamos a pessoa "cadastrar" um e-mail aqui: quem sabe nome -->
+<!-- completo + data de nascimento não é necessariamente o dono da conta. -->
+<div id="recuperar-sem-email" class="hidden text-center">
+<div class="text-4xl mb-3">✉️</div>
+<h3 class="text-lg font-bold text-gray-900 mb-2">Ainda não há e-mail cadastrado</h3>
+<p class="text-sm text-gray-500 mb-6">Por segurança, só é possível recuperar a senha de uma conta que já tem e-mail cadastrado pelo professor. Peça para ele cadastrar seu e-mail — depois disso você já consegue recuperar por aqui.</p>
+<button onclick="window.fecharModalRecuperar()" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition shadow-lg">
+Entendi
+</button>
+</div>
+
 <!-- Etapa 3: sucesso -->
 <div id="recuperar-etapa-3" class="hidden text-center">
 <div class="text-5xl mb-4">✅</div>
 <h3 class="text-xl font-bold text-gray-900 mb-2">Enviamos sua nova senha!</h3>
 <p class="text-sm text-gray-500 mb-6">Confira seu e-mail (inclusive a caixa de spam) e troque a senha assim que entrar.</p>
 <button onclick="window.fecharModalRecuperar()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg">
+Fechar
+</button>
+</div>
+</div>
+</div>
+
+<!-- ================= MODAL: RECUPERAR SENHA DA EQUIPE/PROFESSOR ================= -->
+<div id="modal-recuperar-equipe" class="fixed inset-0 z-50 hidden bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+<div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-t-8 border-red-500 relative">
+<button onclick="window.fecharModalRecuperarEquipe()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold">✖</button>
+
+<!-- Etapa 1: identificar pelo usuário -->
+<div id="recuperar-equipe-etapa-1">
+<h3 class="text-2xl font-bold text-gray-900 mb-2">Recuperar acesso</h3>
+<p class="text-sm text-gray-500 mb-6">Digite o usuário da sua conta de administrador/professor.</p>
+
+<form id="form-recuperar-equipe" class="space-y-4">
+<div>
+<label class="block text-sm font-bold text-gray-700">Usuário</label>
+<input type="text" id="recuperar-equipe-usuario" required autocomplete="username"
+class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
+</div>
+
+<div id="recaptcha-recuperar-equipe"></div>
+
+<p id="msg-recuperar-equipe-1" class="hidden text-sm font-bold p-2 rounded"></p>
+<button type="submit" id="btn-recuperar-equipe-buscar" class="btn-desabilitado w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg mt-2">
+Buscar minha conta
+</button>
+</form>
+</div>
+
+<!-- Etapa 2: confirmar e-mail -->
+<div id="recuperar-equipe-etapa-2" class="hidden">
+<h3 class="text-2xl font-bold text-gray-900 mb-2">Conta encontrada</h3>
+<p class="text-sm text-gray-600 mb-4">Confirme o e-mail cadastrado para receber a nova senha.</p>
+
+<form id="form-recuperar-equipe-email" class="space-y-3">
+<div>
+<label class="block text-sm font-bold text-gray-700">E-mail</label>
+<input type="email" id="recuperar-equipe-email" required placeholder="seuemail@exemplo.com"
+class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none">
+</div>
+
+<p id="msg-recuperar-equipe-2" class="hidden text-sm font-bold p-2 rounded"></p>
+
+<button type="submit" id="btn-recuperar-equipe-confirmar" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg">
+Confirmar e enviar nova senha
+</button>
+</form>
+<button onclick="window.voltarEtapa1RecuperarEquipe()" class="w-full text-gray-500 font-bold py-2 mt-2 hover:text-gray-700 transition text-sm">
+Voltar
+</button>
+</div>
+
+<!-- Etapa 2b: conta encontrada, mas sem e-mail cadastrado -->
+<div id="recuperar-equipe-sem-email" class="hidden text-center">
+<div class="text-4xl mb-3">✉️</div>
+<h3 class="text-lg font-bold text-gray-900 mb-2">Ainda não há e-mail cadastrado</h3>
+<p class="text-sm text-gray-500 mb-6">Essa conta ainda não tem e-mail cadastrado. Peça para outro administrador cadastrar um e-mail antes de recuperar a senha por aqui.</p>
+<button onclick="window.fecharModalRecuperarEquipe()" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition shadow-lg">
+Entendi
+</button>
+</div>
+
+<!-- Etapa 3: sucesso -->
+<div id="recuperar-equipe-etapa-3" class="hidden text-center">
+<div class="text-5xl mb-4">✅</div>
+<h3 class="text-xl font-bold text-gray-900 mb-2">Enviamos sua nova senha!</h3>
+<p class="text-sm text-gray-500 mb-6">Confira seu e-mail (inclusive a caixa de spam) e troque a senha assim que entrar.</p>
+<button onclick="window.fecharModalRecuperarEquipe()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">
 Fechar
 </button>
 </div>
@@ -217,8 +303,8 @@ caixa.classList.remove('hidden');
 // reCAPTCHA — renderização manual (explicit) por widget
 // ============================================================
 let recaptchaApiPronta = false;
-let widgetLogin = null, widgetAdmin = null, widgetRecuperar = null;
-let tokenLogin = null, tokenAdmin = null, tokenRecuperar = null;
+let widgetLogin = null, widgetAdmin = null, widgetRecuperar = null, widgetRecuperarEquipe = null;
+let tokenLogin = null, tokenAdmin = null, tokenRecuperar = null, tokenRecuperarEquipe = null;
 
 window.onRecaptchaApiPronta = function () {
 recaptchaApiPronta = true;
@@ -378,6 +464,7 @@ limparFormularioRecuperar();
 document.getElementById('modal-recuperar').classList.remove('hidden');
 document.getElementById('recuperar-etapa-1').classList.remove('hidden');
 document.getElementById('recuperar-etapa-2').classList.add('hidden');
+document.getElementById('recuperar-sem-email').classList.add('hidden');
 document.getElementById('recuperar-etapa-3').classList.add('hidden');
 if (recaptchaApiPronta && widgetRecuperar === null) {
 widgetRecuperar = grecaptcha.render('recaptcha-recuperar', {
@@ -394,6 +481,7 @@ limparFormularioRecuperar();
 window.voltarEtapa1Recuperar = () => {
 document.getElementById('recuperar-etapa-1').classList.remove('hidden');
 document.getElementById('recuperar-etapa-2').classList.add('hidden');
+document.getElementById('recuperar-sem-email').classList.add('hidden');
 };
 
 document.getElementById('form-recuperar').addEventListener('submit', async (e) => {
@@ -433,13 +521,17 @@ return;
 }
 
 ticketRecuperacao = data.ticket;
+document.getElementById('recuperar-etapa-1').classList.add('hidden');
+
+if (!data.temEmailCadastrado) {
+document.getElementById('recuperar-sem-email').classList.remove('hidden');
+return;
+}
+
 document.getElementById('recuperar-usuario-mascarado').innerText = data.usuarioMascarado;
-document.getElementById('recuperar-email-instrucao').innerText = data.precisaCadastrarEmail
-? 'Este é o seu primeiro pedido de recuperação. Cadastre agora o e-mail que vamos usar para te enviar a senha — e nas próximas vezes.'
-: 'Confirme o e-mail que você cadastrou da última vez que recuperou sua senha.';
+document.getElementById('recuperar-email-instrucao').innerText = 'Confirme o e-mail cadastrado para receber a nova senha.';
 document.getElementById('recuperar-email').value = '';
 document.getElementById('msg-recuperar-2').classList.add('hidden');
-document.getElementById('recuperar-etapa-1').classList.add('hidden');
 document.getElementById('recuperar-etapa-2').classList.remove('hidden');
 });
 
@@ -471,6 +563,125 @@ return;
 
 document.getElementById('recuperar-etapa-2').classList.add('hidden');
 document.getElementById('recuperar-etapa-3').classList.remove('hidden');
+});
+
+// ============================================================
+// MODAL RECUPERAR SENHA DA EQUIPE/PROFESSOR
+// ============================================================
+let ticketRecuperacaoEquipe = null;
+
+function limparFormularioRecuperarEquipe() {
+document.getElementById('form-recuperar-equipe').reset();
+document.getElementById('form-recuperar-equipe-email').reset();
+document.getElementById('msg-recuperar-equipe-1').classList.add('hidden');
+document.getElementById('msg-recuperar-equipe-2').classList.add('hidden');
+ticketRecuperacaoEquipe = null;
+if (widgetRecuperarEquipe !== null) grecaptcha.reset(widgetRecuperarEquipe);
+tokenRecuperarEquipe = null;
+atualizarBotao('btn-recuperar-equipe-buscar', false);
+}
+
+window.abrirModalRecuperarEquipe = () => {
+limparFormularioRecuperarEquipe();
+document.getElementById('modal-recuperar-equipe').classList.remove('hidden');
+document.getElementById('recuperar-equipe-etapa-1').classList.remove('hidden');
+document.getElementById('recuperar-equipe-etapa-2').classList.add('hidden');
+document.getElementById('recuperar-equipe-sem-email').classList.add('hidden');
+document.getElementById('recuperar-equipe-etapa-3').classList.add('hidden');
+if (recaptchaApiPronta && widgetRecuperarEquipe === null) {
+widgetRecuperarEquipe = grecaptcha.render('recaptcha-recuperar-equipe', {
+sitekey: RECAPTCHA_SITE_KEY,
+callback: (token) => { tokenRecuperarEquipe = token; atualizarBotao('btn-recuperar-equipe-buscar', true); },
+'expired-callback': () => { tokenRecuperarEquipe = null; atualizarBotao('btn-recuperar-equipe-buscar', false); },
+});
+}
+};
+window.fecharModalRecuperarEquipe = () => {
+document.getElementById('modal-recuperar-equipe').classList.add('hidden');
+limparFormularioRecuperarEquipe();
+};
+window.voltarEtapa1RecuperarEquipe = () => {
+document.getElementById('recuperar-equipe-etapa-1').classList.remove('hidden');
+document.getElementById('recuperar-equipe-etapa-2').classList.add('hidden');
+document.getElementById('recuperar-equipe-sem-email').classList.add('hidden');
+};
+
+document.getElementById('form-recuperar-equipe').addEventListener('submit', async (e) => {
+e.preventDefault();
+const msg = document.getElementById('msg-recuperar-equipe-1');
+msg.classList.add('hidden');
+
+if (!tokenRecuperarEquipe) return;
+
+const btn = document.getElementById('btn-recuperar-equipe-buscar');
+btn.innerText = 'Buscando...';
+atualizarBotao('btn-recuperar-equipe-buscar', false);
+
+const usuario = document.getElementById('recuperar-equipe-usuario').value.trim();
+
+const { data, error } = await supabaseClient.functions.invoke('recuperar-senha-equipe', {
+body: { etapa: 'identificar', usuario, recaptchaToken: tokenRecuperarEquipe },
+});
+
+grecaptcha.reset(widgetRecuperarEquipe);
+tokenRecuperarEquipe = null;
+btn.innerText = 'Buscar minha conta';
+
+if (error || !data) {
+msg.innerText = await extrairMensagemErro(error, data, 'Erro ao buscar. Tente novamente.');
+msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
+msg.classList.remove('hidden');
+return;
+}
+
+if (!data.encontrado) {
+msg.innerText = data.mensagem;
+msg.className = 'text-sm font-bold p-2 rounded bg-yellow-50 text-yellow-700';
+msg.classList.remove('hidden');
+return;
+}
+
+document.getElementById('recuperar-equipe-etapa-1').classList.add('hidden');
+
+if (!data.temEmailCadastrado) {
+document.getElementById('recuperar-equipe-sem-email').classList.remove('hidden');
+return;
+}
+
+ticketRecuperacaoEquipe = data.ticket;
+document.getElementById('recuperar-equipe-email').value = '';
+document.getElementById('msg-recuperar-equipe-2').classList.add('hidden');
+document.getElementById('recuperar-equipe-etapa-2').classList.remove('hidden');
+});
+
+document.getElementById('form-recuperar-equipe-email').addEventListener('submit', async (e) => {
+e.preventDefault();
+const msg = document.getElementById('msg-recuperar-equipe-2');
+msg.classList.add('hidden');
+
+const email = document.getElementById('recuperar-equipe-email').value.trim();
+if (!email) return;
+
+const btn = document.getElementById('btn-recuperar-equipe-confirmar');
+btn.innerText = 'Enviando...';
+btn.disabled = true;
+
+const { data, error } = await supabaseClient.functions.invoke('recuperar-senha-equipe', {
+body: { etapa: 'confirmar', ticket: ticketRecuperacaoEquipe, email },
+});
+
+btn.innerText = 'Confirmar e enviar nova senha';
+btn.disabled = false;
+
+if (error || !data || data.erro) {
+msg.innerText = await extrairMensagemErro(error, data, 'Erro ao enviar. Tente pedir a recuperação novamente.');
+msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
+msg.classList.remove('hidden');
+return;
+}
+
+document.getElementById('recuperar-equipe-etapa-2').classList.add('hidden');
+document.getElementById('recuperar-equipe-etapa-3').classList.remove('hidden');
 });
 </script>
 </body>
