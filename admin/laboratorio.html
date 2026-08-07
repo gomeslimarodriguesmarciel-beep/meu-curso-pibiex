@@ -141,7 +141,7 @@
                                     <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
                                     <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
                                 </div>
-                                ${e.arquivo_url ? `<a href="${escaparHtml(e.arquivo_url)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir link →</a>` : ''}
+                                ${e.arquivo_url ? `<a href="${escaparHtml(urlSegura(e.arquivo_url))}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir link →</a>` : ''}
                             </div>
                             ${e.resposta_texto ? `<p class="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5 mt-2 whitespace-pre-wrap">${escaparHtml(e.resposta_texto)}</p>` : ''}
                         </div>
