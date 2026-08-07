@@ -59,23 +59,48 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
 // Itens do menu lateral do painel. Itens sem página construída ainda ficam
 // visíveis (mostrando o que vem por aí) mas podem não ter destino ainda.
 const ITENS_MENU_EQUIPE = [
-    { id: 'inicio',       label: 'Início',            href: 'inicio.html',       icone: '🏠' },
-    { id: 'turmas',       label: 'Turmas',            href: 'turmas.html',       icone: '🏫' },
-    { id: 'alunos',       label: 'Alunos',            href: 'alunos.html',       icone: '🎓' },
-    { id: 'cronograma',   label: 'Cronograma',        href: 'cronograma.html',   icone: '📅' },
-    { id: 'conteudo',     label: 'Conteúdo',          href: 'conteudo.html',     icone: '📚' },
-    { id: 'atividades',   label: 'Atividades',        href: 'atividades.html',  icone: '📝' },
-    { id: 'trabalhos',    label: 'Corrigir Trabalhos', href: 'trabalhos.html',   icone: '✅' },
-    { id: 'avisos',       label: 'Avisos',            href: 'avisos.html',       icone: '📢' },
-    { id: 'chat',         label: 'Chat da Turma',     href: 'chat.html',         icone: '💬' },
-    { id: 'galeria',      label: 'Galeria',           href: 'galeria.html',      icone: '🖼️' },
-    { id: 'prompts',      label: 'Banco de Prompts',  href: 'prompts.html',      icone: '💡' },
-    { id: 'desafios',     label: 'Desafios Semanais', href: 'desafios.html',     icone: '🏆' },
-    { id: 'laboratorio',  label: 'Laboratório de IA', href: 'laboratorio.html',  icone: '🧪' },
-    { id: 'faq',          label: 'FAQ',               href: 'faq.html',          icone: '❓' },
-    { id: 'recursos',     label: 'Recursos Extras',   href: 'recursos.html',     icone: '🔗' },
-    { id: 'equipe',       label: 'Equipe',            href: 'equipe.html',       icone: '👥', requerTotal: true },
+    { id: 'inicio',       label: 'Início',            href: 'inicio.html' },
+    { id: 'turmas',       label: 'Turmas',            href: 'turmas.html' },
+    { id: 'alunos',       label: 'Alunos',            href: 'alunos.html' },
+    { id: 'cronograma',   label: 'Cronograma',        href: 'cronograma.html' },
+    { id: 'conteudo',     label: 'Conteúdo',          href: 'conteudo.html' },
+    { id: 'atividades',   label: 'Atividades',        href: 'atividades.html' },
+    { id: 'trabalhos',    label: 'Corrigir Trabalhos', href: 'trabalhos.html' },
+    { id: 'avisos',       label: 'Avisos',            href: 'avisos.html' },
+    { id: 'chat',         label: 'Chat da Turma',     href: 'chat.html' },
+    { id: 'galeria',      label: 'Galeria',           href: 'galeria.html' },
+    { id: 'prompts',      label: 'Banco de Prompts',  href: 'prompts.html' },
+    { id: 'desafios',     label: 'Desafios Semanais', href: 'desafios.html' },
+    { id: 'laboratorio',  label: 'Laboratório de IA', href: 'laboratorio.html' },
+    { id: 'faq',          label: 'FAQ',               href: 'faq.html' },
+    { id: 'recursos',     label: 'Recursos Extras',   href: 'recursos.html' },
+    { id: 'equipe',       label: 'Equipe',            href: 'equipe.html',       requerTotal: true },
 ];
+
+// Ícones de linha (SVG inline, sem dependência externa) — mesmo padrão da
+// área do aluno, sem emoji.
+const ICONES = {
+    inicio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-6h4v6"/></svg>',
+    turmas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>',
+    alunos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M4 19c0-3 2.5-5 5-5s5 2 5 5"/><circle cx="17" cy="9" r="2.3"/><path d="M14.5 19c.3-2.2 1.7-3.8 3.3-4.3"/></svg>',
+    cronograma: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="1.5"/><path d="M4 9.5h16"/><path d="M8 3v4M16 3v4"/></svg>',
+    conteudo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2 2 0 0 1 6 4h12v16H6a2 2 0 0 1-2-2z"/><path d="M8 8h6M8 12h6"/></svg>',
+    atividades: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13.5h5M9.5 17h5"/></svg>',
+    trabalhos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4 10-10"/></svg>',
+    avisos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l5 4V6L7 10z"/><path d="M15 9a3.5 3.5 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
+    galeria: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="14" rx="1.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M20 15.5 15 10 5 18.5"/></svg>',
+    prompts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.9.9.9 1.6v.5h5.2v-.5c0-.7.4-1.2.9-1.6A6 6 0 0 0 12 3z"/></svg>',
+    desafios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v4a4 4 0 0 1-8 0z"/><path d="M8 5H5v2a3 3 0 0 0 3 3M16 5h3v2a3 3 0 0 1-3 3"/><path d="M12 12v4M9 20h6M10 16h4v4h-4z"/></svg>',
+    laboratorio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.5 18a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M8.5 14h7"/></svg>',
+    faq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.7 2.2c-.7.4-1.2.9-1.2 1.7v.3"/><path d="M12 16.7h.01"/></svg>',
+    recursos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 7l1.5-1.5a3.5 3.5 0 0 1 5 5L16 12M13 17l-1.5 1.5a3.5 3.5 0 0 1-5-5L8 12"/></svg>',
+    equipe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3"/><path d="M6.5 19c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5"/><circle cx="4.5" cy="10" r="2"/><circle cx="19.5" cy="10" r="2"/><path d="M2.5 19c.2-2 1.3-3.5 2.8-4M21.5 19c-.2-2-1.3-3.5-2.8-4"/></svg>',
+};
+
+function iconeSvg(id) {
+    return `<span class="w-5 h-5 shrink-0">${ICONES[id] || ''}</span>`;
+}
 
 // ============================================================
 // 1) Proteção de sessão da equipe
@@ -115,7 +140,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
             : 'border-transparent text-slate-400 hover:text-white hover:bg-white/[0.04]';
         return `
             <a href="${item.href}" class="${classesBase} ${classesAtivo}">
-                <span class="text-lg">${item.icone}</span>
+                ${iconeSvg(item.id)}
                 <span>${item.label}</span>
             </a>
         `;
