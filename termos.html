@@ -152,7 +152,7 @@
 
         const tokenAluno = localStorage.getItem('pibiex_aluno_token');
         if (!tokenAluno) {
-            window.location.href = 'index.html';
+            window.location.href = 'login.html';
         }
 
         function alturaRolavel() {
@@ -180,7 +180,7 @@
             if (!confirm('Sem aceitar o termo, não é possível usar a plataforma. Deseja sair e voltar para a tela de acesso?')) return;
             localStorage.removeItem('pibiex_aluno_token');
             localStorage.removeItem('pibiex_aluno_dados');
-            window.location.href = 'index.html?sessao=termos-recusados';
+            window.location.href = 'login.html?sessao=termos-recusados';
         });
 
         document.getElementById('btn-aceitar').addEventListener('click', confirmarAceite);
