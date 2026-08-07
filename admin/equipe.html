@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Equipe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-4 md:p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">👥 Equipe</h1>
+            <p class="text-gray-500 mb-6">
+                Contas de professor/assistente que acessam o painel. "Acesso total" pode fazer tudo
+                (inclusive gerenciar outras contas); "Acesso restrito" não vê senha de aluno,
+                não exclui cadastro de aluno e não lê conversas privadas.
+            </p>
+
+            <div id="aviso-sem-permissao" class="hidden bg-amber-50 border border-amber-100 text-amber-800 text-sm rounded-xl p-4 mb-6">
+                Sua conta não tem acesso total, então não pode gerenciar a equipe.
+            </div>
+
+            <form id="form-nova" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+                <p class="text-xs font-bold text-gray-500 mb-3">Nova conta</p>
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Nome completo</label>
+                        <input id="novo-nome" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">E-mail</label>
+                        <input id="novo-email" type="email" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="flex-1 min-w-[160px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Cargo</label>
+                        <input id="novo-cargo" required placeholder="ex: Monitor" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-44">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Acesso</label>
+                        <select id="novo-nivel" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <option value="restrito">Restrito</option>
+                            <option value="total">Total</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Um usuário e senha provisória são gerados automaticamente e enviados por e-mail.</p>
+                <p id="msg-nova" class="hidden text-sm font-bold p-2 rounded mt-2"></p>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm mt-3">
+                    + Criar conta
+                </button>
+            </form>
+
+            <div id="lista-equipe" class="space-y-3">
+                <p class="text-gray-400 text-sm">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let MEU_ID = null;
+
+        async function chamarGerenciarEquipe(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-equipe', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) ? data.erro : 'Erro ao executar a ação. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        async function carregarEquipe() {
+            const resultado = await chamarGerenciarEquipe('listar', {});
+            if (!resultado) {
+                document.getElementById('lista-equipe').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar a equipe.</p>';
+                return;
+            }
+            renderizarEquipe(resultado.equipe || []);
+        }
+
+        function renderizarEquipe(equipe) {
+            const container = document.getElementById('lista-equipe');
+
+            if (equipe.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma conta cadastrada ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = equipe.map((m) => {
+                const seloAcesso = m.nivel_acesso === 'total'
+                    ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-700">Acesso total</span>'
+                    : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Acesso restrito</span>';
+                const seloStatus = m.ativo
+                    ? ''
+                    : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Desativada</span>';
+                const souEu = m.id === MEU_ID;
+
+                return `
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${m.ativo ? '' : 'opacity-75'}">
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(m.nome_completo)}${souEu ? ' <span class="text-gray-400 font-normal">(você)</span>' : ''}</p>
+                                    ${seloAcesso}
+                                    ${seloStatus}
+                                </div>
+                                <p class="text-xs text-gray-500">${escaparHtml(m.cargo)} · ${escaparHtml(m.usuario || '')} · ${escaparHtml(m.email)}</p>
+                            </div>
+                            <div class="flex gap-2 shrink-0 flex-wrap">
+                                ${souEu ? '' : `
+                                    <select onchange="mudarNivel('${m.id}', this.value)" class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs">
+                                        <option value="restrito" ${m.nivel_acesso === 'restrito' ? 'selected' : ''}>Restrito</option>
+                                        <option value="total" ${m.nivel_acesso === 'total' ? 'selected' : ''}>Total</option>
+                                    </select>
+                                    ${m.ativo
+                                        ? `<button onclick="alternarAtiva('${m.id}', false)" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-lg">Desativar</button>`
+                                        : `<button onclick="alternarAtiva('${m.id}', true)" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Reativar</button>`}
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('form-nova').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg-nova');
+            msg.classList.add('hidden');
+
+            const nomeCompleto = document.getElementById('novo-nome').value.trim();
+            const email = document.getElementById('novo-email').value.trim();
+            const cargo = document.getElementById('novo-cargo').value.trim();
+            const nivelAcesso = document.getElementById('novo-nivel').value;
+            if (!nomeCompleto || !email || !cargo) return;
+
+            const resultado = await chamarGerenciarEquipe('criar', { nomeCompleto, email, cargo, nivelAcesso });
+            if (resultado) {
+                document.getElementById('form-nova').reset();
+                msg.innerText = resultado.emailEnviado
+                    ? `Conta criada! Usuário: ${resultado.usuario} — a senha provisória foi enviada por e-mail.`
+                    : `Conta criada, mas o e-mail não pôde ser enviado. Usuário: ${resultado.usuario} — repasse manualmente.`;
+                msg.className = `text-sm font-bold p-2 rounded mt-2 ${resultado.emailEnviado ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-800'}`;
+                msg.classList.remove('hidden');
+                carregarEquipe();
+            }
+        });
+
+        window.mudarNivel = async (equipeId, nivelAcesso) => {
+            const resultado = await chamarGerenciarEquipe('editar', { equipeId, nivelAcesso });
+            if (resultado) carregarEquipe();
+            else carregarEquipe(); // reverte o <select> pro valor real se a mudança foi bloqueada
+        };
+
+        window.alternarAtiva = async (equipeId, ativo) => {
+            if (!ativo && !confirm('Desativar esta conta? A pessoa não vai conseguir mais entrar no painel.')) return;
+            const resultado = await chamarGerenciarEquipe('editar', { equipeId, ativo });
+            if (resultado) carregarEquipe();
+        };
+
+        iniciarShellEquipe('equipe').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            MEU_ID = sessao.dados.id;
+
+            if (sessao.dados.nivelAcesso !== 'total') {
+                document.getElementById('aviso-sem-permissao').classList.remove('hidden');
+                document.getElementById('form-nova').classList.add('hidden');
+                document.getElementById('lista-equipe').innerHTML = '';
+                return;
+            }
+
+            carregarEquipe();
+        });
+    </script>
+</body>
+</html>
