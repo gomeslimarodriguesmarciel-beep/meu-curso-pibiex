@@ -186,6 +186,14 @@ function escaparHtml(texto) {
     return div.innerHTML;
 }
 
+// Usado em todo href/src que vem de dado gravado por aluno (link de trabalho,
+// desafio, laboratório etc.): escaparHtml() sozinho não barra o esquema
+// "javascript:" porque ele não tem caracteres para escapar — um link desses
+// clicado pelo professor executaria no contexto da própria página do painel.
+function urlSegura(url) {
+    return /^https?:\/\//i.test(url ?? '') ? url : '#';
+}
+
 function seloTurma(turma) {
     return turma.ativa
         ? '<span class="text-xs font-bold uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-full shrink-0">Ativa</span>'
