@@ -89,8 +89,8 @@
                 if (editando) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-titulo-${aviso.id}" value="${aviso.titulo}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <textarea id="edit-mensagem-${aviso.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${aviso.mensagem}</textarea>
+                            <input id="edit-titulo-${aviso.id}" value="${escaparHtml(aviso.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-mensagem-${aviso.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(aviso.mensagem)}</textarea>
                             <label class="flex items-center gap-2 text-sm text-gray-700">
                                 <input type="checkbox" id="edit-fixado-${aviso.id}" class="rounded border-gray-300" ${aviso.fixado ? 'checked' : ''}>
                                 Fixar este aviso no topo
@@ -109,9 +109,9 @@
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
                                     ${aviso.fixado ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Fixado</span>' : ''}
-                                    <p class="font-bold text-gray-800 text-sm">${aviso.titulo}</p>
+                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(aviso.titulo)}</p>
                                 </div>
-                                <p class="text-sm text-gray-600">${aviso.mensagem}</p>
+                                <p class="text-sm text-gray-600">${escaparHtml(aviso.mensagem)}</p>
                                 <p class="text-[11px] text-gray-400 mt-2">${formatarData(aviso.criado_em)}</p>
                             </div>
                             <div class="flex gap-2 shrink-0">
