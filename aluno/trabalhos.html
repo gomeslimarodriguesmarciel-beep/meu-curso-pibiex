@@ -32,6 +32,15 @@
     <script>
         let TOKEN_ALUNO = null;
 
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+        function urlSegura(url) {
+            return /^https?:\/\//i.test(url ?? '') ? url : '#';
+        }
+
         const ROTULO_STATUS = {
             pendente: { texto: 'Não enviado', cor: '#6B7280', fundo: '#F3F4F6' },
             enviado:  { texto: 'Enviado · aguardando correção', cor: '#8A6D1E', fundo: '#FBF3DC' },
@@ -61,7 +70,7 @@
                     <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
                         <div class="flex items-start justify-between gap-4 mb-3">
                             <div>
-                                <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${atv.titulo}</p>
+                                <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(atv.titulo)}</p>
                                 ${prazo ? `<p class="text-xs mt-0.5" style="color: var(--pibiex-texto-suave);">Prazo: ${prazo}</p>` : ''}
                             </div>
                             <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" style="background: ${rotulo.fundo}; color: ${rotulo.cor};">${rotulo.texto}</span>
@@ -69,25 +78,29 @@
 
                         ${trabalho && trabalho.arquivo_url ? `
                             <p class="text-xs mb-3" style="color: var(--pibiex-texto-suave);">
-                                Arquivo enviado: <a href="${trabalho.arquivo_url}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir arquivo</a>
+                                Arquivo enviado: <a href="${escaparHtml(urlSegura(trabalho.arquivo_url))}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir arquivo</a>
                             </p>
                         ` : ''}
 
                         ${status === 'avaliado' ? `
                             <div class="rounded-md p-3 mb-3" style="background: var(--pibiex-papel);">
                                 <p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Nota: ${trabalho.nota ?? '—'}</p>
-                                ${trabalho.feedback_professor ? `<p class="text-xs" style="color: var(--pibiex-texto-suave);">${trabalho.feedback_professor}</p>` : ''}
+                                ${trabalho.feedback_professor ? `<p class="text-xs" style="color: var(--pibiex-texto-suave);">${escaparHtml(trabalho.feedback_professor)}</p>` : ''}
                             </div>
                         ` : ''}
 
                         <div class="flex flex-wrap items-end gap-2 pt-2 border-t" style="border-color: var(--pibiex-borda);">
-                            <div class="flex-1 min-w-[180px]">
+                            <div class="flex-1 min-w-[160px]">
                                 <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">
                                     ${trabalho ? 'Reenviar arquivo (substitui o anterior)' : 'Arquivo'}
                                 </label>
                                 <input type="file" id="arquivo-${atv.id}" class="text-xs w-full">
                             </div>
-                            <div class="flex-1 min-w-[180px]">
+                            <div class="flex-1 min-w-[160px]">
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Ou cole um link</label>
+                                <input type="url" id="link-${atv.id}" placeholder="https://..." class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                            </div>
+                            <div class="flex-1 min-w-[160px]">
                                 <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Comentário (opcional)</label>
                                 <input type="text" id="comentario-${atv.id}" class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                             </div>
@@ -104,41 +117,49 @@
 
         window.enviarArquivo = async (atividadeId) => {
             const inputArquivo = document.getElementById(`arquivo-${atividadeId}`);
+            const inputLink = document.getElementById(`link-${atividadeId}`);
             const inputComentario = document.getElementById(`comentario-${atividadeId}`);
             const btn = document.getElementById(`btn-enviar-${atividadeId}`);
             const msg = document.getElementById(`msg-${atividadeId}`);
+            msg.classList.add('hidden');
 
             const arquivo = inputArquivo.files[0];
-            if (!arquivo) {
-                msg.innerText = 'Selecione um arquivo antes de enviar.';
+            const link = inputLink.value.trim();
+            if (!arquivo && !link) {
+                msg.innerText = 'Selecione um arquivo ou cole um link antes de enviar.';
                 msg.className = 'text-xs mt-2 text-red-600';
+                msg.classList.remove('hidden');
                 return;
             }
 
             btn.innerText = 'Enviando...';
             btn.disabled = true;
-            msg.classList.add('hidden');
 
             try {
-                // 1) Pede um link seguro de upload
-                const { data: urlDados, error: erroUrl } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
-                    body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', atividadeId, nomeArquivo: arquivo.name },
-                });
-                if (erroUrl || !urlDados || urlDados.erro) throw new Error((urlDados && urlDados.erro) || 'Erro ao preparar envio.');
+                let arquivoUrl = link;
 
-                // 2) Envia o arquivo direto pro Storage usando esse link
-                const { error: erroUpload } = await window.supabaseClient
-                    .storage.from('arquivos')
-                    .uploadToSignedUrl(urlDados.caminho, urlDados.token, arquivo);
-                if (erroUpload) throw new Error('Erro ao enviar o arquivo.');
+                if (arquivo) {
+                    // 1) Pede um link seguro de upload
+                    const { data: urlDados, error: erroUrl } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                        body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', atividadeId, nomeArquivo: arquivo.name },
+                    });
+                    if (erroUrl || !urlDados || urlDados.erro) throw new Error((urlDados && urlDados.erro) || 'Erro ao preparar envio.');
 
-                // 3) Pega o link público e registra o envio
-                const { data: urlPublica } = window.supabaseClient.storage.from('arquivos').getPublicUrl(urlDados.caminho);
+                    // 2) Envia o arquivo direto pro Storage usando esse link
+                    const { error: erroUpload } = await window.supabaseClient
+                        .storage.from('arquivos')
+                        .uploadToSignedUrl(urlDados.caminho, urlDados.token, arquivo);
+                    if (erroUpload) throw new Error('Erro ao enviar o arquivo.');
+
+                    // 3) Pega o link público
+                    const { data: urlPublica } = window.supabaseClient.storage.from('arquivos').getPublicUrl(urlDados.caminho);
+                    arquivoUrl = urlPublica.publicUrl;
+                }
 
                 const { data: registro, error: erroRegistro } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
                     body: {
                         token: TOKEN_ALUNO, acao: 'enviar', atividadeId,
-                        arquivoUrl: urlPublica.publicUrl,
+                        arquivoUrl,
                         comentario: inputComentario.value.trim(),
                     },
                 });
@@ -148,6 +169,7 @@
             } catch (erro) {
                 msg.innerText = erro.message || 'Erro ao enviar. Tente novamente.';
                 msg.className = 'text-xs mt-2 text-red-600';
+                msg.classList.remove('hidden');
                 btn.innerText = 'Enviar';
                 btn.disabled = false;
             }
