@@ -3,686 +3,230 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIBIEX 2026 · IA - Acesso</title>
+<title>PIBIEX 2026 · Curso de Inteligência Artificial · UNITINS</title>
+<meta name="description" content="PIBIEX 2026 é o curso de extensão em Inteligência Artificial da Universidade Estadual do Tocantins (UNITINS): aulas, desafios semanais e ferramentas de IA aplicadas à prática. Acesse a área do aluno ou do professor.">
+
+<link rel="icon" type="image/png" href="logo pibiex.png">
+<link rel="apple-touch-icon" href="logo pibiex.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PIBIEX 2026">
+<meta property="og:title" content="PIBIEX 2026 · Curso de Inteligência Artificial · UNITINS">
+<meta property="og:description" content="Curso de extensão em Inteligência Artificial da Universidade Estadual do Tocantins (UNITINS): aulas, desafios semanais e ferramentas de IA aplicadas à prática.">
+<meta property="og:image" content="https://pibiexdigital.com.br/logo%20pibiex.png">
+<meta property="og:url" content="https://pibiexdigital.com.br/">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "PIBIEX 2026 — Curso de Inteligência Artificial",
+  "description": "Curso de extensão em Inteligência Artificial da Universidade Estadual do Tocantins (UNITINS), com aulas, desafios semanais e ferramentas de IA aplicadas à prática.",
+  "provider": {
+    "@type": "CollegeOrUniversity",
+    "name": "UNITINS — Universidade Estadual do Tocantins",
+    "sameAs": "https://www.unitins.br"
+  },
+  "url": "https://pibiexdigital.com.br/",
+  "image": "https://pibiexdigital.com.br/logo%20pibiex.png"
+}
+</script>
+
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- reCAPTCHA em modo "explicit": controlamos manualmente quando cada widget renderiza,
-porque temos widgets dentro de modais que começam escondidos (display:none quebraria
-o tamanho do widget se ele renderizasse automaticamente ali). -->
-<script src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaApiPronta&render=explicit" async defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-body { font-family: 'Inter', sans-serif; }
-.gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
-.btn-desabilitado { opacity: .5; cursor: not-allowed; pointer-events: none; }
+    body { font-family: 'Inter', sans-serif; }
+    :root {
+        --pibiex-gradiente: linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 50%, #1E40AF 100%);
+        --pibiex-lima: #A3E635;
+        --pibiex-lima-profundo: #4D7C0F;
+        --pibiex-texto: #111827;
+        --pibiex-texto-suave: #6B7280;
+        --pibiex-borda: #E5E7EB;
+    }
+    .hero-bg {
+        background-image:
+            linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+            var(--pibiex-gradiente);
+        background-size: 34px 34px, 34px 34px, 100% 100%;
+    }
+    .halo {
+        background: radial-gradient(closest-side, rgba(163,230,53,.35), transparent 70%);
+        filter: blur(10px);
+    }
+    .balance { text-wrap: balance; }
+    @media (prefers-reduced-motion: no-preference) {
+        .flutuar { animation: flutuar 6s ease-in-out infinite; }
+        @keyframes flutuar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+    }
 </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="min-h-screen" style="color: var(--pibiex-texto);">
 
-<main class="gradient-bg flex-grow flex items-center justify-center relative overflow-hidden px-4 py-12">
+<!-- ================= NAV ================= -->
+<header class="fixed top-0 inset-x-0 z-40 backdrop-blur-md bg-[#0B1B4A]/70 border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+        <a href="#topo" class="flex items-center gap-3">
+            <img src="logo pibiex.png" alt="Logo PIBIEX 2026" class="h-9 w-9 rounded-full object-contain">
+            <span class="text-white font-black tracking-tight text-lg">PIBIEX <span style="color: var(--pibiex-lima);">2026</span></span>
+        </a>
+        <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-blue-100/80">
+            <a href="#curso" class="hover:text-white transition">O curso</a>
+            <a href="#programa" class="hover:text-white transition">O programa</a>
+            <a href="#coordenacao" class="hover:text-white transition">Coordenação</a>
+        </nav>
+        <a href="login.html" class="bg-white text-[#1E3A8A] font-extrabold text-sm px-5 py-2.5 rounded-full hover:bg-blue-50 transition shadow-lg">
+            Entrar
+        </a>
+    </div>
+</header>
 
-<div class="absolute top-8 left-6 md:top-12 md:left-12 z-0 flex items-center gap-6">
-<img src="logo unitins branca.png" alt="Logo Unitins" class="h-32 md:h-64 mix-blend-multiply object-contain opacity-90" onerror="this.style.display='none'">
-<h1 class="text-white text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg hidden lg:block opacity-90">
-PIBIEX 2026
-</h1>
-</div>
+<!-- ================= HERO ================= -->
+<main id="topo">
+<section class="hero-bg relative overflow-hidden pt-32 pb-24 md:pt-44 md:pb-32 px-5">
+    <div class="absolute -top-24 -right-24 w-96 h-96 halo pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[560px] h-56 halo pointer-events-none opacity-60"></div>
 
-<!-- ================= CARD DE LOGIN DO ALUNO ================= -->
-<div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+    <div class="max-w-6xl mx-auto relative grid md:grid-cols-[1.15fr_.85fr] gap-14 items-center">
+        <div>
+            <p class="text-[11px] md:text-xs font-black uppercase tracking-[0.22em] mb-5" style="color: var(--pibiex-lima);">
+                Universidade Estadual do Tocantins · Curso de extensão
+            </p>
+            <h1 class="balance text-white text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] mb-6">
+                Inteligência Artificial, direto na prática.
+            </h1>
+            <p class="text-blue-100/85 text-base md:text-lg leading-relaxed max-w-xl mb-10">
+                O <strong class="text-white">PIBIEX 2026</strong> é o curso de extensão em Inteligência Artificial da
+                <strong class="text-white">UNITINS</strong>: aulas organizadas por módulo, desafios semanais,
+                laboratório de IA e acompanhamento de trabalhos — tudo em uma única plataforma.
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <a href="login.html" class="group inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full transition transform hover:scale-105 shadow-xl" style="background: var(--pibiex-lima); color: #0B1B4A;">
+                    Sou aluno
+                    <span class="transition group-hover:translate-x-1">→</span>
+                </a>
+                <a href="login.html?perfil=professor" class="inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full border-2 border-white/30 text-white hover:bg-white/10 transition">
+                    Sou professor / administrador
+                </a>
+            </div>
+        </div>
 
-<div class="bg-blue-600 text-white text-center py-8 px-6">
-<h2 class="text-2xl font-extrabold tracking-widest uppercase leading-snug">
-Curso de<br>Inteligência Artificial
-</h2>
-</div>
+        <div class="relative flex justify-center md:justify-end">
+            <div class="absolute inset-0 halo"></div>
+            <img src="logo pibiex.png" alt="Emblema do PIBIEX 2026" class="flutuar relative w-56 h-56 md:w-72 md:h-72 object-contain drop-shadow-2xl">
+        </div>
+    </div>
+</section>
 
-<div class="p-8 md:p-10">
-<div id="msg-erro-login" class="hidden bg-red-50 text-red-600 font-bold p-4 mb-6 text-sm text-center rounded-lg border border-red-200"></div>
+<!-- ================= O CURSO ================= -->
+<section id="curso" class="bg-white py-20 md:py-28 px-5">
+    <div class="max-w-6xl mx-auto">
+        <div class="max-w-2xl mb-14">
+            <p class="text-[11px] font-black uppercase tracking-[0.2em] mb-3" style="color: var(--pibiex-lima-profundo);">O que tem na plataforma</p>
+            <h2 class="text-3xl md:text-[40px] font-black balance" style="color: var(--pibiex-texto);">Tudo o que o curso precisa, em um só lugar.</h2>
+        </div>
 
-<form id="form-login" class="space-y-5">
-<div>
-<label class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Usuário</label>
-<input type="text" id="login-usuario" required autocomplete="username"
-class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-</div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #EEF2FF;">📚</div>
+                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Aulas e cronograma</h3>
+                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Conteúdo organizado por módulo, com cronograma e materiais de apoio sempre à mão.</p>
+            </div>
+            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #ECFCCB;">🏆</div>
+                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Desafios semanais</h3>
+                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Desafios com prazo e ranking pra colocar a mão na massa toda semana.</p>
+            </div>
+            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #FEF3C7;">🤖</div>
+                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Laboratório de IA</h3>
+                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Prompts, ferramentas e um laboratório pra testar IA na prática, não só na teoria.</p>
+            </div>
+            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #FCE7F3;">💬</div>
+                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Trabalhos e turma</h3>
+                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Envio de trabalhos, correção do professor e chat direto com a turma.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
-<div>
-<label class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Senha</label>
-<div class="relative">
-<input type="password" id="login-senha" required autocomplete="current-password"
-class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 pr-12 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-<button type="button" onclick="window.alternarSenha('login-senha', this)"
-class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition text-xs font-bold uppercase">
-Ver
-</button>
-</div>
-</div>
+<!-- ================= O PROGRAMA ================= -->
+<section id="programa" class="py-20 md:py-28 px-5" style="background: #F4F6FB;">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
+        <div class="bg-white rounded-3xl p-8 md:p-10 border" style="border-color: var(--pibiex-borda);">
+            <img src="logo unitins.png" alt="Logo UNITINS" class="h-10 object-contain mb-6" onerror="this.style.display='none'">
+            <h3 class="text-xl font-black mb-3" style="color: var(--pibiex-texto);">Universidade Estadual do Tocantins</h3>
+            <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                A UNITINS é a instituição de ensino responsável pelo PIBIEX 2026, garantindo a estrutura acadêmica
+                e institucional por trás do curso de extensão em Inteligência Artificial.
+            </p>
+        </div>
+        <div class="bg-white rounded-3xl p-8 md:p-10 border" style="border-color: var(--pibiex-borda);">
+            <img src="logo pibiex.png" alt="Logo PIBIEX 2026" class="h-10 w-10 object-contain mb-6">
+            <h3 class="text-xl font-black mb-3" style="color: var(--pibiex-texto);">O que é o PIBIEX</h3>
+            <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                O PIBIEX 2026 é o curso de extensão em Inteligência Artificial oferecido pela UNITINS: uma
+                formação prática, aberta e acompanhada de perto, pensada pra tirar a IA do discurso e colocar
+                na rotina de quem está aprendendo.
+            </p>
+        </div>
+    </div>
+</section>
 
-<div id="recaptcha-login" class="pt-1"></div>
+<!-- ================= COORDENAÇÃO ================= -->
+<section id="coordenacao" class="bg-white py-20 md:py-28 px-5">
+    <div class="max-w-4xl mx-auto">
+        <p class="text-[11px] font-black uppercase tracking-[0.2em] mb-3 text-center" style="color: var(--pibiex-lima-profundo);">Coordenação</p>
+        <h2 class="text-3xl md:text-[38px] font-black balance text-center mb-14" style="color: var(--pibiex-texto);">Quem está por trás do curso</h2>
 
-<div class="pt-2 flex flex-col gap-3">
-<button type="submit" id="btn-acessar" class="btn-desabilitado bg-blue-600 text-white font-extrabold py-3 px-8 rounded-full hover:bg-blue-700 transition transform hover:scale-105 shadow-lg hover:shadow-blue-600/30 text-lg">
-Entrar
-</button>
+        <div class="rounded-3xl p-8 md:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-7 text-center sm:text-left" style="background: var(--pibiex-gradiente);">
+            <div class="w-24 h-24 rounded-full flex items-center justify-center shrink-0 font-black text-2xl text-white" style="background: rgba(255,255,255,.12); border: 2px solid rgba(163,230,53,.5);">
+                MG
+            </div>
+            <div>
+                <h3 class="text-white font-black text-xl mb-1">Marciel Gomes Lima Rodrigues</h3>
+                <p class="text-[11px] font-black uppercase tracking-[0.16em] mb-4" style="color: var(--pibiex-lima);">Professor coordenador do PIBIEX 2026</p>
+                <p class="text-blue-100/85 text-sm leading-relaxed max-w-xl">
+                    Responsável pela coordenação do curso, do desenho das aulas ao acompanhamento direto dos
+                    alunos — e também pelo desenvolvimento desta plataforma, criada especialmente para dar
+                    suporte ao PIBIEX 2026 do primeiro ao último módulo.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
 
-<div class="flex justify-between items-center text-sm pt-1">
-<a onclick="window.abrirModalRecuperar()" class="text-gray-500 font-bold hover:text-blue-700 cursor-pointer transition underline decoration-2 underline-offset-4 decoration-blue-200 hover:decoration-blue-700">
-Esqueci usuário/senha
-</a>
-<a onclick="window.abrirModalAdmin()" class="text-gray-500 font-bold hover:text-red-700 cursor-pointer transition underline decoration-2 underline-offset-4 decoration-red-200 hover:decoration-red-700">
-Sou professor/admin
-</a>
-</div>
-</div>
-</form>
-</div>
-</div>
-
-<div class="absolute bottom-4 w-full text-center z-20">
-<p class="text-blue-100/70 text-xs md:text-sm font-medium tracking-wide">
-Desenvolvido por <span class="font-bold text-white">MARCIEL GOMES LIMA RODRIGUES</span>
-</p>
-</div>
+<!-- ================= CTA FINAL ================= -->
+<section class="hero-bg py-20 px-5">
+    <div class="max-w-3xl mx-auto text-center">
+        <h2 class="balance text-white text-3xl md:text-[40px] font-black mb-5">Pronto pra começar?</h2>
+        <p class="text-blue-100/80 mb-10 max-w-xl mx-auto">Acesse a plataforma com o usuário e a senha fornecidos pelo curso.</p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="login.html" class="inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full transition transform hover:scale-105 shadow-xl" style="background: var(--pibiex-lima); color: #0B1B4A;">
+                Sou aluno →
+            </a>
+            <a href="login.html?perfil=professor" class="inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full border-2 border-white/30 text-white hover:bg-white/10 transition">
+                Sou professor / administrador
+            </a>
+        </div>
+    </div>
+</section>
 </main>
 
-<!-- ================= MODAL: LOGIN ADMIN/PROFESSOR ================= -->
-<div id="modal-admin" class="fixed inset-0 z-50 hidden bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-<div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-t-8 border-red-500 relative">
-<button onclick="window.fecharModalAdmin()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold">✖</button>
-<h3 class="text-2xl font-bold text-gray-900 mb-2">Área Restrita</h3>
-<p class="text-sm text-gray-500 mb-6">Acesso exclusivo de administrador/professor.</p>
+<!-- ================= FOOTER ================= -->
+<footer class="py-8 px-5" style="background: #0B1B4A;">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <img src="logo pibiex.png" alt="Logo PIBIEX 2026" class="h-6 w-6 rounded-full object-contain">
+            <span class="text-blue-100/70 text-xs font-bold tracking-wide">PIBIEX 2026 · UNITINS</span>
+        </div>
+        <p class="text-blue-100/60 text-xs font-medium tracking-wide">
+            Desenvolvido por <span class="font-bold text-white">MARCIEL GOMES LIMA RODRIGUES</span>
+        </p>
+    </div>
+</footer>
 
-<form id="form-admin" class="space-y-4">
-<div>
-<label class="block text-sm font-bold text-gray-700">Usuário</label>
-<input type="text" id="admin-email" required autocomplete="username"
-class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
-</div>
-<div>
-<label class="block text-sm font-bold text-gray-700">Senha</label>
-<div class="relative">
-<input type="password" id="admin-senha" required autocomplete="current-password"
-class="w-full border border-gray-200 p-3 pr-14 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
-<button type="button" onclick="window.alternarSenha('admin-senha', this)"
-class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-600 transition text-xs font-bold uppercase">
-Ver
-</button>
-</div>
-</div>
-
-<div id="recaptcha-admin"></div>
-
-<p id="erro-admin" class="hidden text-red-500 text-sm font-bold bg-red-50 p-2 rounded"></p>
-<button type="submit" id="btn-admin" class="btn-desabilitado w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg mt-2">
-Verificar Acesso
-</button>
-<a onclick="window.abrirModalRecuperarEquipe()" class="block text-center text-sm text-gray-500 font-bold hover:text-red-700 cursor-pointer transition underline decoration-2 underline-offset-4 decoration-red-200 hover:decoration-red-700 mt-3">
-Esqueci minha senha
-</a>
-</form>
-</div>
-</div>
-
-<!-- ================= MODAL: RECUPERAR USUÁRIO/SENHA ================= -->
-<div id="modal-recuperar" class="fixed inset-0 z-50 hidden bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-<div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-t-8 border-blue-500 relative">
-<button onclick="window.fecharModalRecuperar()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold">✖</button>
-
-<!-- Etapa 1: identificar -->
-<div id="recuperar-etapa-1">
-<h3 class="text-2xl font-bold text-gray-900 mb-2">Recuperar acesso</h3>
-<p class="text-sm text-gray-500 mb-6">Confirme seu nome completo e data de nascimento cadastrados.</p>
-
-<form id="form-recuperar" class="space-y-4">
-<div>
-<label class="block text-sm font-bold text-gray-700">Nome completo</label>
-<input type="text" id="recuperar-nome" required
-class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
-</div>
-<div>
-<label class="block text-sm font-bold text-gray-700">Data de nascimento</label>
-<input type="date" id="recuperar-nascimento" required
-class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
-</div>
-
-<div id="recaptcha-recuperar"></div>
-
-<p id="msg-recuperar-1" class="hidden text-sm font-bold p-2 rounded"></p>
-<button type="submit" id="btn-recuperar-buscar" class="btn-desabilitado w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg mt-2">
-Buscar minha conta
-</button>
-</form>
-</div>
-
-<!-- Etapa 2: confirmar -->
-<div id="recuperar-etapa-2" class="hidden">
-<h3 class="text-2xl font-bold text-gray-900 mb-2">Conta encontrada</h3>
-<p class="text-sm text-gray-600 mb-1">Usuário: <span id="recuperar-usuario-mascarado" class="font-mono font-bold"></span></p>
-<p id="recuperar-email-instrucao" class="text-sm text-gray-600 mb-4"></p>
-
-<form id="form-recuperar-email" class="space-y-3">
-<div>
-<label class="block text-sm font-bold text-gray-700">E-mail</label>
-<input type="email" id="recuperar-email" required placeholder="seuemail@exemplo.com"
-class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none">
-</div>
-
-<p id="msg-recuperar-2" class="hidden text-sm font-bold p-2 rounded"></p>
-
-<button type="submit" id="btn-recuperar-confirmar" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg">
-Confirmar e enviar nova senha
-</button>
-</form>
-<button onclick="window.voltarEtapa1Recuperar()" class="w-full text-gray-500 font-bold py-2 mt-2 hover:text-gray-700 transition text-sm">
-Voltar
-</button>
-</div>
-
-<!-- Etapa 2b: conta encontrada, mas sem e-mail cadastrado pelo professor -->
-<!-- ainda. Não deixamos a pessoa "cadastrar" um e-mail aqui: quem sabe nome -->
-<!-- completo + data de nascimento não é necessariamente o dono da conta. -->
-<div id="recuperar-sem-email" class="hidden text-center">
-<div class="text-4xl mb-3">✉️</div>
-<h3 class="text-lg font-bold text-gray-900 mb-2">Ainda não há e-mail cadastrado</h3>
-<p class="text-sm text-gray-500 mb-6">Por segurança, só é possível recuperar a senha de uma conta que já tem e-mail cadastrado pelo professor. Peça para ele cadastrar seu e-mail — depois disso você já consegue recuperar por aqui.</p>
-<button onclick="window.fecharModalRecuperar()" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition shadow-lg">
-Entendi
-</button>
-</div>
-
-<!-- Etapa 3: sucesso -->
-<div id="recuperar-etapa-3" class="hidden text-center">
-<div class="text-5xl mb-4">✅</div>
-<h3 class="text-xl font-bold text-gray-900 mb-2">Enviamos sua nova senha!</h3>
-<p class="text-sm text-gray-500 mb-6">Confira seu e-mail (inclusive a caixa de spam) e troque a senha assim que entrar.</p>
-<button onclick="window.fecharModalRecuperar()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg">
-Fechar
-</button>
-</div>
-</div>
-</div>
-
-<!-- ================= MODAL: RECUPERAR SENHA DA EQUIPE/PROFESSOR ================= -->
-<div id="modal-recuperar-equipe" class="fixed inset-0 z-50 hidden bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-<div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-t-8 border-red-500 relative">
-<button onclick="window.fecharModalRecuperarEquipe()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold">✖</button>
-
-<!-- Etapa 1: identificar pelo usuário -->
-<div id="recuperar-equipe-etapa-1">
-<h3 class="text-2xl font-bold text-gray-900 mb-2">Recuperar acesso</h3>
-<p class="text-sm text-gray-500 mb-6">Digite o usuário da sua conta de administrador/professor.</p>
-
-<form id="form-recuperar-equipe" class="space-y-4">
-<div>
-<label class="block text-sm font-bold text-gray-700">Usuário</label>
-<input type="text" id="recuperar-equipe-usuario" required autocomplete="username"
-class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
-</div>
-
-<div id="recaptcha-recuperar-equipe"></div>
-
-<p id="msg-recuperar-equipe-1" class="hidden text-sm font-bold p-2 rounded"></p>
-<button type="submit" id="btn-recuperar-equipe-buscar" class="btn-desabilitado w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg mt-2">
-Buscar minha conta
-</button>
-</form>
-</div>
-
-<!-- Etapa 2: confirmar e-mail -->
-<div id="recuperar-equipe-etapa-2" class="hidden">
-<h3 class="text-2xl font-bold text-gray-900 mb-2">Conta encontrada</h3>
-<p class="text-sm text-gray-600 mb-4">Confirme o e-mail cadastrado para receber a nova senha.</p>
-
-<form id="form-recuperar-equipe-email" class="space-y-3">
-<div>
-<label class="block text-sm font-bold text-gray-700">E-mail</label>
-<input type="email" id="recuperar-equipe-email" required placeholder="seuemail@exemplo.com"
-class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none">
-</div>
-
-<p id="msg-recuperar-equipe-2" class="hidden text-sm font-bold p-2 rounded"></p>
-
-<button type="submit" id="btn-recuperar-equipe-confirmar" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg">
-Confirmar e enviar nova senha
-</button>
-</form>
-<button onclick="window.voltarEtapa1RecuperarEquipe()" class="w-full text-gray-500 font-bold py-2 mt-2 hover:text-gray-700 transition text-sm">
-Voltar
-</button>
-</div>
-
-<!-- Etapa 2b: conta encontrada, mas sem e-mail cadastrado -->
-<div id="recuperar-equipe-sem-email" class="hidden text-center">
-<div class="text-4xl mb-3">✉️</div>
-<h3 class="text-lg font-bold text-gray-900 mb-2">Ainda não há e-mail cadastrado</h3>
-<p class="text-sm text-gray-500 mb-6">Essa conta ainda não tem e-mail cadastrado. Peça para outro administrador cadastrar um e-mail antes de recuperar a senha por aqui.</p>
-<button onclick="window.fecharModalRecuperarEquipe()" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition shadow-lg">
-Entendi
-</button>
-</div>
-
-<!-- Etapa 3: sucesso -->
-<div id="recuperar-equipe-etapa-3" class="hidden text-center">
-<div class="text-5xl mb-4">✅</div>
-<h3 class="text-xl font-bold text-gray-900 mb-2">Enviamos sua nova senha!</h3>
-<p class="text-sm text-gray-500 mb-6">Confira seu e-mail (inclusive a caixa de spam) e troque a senha assim que entrar.</p>
-<button onclick="window.fecharModalRecuperarEquipe()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg">
-Fechar
-</button>
-</div>
-</div>
-</div>
-
-<script>
-// ============================================================
-// CONFIGURAÇÃO (chaves públicas — seguras para ficar no front-end)
-// ============================================================
-const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbGNzZ3F2dW51dGJ2cGF6Z3NnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1Njc5MTQsImV4cCI6MjEwMDE0MzkxNH0.T87bJPVYiYO9vyJtaB6_n9CREO6f-mNGumGK0phtaYk';
-const RECAPTCHA_SITE_KEY = '6LddCF0tAAAAAMS5sgbLZgyBiBAaV9dLNyLT-OH1';
-
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Quando o shell do aluno derruba uma sessão que não vale mais, ele volta pra
-// cá com ?sessao=<motivo>. Explica o que houve em vez de deixar o aluno
-// achando que só "caiu".
-(function avisarSessaoEncerrada() {
-const motivo = new URLSearchParams(window.location.search).get('sessao');
-if (!motivo) return;
-const mensagens = {
-encerrada: 'Sua sessão foi encerrada. Se a sua turma foi pausada, o acesso fica bloqueado — fale com o professor.',
-'termos-recusados': 'Para usar a plataforma é preciso aceitar o Termo de Uso e Responsabilidade. Entre novamente quando quiser revisar e aceitar.',
-};
-const caixa = document.getElementById('msg-erro-login');
-caixa.innerText = mensagens[motivo] || mensagens.encerrada;
-caixa.classList.remove('hidden');
-})();
-
-// ============================================================
-// reCAPTCHA — renderização manual (explicit) por widget
-// ============================================================
-let recaptchaApiPronta = false;
-let widgetLogin = null, widgetAdmin = null, widgetRecuperar = null, widgetRecuperarEquipe = null;
-let tokenLogin = null, tokenAdmin = null, tokenRecuperar = null, tokenRecuperarEquipe = null;
-
-window.onRecaptchaApiPronta = function () {
-recaptchaApiPronta = true;
-// O card de login já está visível no carregamento da página, então renderiza direto.
-widgetLogin = grecaptcha.render('recaptcha-login', {
-sitekey: RECAPTCHA_SITE_KEY,
-callback: (token) => { tokenLogin = token; atualizarBotao('btn-acessar', true); },
-'expired-callback': () => { tokenLogin = null; atualizarBotao('btn-acessar', false); },
-});
-};
-
-function atualizarBotao(id, habilitado) {
-const btn = document.getElementById(id);
-if (habilitado) btn.classList.remove('btn-desabilitado');
-else btn.classList.add('btn-desabilitado');
-}
-
-// Quando uma Edge Function responde com status de erro (400/401/etc.), o
-// supabase-js NÃO coloca o corpo da resposta em "data" — ele vai parar em
-// "error.context" (a Response bruta). Por isso, sem isso aqui, toda mensagem
-// de erro específica (ex: "Usuário ou senha incorretos") virava um genérico
-// "Não foi possível entrar".
-async function extrairMensagemErro(error, data, mensagemPadrao) {
-if (data && data.erro) return data.erro;
-if (error && error.context) {
-try {
-const corpo = await error.context.json();
-if (corpo && corpo.erro) return corpo.erro;
-} catch (e) { /* corpo não era JSON, usa a mensagem padrão */ }
-}
-return mensagemPadrao;
-}
-
-// ============================================================
-// Alternar visibilidade de senha
-// ============================================================
-window.alternarSenha = (idInput, botao) => {
-const input = document.getElementById(idInput);
-const mostrando = input.type === 'text';
-input.type = mostrando ? 'password' : 'text';
-botao.innerText = mostrando ? 'Ver' : 'Ocultar';
-};
-
-// ============================================================
-// LOGIN DO ALUNO
-// ============================================================
-document.getElementById('form-login').addEventListener('submit', async (e) => {
-e.preventDefault();
-const erroBox = document.getElementById('msg-erro-login');
-erroBox.classList.add('hidden');
-
-if (!tokenLogin) return;
-
-const btn = document.getElementById('btn-acessar');
-const textoOriginal = btn.innerText;
-btn.innerText = 'Entrando...';
-atualizarBotao('btn-acessar', false);
-
-const usuario = document.getElementById('login-usuario').value.trim();
-const senha = document.getElementById('login-senha').value;
-
-const { data, error } = await supabaseClient.functions.invoke('login-aluno', {
-body: { usuario, senha, recaptchaToken: tokenLogin },
-});
-
-if (error || !data || data.erro) {
-erroBox.innerText = await extrairMensagemErro(error, data, 'Não foi possível entrar. Tente novamente.');
-erroBox.classList.remove('hidden');
-grecaptcha.reset(widgetLogin);
-tokenLogin = null;
-btn.innerText = textoOriginal;
-return;
-}
-
-// Guarda a sessão do aluno para as próximas páginas usarem
-localStorage.setItem('pibiex_aluno_token', data.token);
-localStorage.setItem('pibiex_aluno_dados', JSON.stringify(data.aluno));
-
-let destino = 'aluno/inicio.html';
-if (data.aluno.precisaTrocarSenha) destino = 'trocar-senha.html';
-else if (data.aluno.precisaAceitarTermos) destino = 'termos.html';
-window.location.href = destino;
-});
-
-// ============================================================
-// MODAL ADMIN
-// ============================================================
-window.abrirModalAdmin = () => {
-document.getElementById('modal-admin').classList.remove('hidden');
-if (recaptchaApiPronta && widgetAdmin === null) {
-widgetAdmin = grecaptcha.render('recaptcha-admin', {
-sitekey: RECAPTCHA_SITE_KEY,
-callback: (token) => { tokenAdmin = token; atualizarBotao('btn-admin', true); },
-'expired-callback': () => { tokenAdmin = null; atualizarBotao('btn-admin', false); },
-});
-}
-};
-window.fecharModalAdmin = () => document.getElementById('modal-admin').classList.add('hidden');
-
-document.getElementById('form-admin').addEventListener('submit', async (e) => {
-e.preventDefault();
-const erroAdmin = document.getElementById('erro-admin');
-erroAdmin.classList.add('hidden');
-
-if (!tokenAdmin) return;
-
-const btn = document.getElementById('btn-admin');
-btn.innerText = 'Verificando...';
-atualizarBotao('btn-admin', false);
-
-const usuario = document.getElementById('admin-email').value.trim();
-const senha = document.getElementById('admin-senha').value;
-
-const { data, error } = await supabaseClient.functions.invoke('login-equipe', {
-body: { usuario, senha, recaptchaToken: tokenAdmin },
-});
-
-if (error || !data || data.erro) {
-erroAdmin.innerText = await extrairMensagemErro(error, data, 'Não foi possível entrar.');
-erroAdmin.classList.remove('hidden');
-grecaptcha.reset(widgetAdmin);
-tokenAdmin = null;
-btn.innerText = 'Verificar Acesso';
-return;
-}
-
-localStorage.setItem('pibiex_equipe_token', data.token);
-localStorage.setItem('pibiex_equipe_dados', JSON.stringify(data.equipe));
-
-window.location.href = 'admin/inicio.html';
-});
-
-// ============================================================
-// MODAL RECUPERAR SENHA
-// ============================================================
-let ticketRecuperacao = null;
-
-// Limpa tudo que a etapa 1/2 possa ter guardado: nome, data de nascimento,
-// e-mail digitado e o ticket da busca. Sem isso, quem usa um computador
-// compartilhado (ex: da sala de aula) e sai sem fechar a aba deixa os dados
-// de outra pessoa visíveis pro próximo que abrir "Esqueci minha senha".
-function limparFormularioRecuperar() {
-document.getElementById('form-recuperar').reset();
-document.getElementById('form-recuperar-email').reset();
-document.getElementById('msg-recuperar-1').classList.add('hidden');
-document.getElementById('msg-recuperar-2').classList.add('hidden');
-document.getElementById('recuperar-usuario-mascarado').innerText = '';
-document.getElementById('recuperar-email-instrucao').innerText = '';
-ticketRecuperacao = null;
-if (widgetRecuperar !== null) grecaptcha.reset(widgetRecuperar);
-tokenRecuperar = null;
-atualizarBotao('btn-recuperar-buscar', false);
-}
-
-window.abrirModalRecuperar = () => {
-limparFormularioRecuperar();
-document.getElementById('modal-recuperar').classList.remove('hidden');
-document.getElementById('recuperar-etapa-1').classList.remove('hidden');
-document.getElementById('recuperar-etapa-2').classList.add('hidden');
-document.getElementById('recuperar-sem-email').classList.add('hidden');
-document.getElementById('recuperar-etapa-3').classList.add('hidden');
-if (recaptchaApiPronta && widgetRecuperar === null) {
-widgetRecuperar = grecaptcha.render('recaptcha-recuperar', {
-sitekey: RECAPTCHA_SITE_KEY,
-callback: (token) => { tokenRecuperar = token; atualizarBotao('btn-recuperar-buscar', true); },
-'expired-callback': () => { tokenRecuperar = null; atualizarBotao('btn-recuperar-buscar', false); },
-});
-}
-};
-window.fecharModalRecuperar = () => {
-document.getElementById('modal-recuperar').classList.add('hidden');
-limparFormularioRecuperar();
-};
-window.voltarEtapa1Recuperar = () => {
-document.getElementById('recuperar-etapa-1').classList.remove('hidden');
-document.getElementById('recuperar-etapa-2').classList.add('hidden');
-document.getElementById('recuperar-sem-email').classList.add('hidden');
-};
-
-document.getElementById('form-recuperar').addEventListener('submit', async (e) => {
-e.preventDefault();
-const msg = document.getElementById('msg-recuperar-1');
-msg.classList.add('hidden');
-
-if (!tokenRecuperar) return;
-
-const btn = document.getElementById('btn-recuperar-buscar');
-btn.innerText = 'Buscando...';
-atualizarBotao('btn-recuperar-buscar', false);
-
-const nomeCompleto = document.getElementById('recuperar-nome').value.trim();
-const dataNascimento = document.getElementById('recuperar-nascimento').value;
-
-const { data, error } = await supabaseClient.functions.invoke('recuperar-senha', {
-body: { etapa: 'identificar', nomeCompleto, dataNascimento, recaptchaToken: tokenRecuperar },
-});
-
-grecaptcha.reset(widgetRecuperar);
-tokenRecuperar = null;
-btn.innerText = 'Buscar minha conta';
-
-if (error || !data) {
-msg.innerText = await extrairMensagemErro(error, data, 'Erro ao buscar. Tente novamente.');
-msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
-msg.classList.remove('hidden');
-return;
-}
-
-if (!data.encontrado) {
-msg.innerText = data.mensagem;
-msg.className = 'text-sm font-bold p-2 rounded bg-yellow-50 text-yellow-700';
-msg.classList.remove('hidden');
-return;
-}
-
-ticketRecuperacao = data.ticket;
-document.getElementById('recuperar-etapa-1').classList.add('hidden');
-
-if (!data.temEmailCadastrado) {
-document.getElementById('recuperar-sem-email').classList.remove('hidden');
-return;
-}
-
-document.getElementById('recuperar-usuario-mascarado').innerText = data.usuarioMascarado;
-document.getElementById('recuperar-email-instrucao').innerText = 'Confirme o e-mail cadastrado para receber a nova senha.';
-document.getElementById('recuperar-email').value = '';
-document.getElementById('msg-recuperar-2').classList.add('hidden');
-document.getElementById('recuperar-etapa-2').classList.remove('hidden');
-});
-
-document.getElementById('form-recuperar-email').addEventListener('submit', async (e) => {
-e.preventDefault();
-const msg = document.getElementById('msg-recuperar-2');
-msg.classList.add('hidden');
-
-const email = document.getElementById('recuperar-email').value.trim();
-if (!email) return;
-
-const btn = document.getElementById('btn-recuperar-confirmar');
-btn.innerText = 'Enviando...';
-btn.disabled = true;
-
-const { data, error } = await supabaseClient.functions.invoke('recuperar-senha', {
-body: { etapa: 'confirmar', ticket: ticketRecuperacao, email },
-});
-
-btn.innerText = 'Confirmar e enviar nova senha';
-btn.disabled = false;
-
-if (error || !data || data.erro) {
-msg.innerText = await extrairMensagemErro(error, data, 'Erro ao enviar. Tente pedir a recuperação novamente.');
-msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
-msg.classList.remove('hidden');
-return;
-}
-
-document.getElementById('recuperar-etapa-2').classList.add('hidden');
-document.getElementById('recuperar-etapa-3').classList.remove('hidden');
-});
-
-// ============================================================
-// MODAL RECUPERAR SENHA DA EQUIPE/PROFESSOR
-// ============================================================
-let ticketRecuperacaoEquipe = null;
-
-function limparFormularioRecuperarEquipe() {
-document.getElementById('form-recuperar-equipe').reset();
-document.getElementById('form-recuperar-equipe-email').reset();
-document.getElementById('msg-recuperar-equipe-1').classList.add('hidden');
-document.getElementById('msg-recuperar-equipe-2').classList.add('hidden');
-ticketRecuperacaoEquipe = null;
-if (widgetRecuperarEquipe !== null) grecaptcha.reset(widgetRecuperarEquipe);
-tokenRecuperarEquipe = null;
-atualizarBotao('btn-recuperar-equipe-buscar', false);
-}
-
-window.abrirModalRecuperarEquipe = () => {
-limparFormularioRecuperarEquipe();
-document.getElementById('modal-recuperar-equipe').classList.remove('hidden');
-document.getElementById('recuperar-equipe-etapa-1').classList.remove('hidden');
-document.getElementById('recuperar-equipe-etapa-2').classList.add('hidden');
-document.getElementById('recuperar-equipe-sem-email').classList.add('hidden');
-document.getElementById('recuperar-equipe-etapa-3').classList.add('hidden');
-if (recaptchaApiPronta && widgetRecuperarEquipe === null) {
-widgetRecuperarEquipe = grecaptcha.render('recaptcha-recuperar-equipe', {
-sitekey: RECAPTCHA_SITE_KEY,
-callback: (token) => { tokenRecuperarEquipe = token; atualizarBotao('btn-recuperar-equipe-buscar', true); },
-'expired-callback': () => { tokenRecuperarEquipe = null; atualizarBotao('btn-recuperar-equipe-buscar', false); },
-});
-}
-};
-window.fecharModalRecuperarEquipe = () => {
-document.getElementById('modal-recuperar-equipe').classList.add('hidden');
-limparFormularioRecuperarEquipe();
-};
-window.voltarEtapa1RecuperarEquipe = () => {
-document.getElementById('recuperar-equipe-etapa-1').classList.remove('hidden');
-document.getElementById('recuperar-equipe-etapa-2').classList.add('hidden');
-document.getElementById('recuperar-equipe-sem-email').classList.add('hidden');
-};
-
-document.getElementById('form-recuperar-equipe').addEventListener('submit', async (e) => {
-e.preventDefault();
-const msg = document.getElementById('msg-recuperar-equipe-1');
-msg.classList.add('hidden');
-
-if (!tokenRecuperarEquipe) return;
-
-const btn = document.getElementById('btn-recuperar-equipe-buscar');
-btn.innerText = 'Buscando...';
-atualizarBotao('btn-recuperar-equipe-buscar', false);
-
-const usuario = document.getElementById('recuperar-equipe-usuario').value.trim();
-
-const { data, error } = await supabaseClient.functions.invoke('recuperar-senha-equipe', {
-body: { etapa: 'identificar', usuario, recaptchaToken: tokenRecuperarEquipe },
-});
-
-grecaptcha.reset(widgetRecuperarEquipe);
-tokenRecuperarEquipe = null;
-btn.innerText = 'Buscar minha conta';
-
-if (error || !data) {
-msg.innerText = await extrairMensagemErro(error, data, 'Erro ao buscar. Tente novamente.');
-msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
-msg.classList.remove('hidden');
-return;
-}
-
-if (!data.encontrado) {
-msg.innerText = data.mensagem;
-msg.className = 'text-sm font-bold p-2 rounded bg-yellow-50 text-yellow-700';
-msg.classList.remove('hidden');
-return;
-}
-
-document.getElementById('recuperar-equipe-etapa-1').classList.add('hidden');
-
-if (!data.temEmailCadastrado) {
-document.getElementById('recuperar-equipe-sem-email').classList.remove('hidden');
-return;
-}
-
-ticketRecuperacaoEquipe = data.ticket;
-document.getElementById('recuperar-equipe-email').value = '';
-document.getElementById('msg-recuperar-equipe-2').classList.add('hidden');
-document.getElementById('recuperar-equipe-etapa-2').classList.remove('hidden');
-});
-
-document.getElementById('form-recuperar-equipe-email').addEventListener('submit', async (e) => {
-e.preventDefault();
-const msg = document.getElementById('msg-recuperar-equipe-2');
-msg.classList.add('hidden');
-
-const email = document.getElementById('recuperar-equipe-email').value.trim();
-if (!email) return;
-
-const btn = document.getElementById('btn-recuperar-equipe-confirmar');
-btn.innerText = 'Enviando...';
-btn.disabled = true;
-
-const { data, error } = await supabaseClient.functions.invoke('recuperar-senha-equipe', {
-body: { etapa: 'confirmar', ticket: ticketRecuperacaoEquipe, email },
-});
-
-btn.innerText = 'Confirmar e enviar nova senha';
-btn.disabled = false;
-
-if (error || !data || data.erro) {
-msg.innerText = await extrairMensagemErro(error, data, 'Erro ao enviar. Tente pedir a recuperação novamente.');
-msg.className = 'text-sm font-bold p-2 rounded bg-red-50 text-red-600';
-msg.classList.remove('hidden');
-return;
-}
-
-document.getElementById('recuperar-equipe-etapa-2').classList.add('hidden');
-document.getElementById('recuperar-equipe-etapa-3').classList.remove('hidden');
-});
-</script>
 </body>
 </html>
