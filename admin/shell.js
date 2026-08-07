@@ -85,7 +85,7 @@ function protegerPaginaEquipe() {
     const dadosBrutos = localStorage.getItem('pibiex_equipe_dados');
 
     if (!token || !dadosBrutos) {
-        window.location.href = '../index.html';
+        window.location.href = '../login.html';
         return null;
     }
 
@@ -186,7 +186,7 @@ async function sairEquipe() {
     }
     localStorage.removeItem('pibiex_equipe_token');
     localStorage.removeItem('pibiex_equipe_dados');
-    window.location.href = '../index.html';
+    window.location.href = '../login.html';
 }
 
 // ============================================================
