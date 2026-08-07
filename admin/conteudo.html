@@ -93,9 +93,9 @@
                     if (editando) {
                         return `
                             <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
-                                <input id="edit-titulo-${item.id}" value="${item.titulo}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                <input id="edit-url-${item.id}" value="${item.url}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                <input id="edit-descricao-${item.id}" value="${item.descricao || ''}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <input id="edit-titulo-${item.id}" value="${escaparHtml(item.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <input id="edit-url-${item.id}" value="${escaparHtml(item.url)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <input id="edit-descricao-${item.id}" value="${escaparHtml(item.descricao || '')}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                                 <div class="flex gap-2 flex-wrap">
                                     <select id="edit-tipo-${item.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">${opcoesTipo(item.tipo)}</select>
                                     <input id="edit-ordem-${item.id}" type="number" value="${item.ordem}" class="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
@@ -111,8 +111,8 @@
                             <div class="flex items-center gap-3 min-w-0">
                                 <span class="text-xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</span>
                                 <div class="min-w-0">
-                                    <p class="font-bold text-gray-800 text-sm truncate">${item.titulo}</p>
-                                    <a href="${item.url}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${item.url}</a>
+                                    <p class="font-bold text-gray-800 text-sm truncate">${escaparHtml(item.titulo)}</p>
+                                    <a href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${escaparHtml(item.url)}</a>
                                 </div>
                             </div>
                             <div class="flex gap-2 shrink-0">
@@ -140,8 +140,8 @@
                 return `
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="px-5 py-4 bg-gray-900">
-                            <p class="text-white font-black">${modulo.titulo}</p>
-                            ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${modulo.descricao}</p>` : ''}
+                            <p class="text-white font-black">${escaparHtml(modulo.titulo)}</p>
+                            ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${escaparHtml(modulo.descricao)}</p>` : ''}
                         </div>
                         ${itensHtml || '<p class="text-gray-400 text-sm px-5 py-4">Nenhum conteúdo neste módulo ainda.</p>'}
                         ${formNovoConteudo}
