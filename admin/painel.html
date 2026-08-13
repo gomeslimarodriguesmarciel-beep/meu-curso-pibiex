@@ -54,6 +54,16 @@
         @keyframes pulso-vivo { 0% { box-shadow: 0 0 0 0 var(--status-good-glow); } 70% { box-shadow: 0 0 0 7px rgba(31,206,74,0); } 100% { box-shadow: 0 0 0 0 rgba(31,206,74,0); } }
         @media (prefers-reduced-motion: reduce) { .painel-fundo .ponto-vivo { animation: none; } }
         .painel-fundo .relogio { font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .painel-fundo .seletor-turma {
+            background: var(--surface-card); border: 1px solid var(--border); border-radius: 999px;
+            padding: 8px 32px 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--text-primary);
+            font-family: inherit; outline: none; cursor: pointer; transition: border-color .15s;
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9b1d6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center; background-size: 14px;
+        }
+        .painel-fundo .seletor-turma:focus { border-color: var(--series-1); }
+        .painel-fundo .seletor-turma option { background: var(--surface-card); color: var(--text-primary); }
 
         .painel-fundo .filtros { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .painel-fundo .grupo-pills { display: flex; gap: 6px; background: var(--surface-card); border: 1px solid var(--border); border-radius: 999px; padding: 4px; }
@@ -168,6 +178,9 @@
                         <p>Acompanhamento de acesso dos alunos</p>
                     </div>
                     <div class="status-topo">
+                        <select id="seletor-turma" class="seletor-turma" aria-label="Filtrar por turma">
+                            <option value="">Todas as turmas</option>
+                        </select>
                         <span class="relogio" id="relogio">carregando…</span>
                         <span class="ao-vivo"><span class="ponto-vivo"></span>AO VIVO</span>
                     </div>
@@ -294,6 +307,7 @@
     <script src="shell.js"></script>
     <script>
         let TOKEN_EQUIPE = null;
+        let turmaAtual = '';
         const reduzMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         function escaparHtml(texto) {
@@ -304,13 +318,47 @@
 
         async function chamarPainel(acao, extra) {
             const { data, error } = await window.supabaseClient.functions.invoke('painel-acesso', {
-                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...(extra || {}) },
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, turmaId: turmaAtual || undefined, ...(extra || {}) },
             });
             if (error || !data || data.erro) {
                 console.error('Erro ao carregar painel:', acao, error, data && data.erro);
                 return null;
             }
             return data;
+        }
+
+        // ---------------- seletor de turma ----------------
+        async function carregarTurmas() {
+            const seletor = document.getElementById('seletor-turma');
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-turmas', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'listar' },
+            });
+            if (error || !data || data.erro || !data.turmas) return;
+
+            for (const t of data.turmas) {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.nome + (t.ativa ? '' : ' (pausada)');
+                seletor.appendChild(opt);
+            }
+
+            // Só vale a pena mostrar o seletor quando existe mais de uma turma
+            // pra escolher — com uma só, "Todas as turmas" e "aquela turma"
+            // são a mesma coisa, e o controle só ocuparia espaço à toa.
+            if (data.turmas.length < 2) seletor.style.display = 'none';
+        }
+
+        document.getElementById('seletor-turma').addEventListener('change', (e) => {
+            turmaAtual = e.target.value;
+            carregarTudo();
+        });
+
+        function carregarTudo() {
+            carregarResumo();
+            carregarLinhaTempo(periodoAtual);
+            carregarRanking();
+            carregarMapaCalor();
+            carregarAlunos();
         }
 
         // ---------------- relógio ----------------
@@ -684,11 +732,8 @@
             atualizarRelogio();
             setInterval(atualizarRelogio, 1000);
 
-            carregarResumo();
-            carregarLinhaTempo('hoje');
-            carregarRanking();
-            carregarMapaCalor();
-            carregarAlunos();
+            carregarTurmas();
+            carregarTudo();
         });
     </script>
 </body>
