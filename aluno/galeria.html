@@ -97,9 +97,13 @@
         }
 
         window.alternarCurtida = async (projetoId, jaCurti) => {
-            await window.supabaseClient.functions.invoke('galeria', {
+            const { data, error } = await window.supabaseClient.functions.invoke('galeria', {
                 body: { token: TOKEN_ALUNO, acao: jaCurti ? 'descurtir' : 'curtir', projetoId },
             });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) || 'Não foi possível curtir agora. Tente novamente.');
+                return;
+            }
             await carregar();
         };
 
@@ -110,9 +114,14 @@
             if (!comentario) return false;
 
             input.value = '';
-            await window.supabaseClient.functions.invoke('galeria', {
+            const { data, error } = await window.supabaseClient.functions.invoke('galeria', {
                 body: { token: TOKEN_ALUNO, acao: 'comentar', projetoId, comentario },
             });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) || 'Não foi possível comentar agora. Tente novamente.');
+                input.value = comentario;
+                return false;
+            }
             await carregar();
             return false;
         };
