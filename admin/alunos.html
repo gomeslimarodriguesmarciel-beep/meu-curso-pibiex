@@ -387,7 +387,8 @@
             if (!termo) return;
 
             document.getElementById('termo-assinatura').innerText =
-                `${termo.aluno.nome_completo} (${termo.aluno.usuario}) · aceito em ${formatarDataHora(termo.aceite.aceito_em)} · versão ${termo.aceite.versao}`;
+                `${termo.aluno.nome_completo} (${termo.aluno.usuario}) · aceito em ${formatarDataHora(termo.aceite.aceito_em)} · versão ${termo.aceite.versao}` +
+                (termo.aceite.ip ? ` · IP ${termo.aceite.ip}` : '');
 
             const blocos = [
                 `<p class="text-gray-900 font-black text-base">${escaparHtml(TERMOS_CONTEUDO.titulo)}</p>`,
@@ -447,7 +448,15 @@
             doc.setTextColor(90);
             const assinatura = `${termoAtual.aluno.nome_completo} (${termoAtual.aluno.usuario}) · aceito em ${formatarDataHora(termoAtual.aceite.aceito_em)} · versão ${termoAtual.aceite.versao}`;
             doc.text(assinatura, margem, y, { maxWidth: largura });
-            avancar(22);
+            avancar(16);
+
+            if (termoAtual.aceite.ip) {
+                doc.setFontSize(8.5);
+                const rastro = `Registrado a partir do IP ${termoAtual.aceite.ip}${termoAtual.aceite.user_agent ? ' · ' + termoAtual.aceite.user_agent : ''}`;
+                doc.text(doc.splitTextToSize(rastro, largura), margem, y);
+                avancar(14);
+            }
+            avancar(8);
             doc.setTextColor(20);
 
             escreverParagrafo(TERMOS_CONTEUDO.preambulo, false);
