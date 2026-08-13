@@ -11,7 +11,7 @@
 // realmente assinou.
 
 window.TERMOS_CONTEUDO = {
-    versao: '2026-08-02',
+    versao: '2026-08-13',
     titulo: 'Termo de Uso e Responsabilidade — PIBIEX 2026',
     preambulo: 'Este Termo estabelece as condições para utilização da plataforma PIBIEX 2026 ("Plataforma"), disponibilizada no âmbito do curso de extensão em Inteligência Artificial, sob responsabilidade da instituição de ensino e do professor coordenador. O acesso à Plataforma está condicionado à leitura e ao aceite integral deste Termo.',
     clausulas: [
@@ -54,7 +54,7 @@ window.TERMOS_CONTEUDO = {
             titulo: '5. Proteção de dados pessoais',
             itens: [
                 '5.1. O aluno é responsável pelo uso realizado por meio de sua conta.',
-                '5.2. Os dados cadastrados — nome, data de nascimento e e-mail — são utilizados exclusivamente para o funcionamento do curso e para a recuperação de acesso, não sendo compartilhados com terceiros externos à instituição.',
+                '5.2. Os dados cadastrados — nome, data de nascimento e e-mail — são utilizados para o funcionamento do curso e para a recuperação de acesso. Alguns dados podem ser compartilhados com prestadores de serviço estritamente necessários ao funcionamento da Plataforma (como envio de e-mail e processamento das mensagens enviadas ao assistente de inteligência artificial) — os detalhes de quais dados, quais prestadores e por quê estão descritos na Política de Privacidade.',
                 '5.3. Pais e responsáveis legais poderão, a qualquer momento, solicitar ao professor informações sobre o uso da Plataforma por aluno menor de idade.',
             ],
         },
