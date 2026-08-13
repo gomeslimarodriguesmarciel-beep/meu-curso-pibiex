@@ -60,6 +60,7 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
 // visíveis (mostrando o que vem por aí) mas podem não ter destino ainda.
 const ITENS_MENU_EQUIPE = [
     { id: 'inicio',       label: 'Início',            href: 'inicio.html' },
+    { id: 'painel',       label: 'Painel de Controle', href: 'painel.html' },
     { id: 'turmas',       label: 'Turmas',            href: 'turmas.html' },
     { id: 'alunos',       label: 'Alunos',            href: 'alunos.html' },
     { id: 'cronograma',   label: 'Cronograma',        href: 'cronograma.html' },
@@ -81,6 +82,7 @@ const ITENS_MENU_EQUIPE = [
 // área do aluno, sem emoji.
 const ICONES = {
     inicio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-6h4v6"/></svg>',
+    painel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M11 20V4M18 20v-7"/><circle cx="18" cy="9.5" r="1.4"/></svg>',
     turmas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>',
     alunos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M4 19c0-3 2.5-5 5-5s5 2 5 5"/><circle cx="17" cy="9" r="2.3"/><path d="M14.5 19c.3-2.2 1.7-3.8 3.3-4.3"/></svg>',
     cronograma: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="1.5"/><path d="M4 9.5h16"/><path d="M8 3v4M16 3v4"/></svg>',
