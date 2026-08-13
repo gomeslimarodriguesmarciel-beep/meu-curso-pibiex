@@ -52,6 +52,11 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
         }
         .pibiex-pulso { width: 7px; height: 7px; border-radius: 50%; background: var(--pibiex-dourado); box-shadow: 0 0 0 0 rgba(163,230,53,.7); animation: pibiexPulso 2s infinite; flex-shrink: 0; }
         @keyframes pibiexPulso { 0% { box-shadow: 0 0 0 0 rgba(163,230,53,.6); } 70% { box-shadow: 0 0 0 8px rgba(163,230,53,0); } 100% { box-shadow: 0 0 0 0 rgba(163,230,53,0); } }
+        .pibiex-digitando { display: inline-flex; gap: 4px; align-items: center; padding: 2px 0; }
+        .pibiex-digitando span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .35; animation: pibiexDigitando 1.2s infinite ease-in-out; }
+        .pibiex-digitando span:nth-child(2) { animation-delay: .15s; }
+        .pibiex-digitando span:nth-child(3) { animation-delay: .3s; }
+        @keyframes pibiexDigitando { 0%, 60%, 100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
     `;
     document.head.appendChild(estilo);
 })();
@@ -321,6 +326,25 @@ function mostrarAvisoAssistente(texto) {
     box.scrollTop = box.scrollHeight;
 }
 
+// Bolha com "..." animado enquanto espera o Gemini responder — sem isso, o
+// aluno via a própria mensagem e nada mais por alguns segundos, e achava que
+// tinha travado.
+function mostrarDigitando() {
+    const box = document.getElementById('mensagens-assistente');
+    const bolha = document.createElement('div');
+    bolha.id = 'bolha-digitando';
+    bolha.className = 'bg-white border rounded-lg rounded-bl-sm px-4 py-3 max-w-[85%] w-fit';
+    bolha.style.borderColor = 'var(--pibiex-borda)';
+    bolha.innerHTML = '<span class="pibiex-digitando" style="color: var(--pibiex-texto-suave);"><span></span><span></span><span></span></span>';
+    box.appendChild(bolha);
+    box.scrollTop = box.scrollHeight;
+}
+
+function removerDigitando() {
+    const bolha = document.getElementById('bolha-digitando');
+    if (bolha) bolha.remove();
+}
+
 // Apaga a conversa atual no banco e limpa a tela. Se ainda não houve pergunta
 // nenhuma, não existe conversa salva — aí é só limpar.
 window.novoChatAssistente = async () => {
@@ -349,22 +373,38 @@ window.novoChatAssistente = async () => {
     mostrarAvisoAssistente('Conversa apagada. Pode começar de novo.');
 };
 
+let enviandoMensagemAssistente = false;
+
 async function enviarMensagemAssistente(e) {
     e.preventDefault();
+    if (enviandoMensagemAssistente) return;
+
     const input = document.getElementById('input-assistente');
+    const botaoEnviar = document.querySelector('#form-assistente button[type="submit"]');
     const mensagem = input.value.trim();
     if (!mensagem) return;
 
     adicionarMensagemNaTela('aluno', mensagem);
     input.value = '';
 
+    enviandoMensagemAssistente = true;
+    input.disabled = true;
+    if (botaoEnviar) botaoEnviar.disabled = true;
+    mostrarDigitando();
+
     const token = localStorage.getItem('pibiex_aluno_token');
     const { data, error } = await window.supabaseClient.functions.invoke('assistente-ia', {
         body: { token, mensagem, conversaId: conversaIaAtual },
     });
 
+    removerDigitando();
+    enviandoMensagemAssistente = false;
+    input.disabled = false;
+    if (botaoEnviar) botaoEnviar.disabled = false;
+    input.focus();
+
     if (error || !data || data.erro) {
-        adicionarMensagemNaTela('ia', 'Desculpe, não consegui responder agora. Tente novamente em instantes.');
+        adicionarMensagemNaTela('ia', (data && data.erro) || 'Desculpe, não consegui responder agora. Tente novamente em instantes.');
         return;
     }
 
