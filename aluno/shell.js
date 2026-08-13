@@ -446,20 +446,30 @@ async function iniciarShellAluno(paginaAtivaId) {
     const sessao = protegerPaginaAluno();
     if (!sessao) return null;
 
-    const alunoNoServidor = await conferirSessaoNoServidor(sessao.token);
-    if (!alunoNoServidor) {
-        encerrarSessaoLocal('encerrada');
-        return null;
-    }
-
-    if (alunoNoServidor.precisaAceitarTermos) {
-        window.location.href = '../termos.html';
-        return null;
-    }
-
+    // Desenha a tela JÁ com os dados salvos localmente, sem esperar o
+    // servidor confirmar — a confirmação (abaixo) roda em paralelo, não
+    // antes. É isso que faz a página parecer carregar na hora: antes, toda
+    // página ficava em branco por mais de 1s esperando essa checagem só pra
+    // então desenhar o menu e SÓ DEPOIS começar a buscar o conteúdo real —
+    // duas idas e voltas ao servidor em fila, uma atrás da outra.
     montarMenuLateral(paginaAtivaId);
     montarTopo(sessao.dados.nomeCompleto);
     montarAssistenteFlutuante();
+
+    // Confirma no servidor por trás dos panos: pega o caso (raro) de a turma
+    // ter sido pausada ou o termo de uso ter mudado de versão desde o último
+    // login — coisas que o localStorage sozinho não sabe. Se achar algo
+    // errado, redireciona a partir daqui mesmo, mesmo com a página já
+    // desenhada.
+    conferirSessaoNoServidor(sessao.token).then((alunoNoServidor) => {
+        if (!alunoNoServidor) {
+            encerrarSessaoLocal('encerrada');
+            return;
+        }
+        if (alunoNoServidor.precisaAceitarTermos) {
+            window.location.href = '../termos.html';
+        }
+    });
 
     return sessao.dados;
 }
