@@ -135,7 +135,19 @@
 
         document.getElementById('editor-cor').addEventListener('input', (e) => {
             editorConteudo.focus();
+            // Em alguns navegadores execCommand('foreColor') gera <font
+            // color="..."> em vez de <span style="color:...">. O
+            // sanitizador do servidor só reconhece a segunda forma — sem
+            // essa troca, a cor aplicada seria descartada silenciosamente
+            // ao salvar (confirmado testando: o Chrome deste ambiente faz
+            // exatamente isso).
             document.execCommand('foreColor', false, e.target.value);
+            editorConteudo.querySelectorAll('font[color]').forEach((f) => {
+                const span = document.createElement('span');
+                span.style.color = f.getAttribute('color');
+                while (f.firstChild) span.appendChild(f.firstChild);
+                f.replaceWith(span);
+            });
         });
         document.getElementById('editor-cor').addEventListener('mousedown', () => editorConteudo.focus());
 
