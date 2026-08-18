@@ -28,6 +28,19 @@
                 Sua conta não tem acesso total, então não pode gerenciar a equipe.
             </div>
 
+            <div id="secao-backup" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+                <p class="text-xs font-bold text-gray-500 mb-1">Backup do banco de dados</p>
+                <p class="text-sm text-gray-500 mb-3">
+                    Baixa um arquivo com todos os dados da plataforma (alunos, trabalhos, mensagens,
+                    termos assinados, etc.) — guarde-o em um lugar seguro, fora deste computador,
+                    de vez em quando. Ele contém dado pessoal real dos alunos, então trate-o como algo sensível.
+                </p>
+                <p id="msg-backup" class="hidden text-sm font-bold p-2 rounded mb-2"></p>
+                <button id="btn-baixar-backup" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">
+                    Baixar backup completo
+                </button>
+            </div>
+
             <form id="form-nova" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
                 <p class="text-xs font-bold text-gray-500 mb-3">Nova conta</p>
                 <div class="flex flex-wrap gap-3">
@@ -172,6 +185,46 @@
             if (resultado) carregarEquipe();
         };
 
+        document.getElementById('btn-baixar-backup').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-baixar-backup');
+            const msg = document.getElementById('msg-backup');
+            msg.classList.add('hidden');
+            const textoOriginal = btn.innerText;
+            btn.innerText = 'Gerando backup...';
+            btn.disabled = true;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('exportar-backup', {
+                body: { tokenEquipe: TOKEN_EQUIPE },
+            });
+
+            btn.innerText = textoOriginal;
+            btn.disabled = false;
+
+            if (error || !data || data.erro) {
+                msg.innerText = (data && data.erro) || 'Não foi possível gerar o backup agora.';
+                msg.className = 'text-sm font-bold p-2 rounded mb-2 bg-red-50 text-red-600';
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            const totalTabelas = Object.keys(data.backup).length;
+            const dataHora = new Date(data.geradoEm).toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+
+            const blob = new Blob([JSON.stringify(data.backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `backup-pibiex-${dataHora}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+
+            msg.innerText = `Backup gerado com ${totalTabelas} tabelas. Guarde o arquivo baixado em um lugar seguro.`;
+            msg.className = 'text-sm font-bold p-2 rounded mb-2 bg-green-50 text-green-700';
+            msg.classList.remove('hidden');
+        });
+
         iniciarShellEquipe('equipe').then((sessao) => {
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
@@ -179,6 +232,7 @@
 
             if (sessao.dados.nivelAcesso !== 'total') {
                 document.getElementById('aviso-sem-permissao').classList.remove('hidden');
+                document.getElementById('secao-backup').classList.add('hidden');
                 document.getElementById('form-nova').classList.add('hidden');
                 document.getElementById('lista-equipe').innerHTML = '';
                 return;
