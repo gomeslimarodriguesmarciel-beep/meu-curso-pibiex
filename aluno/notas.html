@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Minhas Notas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        #editor-conteudo {
+            min-height: 140px;
+            outline: none;
+        }
+        #editor-conteudo:empty::before {
+            content: attr(data-placeholder);
+            color: var(--pibiex-texto-suave);
+        }
+
+        .botao-formato {
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; font-size: 13px; font-weight: 700; color: var(--pibiex-texto-suave);
+            border: 1px solid var(--pibiex-borda); background: white; cursor: pointer; transition: background .12s;
+        }
+        .botao-formato:hover { background: var(--pibiex-papel); }
+        .botao-formato.italico { font-style: italic; }
+        .botao-formato.sublinhado { text-decoration: underline; }
+
+        .nota-conteudo { word-break: break-word; }
+        .nota-conteudo div { margin: 0; }
+
+        .cartao-nota { break-inside: avoid; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-4 md:p-9 max-w-5xl mx-auto">
+            <div class="flex items-start justify-between gap-4 mb-1 flex-wrap">
+                <div>
+                    <h1 class="fonte-display text-2xl font-semibold" style="color: var(--pibiex-texto);">Minhas Notas</h1>
+                    <p class="text-sm" style="color: var(--pibiex-texto-suave);">Anotações pessoais só suas — negrito, itálico, sublinhado, cor e tamanho de fonte.</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <p id="contador-notas" class="text-xs font-semibold" style="color: var(--pibiex-texto-suave);">carregando…</p>
+                    <button id="btn-nova-nota" class="mt-1 text-white text-xs font-semibold px-4 py-2 rounded-md" style="background: var(--pibiex-tinta);">
+                        + Nova nota
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= EDITOR (criar/editar) ================= -->
+            <div id="painel-editor" class="hidden bg-white rounded-lg border mt-5 p-4" style="border-color: var(--pibiex-borda);">
+                <input id="editor-titulo" maxlength="100" placeholder="Título da nota (opcional)"
+                       class="w-full border rounded-md px-3 py-2 text-sm font-semibold mb-2" style="border-color: var(--pibiex-borda);">
+
+                <div class="flex flex-wrap items-center gap-2 mb-2 pb-2 border-b" style="border-color: var(--pibiex-borda);">
+                    <button type="button" class="botao-formato" data-comando="bold" title="Negrito"><b>N</b></button>
+                    <button type="button" class="botao-formato italico" data-comando="italic" title="Itálico">I</button>
+                    <button type="button" class="botao-formato sublinhado" data-comando="underline" title="Sublinhado">S</button>
+                    <span class="w-px h-5" style="background: var(--pibiex-borda);"></span>
+                    <label class="botao-formato" title="Cor do texto" style="padding: 0; overflow: hidden;">
+                        <input type="color" id="editor-cor" value="#1f2937" class="w-full h-full cursor-pointer" style="border: none;">
+                    </label>
+                    <select id="editor-tamanho" class="border rounded-md text-xs px-1.5 py-1.5" style="border-color: var(--pibiex-borda); color: var(--pibiex-texto-suave);" title="Tamanho da fonte">
+                        <option value="12px">Pequeno</option>
+                        <option value="16px" selected>Normal</option>
+                        <option value="20px">Grande</option>
+                        <option value="28px">Enorme</option>
+                    </select>
+                </div>
+
+                <div id="editor-conteudo" contenteditable="true" data-placeholder="Escreva sua anotação..."
+                     class="text-sm leading-relaxed px-1 py-1" style="color: var(--pibiex-texto);"></div>
+
+                <p id="msg-editor" class="hidden text-xs mt-2"></p>
+
+                <div class="flex justify-end gap-2 mt-3 pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                    <button id="btn-cancelar-nota" type="button" class="text-xs font-semibold px-4 py-2 rounded-md" style="color: var(--pibiex-texto-suave);">Cancelar</button>
+                    <button id="btn-salvar-nota" type="button" class="text-white text-xs font-semibold px-4 py-2 rounded-md" style="background: var(--pibiex-tinta);">Salvar</button>
+                </div>
+            </div>
+
+            <div id="grade-notas" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_ALUNO = null;
+        let notas = [];
+        let notaEmEdicaoId = null; // null = criando nova
+        const LIMITE_NOTAS = 50;
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarData(dataIso) {
+            return new Date(dataIso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function mostrarMensagemEditor(texto, tipo) {
+            const msg = document.getElementById('msg-editor');
+            msg.innerText = texto;
+            msg.className = 'text-xs mt-2 ' + (tipo === 'erro' ? 'text-red-600 font-semibold' : '');
+            msg.classList.remove('hidden');
+        }
+
+        // ---------------- editor de formatação ----------------
+        const editorConteudo = document.getElementById('editor-conteudo');
+
+        document.querySelectorAll('.botao-formato[data-comando]').forEach((btn) => {
+            // mousedown (não click) + preventDefault: clicar num botão normalmente
+            // tira o foco do contenteditable ANTES do evento disparar, o que
+            // perderia a seleção de texto que o comando deveria formatar.
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                editorConteudo.focus();
+                document.execCommand(btn.dataset.comando);
+            });
+        });
+
+        document.getElementById('editor-cor').addEventListener('input', (e) => {
+            editorConteudo.focus();
+            document.execCommand('foreColor', false, e.target.value);
+        });
+        document.getElementById('editor-cor').addEventListener('mousedown', () => editorConteudo.focus());
+
+        document.getElementById('editor-tamanho').addEventListener('change', (e) => {
+            editorConteudo.focus();
+            // execCommand('fontSize') só aceita os tamanhos legados 1-7 e gera
+            // <font size="7">, sem controle de pixel — por isso aplicamos com o
+            // tamanho 7 (garantido de existir) e depois trocamos a tag <font>
+            // pelo <span style="font-size:..."> que a página realmente usa e
+            // que o sanitizador do servidor reconhece.
+            document.execCommand('fontSize', false, '7');
+            editorConteudo.querySelectorAll('font[size="7"]').forEach((f) => {
+                const span = document.createElement('span');
+                span.style.fontSize = e.target.value;
+                while (f.firstChild) span.appendChild(f.firstChild);
+                f.replaceWith(span);
+            });
+        });
+
+        // ---------------- abrir/fechar editor ----------------
+        function abrirEditor(nota) {
+            notaEmEdicaoId = nota ? nota.id : null;
+            document.getElementById('editor-titulo').value = nota ? nota.titulo : '';
+            editorConteudo.innerHTML = nota ? nota.conteudo : '';
+            document.getElementById('msg-editor').classList.add('hidden');
+            document.getElementById('painel-editor').classList.remove('hidden');
+            document.getElementById('editor-titulo').focus();
+            document.getElementById('painel-editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function fecharEditor() {
+            document.getElementById('painel-editor').classList.add('hidden');
+            document.getElementById('editor-titulo').value = '';
+            editorConteudo.innerHTML = '';
+            notaEmEdicaoId = null;
+        }
+
+        document.getElementById('btn-nova-nota').addEventListener('click', () => {
+            if (notas.length >= LIMITE_NOTAS) {
+                alert(`Você já tem ${LIMITE_NOTAS} notas, o máximo permitido. Apague alguma para criar uma nova.`);
+                return;
+            }
+            abrirEditor(null);
+        });
+        document.getElementById('btn-cancelar-nota').addEventListener('click', fecharEditor);
+
+        document.getElementById('btn-salvar-nota').addEventListener('click', async () => {
+            const titulo = document.getElementById('editor-titulo').value.trim();
+            const conteudo = editorConteudo.innerHTML;
+            const textoPuro = editorConteudo.innerText.trim();
+
+            if (!textoPuro) {
+                mostrarMensagemEditor('Escreva algo na nota antes de salvar.', 'erro');
+                return;
+            }
+
+            const btn = document.getElementById('btn-salvar-nota');
+            const textoOriginal = btn.innerText;
+            btn.innerText = 'Salvando...';
+            btn.disabled = true;
+
+            const acao = notaEmEdicaoId ? 'atualizar' : 'criar';
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-notas', {
+                body: { token: TOKEN_ALUNO, acao, notaId: notaEmEdicaoId, titulo, conteudo },
+            });
+
+            btn.innerText = textoOriginal;
+            btn.disabled = false;
+
+            if (error || !data || data.erro) {
+                mostrarMensagemEditor((data && data.erro) || 'Não foi possível salvar. Tente novamente.', 'erro');
+                return;
+            }
+
+            fecharEditor();
+            await carregar();
+        });
+
+        // ---------------- lista de notas ----------------
+        function renderizarNotas() {
+            document.getElementById('contador-notas').innerText = `${notas.length} de ${LIMITE_NOTAS} blocos usados`;
+
+            const grade = document.getElementById('grade-notas');
+            if (notas.length === 0) {
+                grade.innerHTML = `<p class="text-sm col-span-full" style="color: var(--pibiex-texto-suave);">Você ainda não criou nenhuma nota. Clique em "+ Nova nota" para começar.</p>`;
+                return;
+            }
+
+            grade.innerHTML = notas.map((n) => `
+                <div class="cartao-nota bg-white rounded-lg border p-4 flex flex-col" style="border-color: var(--pibiex-borda);">
+                    ${n.titulo ? `<p class="font-semibold text-[14px] mb-1.5" style="color: var(--pibiex-texto);">${escaparHtml(n.titulo)}</p>` : ''}
+                    <div class="nota-conteudo text-[13.5px] leading-relaxed flex-1 mb-3" style="color: var(--pibiex-texto);">${n.conteudo}</div>
+                    <div class="flex items-center justify-between pt-2 border-t" style="border-color: var(--pibiex-borda);">
+                        <span class="text-[10.5px]" style="color: var(--pibiex-texto-suave);">Editado ${formatarData(n.atualizadoEm)}</span>
+                        <div class="flex gap-3">
+                            <button onclick="editarNota('${n.id}')" class="text-[11.5px] font-semibold" style="color: var(--pibiex-tinta);">Editar</button>
+                            <button onclick="excluirNota('${n.id}')" class="text-[11.5px] font-semibold text-red-600">Apagar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.editarNota = (id) => {
+            const nota = notas.find((n) => n.id === id);
+            if (nota) abrirEditor(nota);
+        };
+
+        window.excluirNota = async (id) => {
+            if (!confirm('Apagar esta nota? Essa ação não pode ser desfeita.')) return;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-notas', {
+                body: { token: TOKEN_ALUNO, acao: 'excluir', notaId: id },
+            });
+
+            if (error || !data || data.erro) {
+                alert((data && data.erro) || 'Não foi possível apagar a nota agora.');
+                return;
+            }
+            await carregar();
+        };
+
+        async function carregar() {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-notas', {
+                body: { token: TOKEN_ALUNO, acao: 'listar' },
+            });
+            if (error || !data || data.erro) {
+                document.getElementById('grade-notas').innerHTML = `<p class="text-sm text-red-600 col-span-full">Não foi possível carregar suas notas.</p>`;
+                return;
+            }
+            notas = data.notas || [];
+            renderizarNotas();
+        }
+
+        iniciarShellAluno('notas').then((dados) => {
+            if (!dados) return;
+            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            carregar();
+        });
+    </script>
+</body>
+</html>
