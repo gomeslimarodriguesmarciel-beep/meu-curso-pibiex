@@ -221,7 +221,8 @@
             const resultado = await chamar('gerenciar-chamadas', { acao: 'criar', turmaId: turmaAtual, titulo, horas, duracaoMinutos, alunosIds });
             if (!resultado) return;
 
-            msg.innerText = `Chamada aberta para ${resultado.totalElegiveis} aluno(s), disponível por ${duracaoMinutos} minuto(s).`;
+            msg.innerHTML = `Chamada aberta para ${resultado.totalElegiveis} aluno(s), disponível por ${duracaoMinutos} minuto(s).
+                <br>Anuncie o PIN em sala: <span class="text-lg tracking-[0.2em] font-black">${escaparHtml(resultado.chamada.pin)}</span>`;
             msg.className = 'text-sm font-bold p-2 rounded mb-2 bg-green-50 text-green-700';
             msg.classList.remove('hidden');
             document.getElementById('form-chamada').reset();
@@ -246,6 +247,7 @@
                         <div class="min-w-0">
                             <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')} <span class="text-green-600 font-bold text-xs">● ativa</span></p>
                             <p class="text-xs text-gray-500">${c.horas}h · ${c.totalRegistrados}/${c.totalElegiveis} registraram · fecha em <span class="contador" data-expira="${c.expira_em}">${tempoRestante(c.expira_em)}</span></p>
+                            <p class="text-xs text-gray-500 mt-0.5">PIN: <span class="font-black tracking-[0.15em] text-gray-800">${escaparHtml(c.pin)}</span></p>
                         </div>
                         <div class="flex gap-2 shrink-0">
                             <button onclick="verDetalhe('${c.id}')" class="text-xs font-bold text-blue-700 hover:underline">Ver quem registrou</button>
@@ -276,11 +278,14 @@
             document.getElementById('detalhe-titulo').innerText = c.titulo || 'Chamada';
             document.getElementById('detalhe-sub').innerText = `${c.horas}h · aberta em ${formatarDataHora(c.criado_em)}`;
             document.getElementById('detalhe-lista').innerHTML = resultado.alunos.map((a) => `
-                <div class="flex items-center justify-between py-1.5 border-b border-gray-50">
-                    <span>${escaparHtml(a.nomeCompleto)}</span>
+                <div class="flex items-center justify-between py-1.5 border-b border-gray-50 gap-2">
+                    <span class="min-w-0 truncate">${escaparHtml(a.nomeCompleto)}</span>
                     ${a.presente
-                        ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700">Presente · ${formatarDataHora(a.registradoEm)}</span>`
-                        : `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Ausente</span>`}
+                        ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700 shrink-0">Presente · ${formatarDataHora(a.registradoEm)}</span>`
+                        : `<span class="flex items-center gap-2 shrink-0">
+                             <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Ausente</span>
+                             <button onclick="reabrirParaFaltantes('${c.id}', ['${a.id}'])" class="text-[10.5px] font-bold text-amber-700 hover:underline">Reabrir só p/ ele(a)</button>
+                           </span>`}
                 </div>
             `).join('');
             document.getElementById('modal-detalhe').classList.remove('hidden');
@@ -303,10 +308,24 @@
                         <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')}</p>
                         <p class="text-xs text-gray-500">${c.horas}h · ${c.totalRegistrados}/${c.totalElegiveis} presentes · ${formatarDataHora(c.criado_em)}</p>
                     </div>
-                    <button onclick="verDetalhe('${c.id}')" class="text-xs font-bold text-blue-700 hover:underline shrink-0">Ver detalhe</button>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="verDetalhe('${c.id}')" class="text-xs font-bold text-blue-700 hover:underline">Ver detalhe</button>
+                        <button onclick="reabrirParaFaltantes('${c.id}')" class="text-xs font-bold text-amber-700 hover:underline">Reabrir p/ quem faltou</button>
+                    </div>
                 </div>
             `).join('');
         }
+
+        window.reabrirParaFaltantes = async (chamadaId, alunosIds) => {
+            const minutos = prompt('Reabrir por quantos minutos?', '5');
+            if (!minutos) return;
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'reabrir', chamadaId, duracaoMinutos: minutos, alunosIds });
+            if (!resultado) return;
+            alert(alunosIds ? `Reaberta para ${resultado.totalAlunos} aluno(s) escolhido(s).` : 'Reaberta para quem ainda não registrou.');
+            fecharDetalhe();
+            carregarAtivas();
+            carregarHistorico();
+        };
 
         // ---------------- resumo de horas ----------------
         let resumoAtual = [];
