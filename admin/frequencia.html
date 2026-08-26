@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Frequência</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-4 md:p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">Frequência</h1>
+            <p class="text-gray-500 mb-6">
+                Abra uma chamada por tempo limitado durante a aula. Cada chamada vale um número
+                de horas — a soma das que o aluno registrar presença vira a base para o certificado.
+            </p>
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-500 mb-1">Turma</label>
+                <select id="seletor-turma-freq" class="border border-gray-200 rounded-lg px-3 py-2 text-sm min-w-[260px]"></select>
+            </div>
+
+            <!-- ================= NOVA CHAMADA ================= -->
+            <form id="form-chamada" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+                <p class="text-xs font-bold text-gray-500 mb-3">Abrir nova chamada</p>
+                <div class="flex flex-wrap gap-3 mb-3">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Título (opcional)</label>
+                        <input id="chamada-titulo" placeholder="ex: Aula de prompts — 18/08" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-40">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Vale quantas horas</label>
+                        <input id="chamada-horas" type="number" min="0.5" step="0.5" value="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                    <div class="w-48">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Disponível por (minutos)</label>
+                        <input id="chamada-duracao" type="number" min="1" max="240" value="10" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Quem vê essa chamada</label>
+                    <div class="flex gap-4 text-sm mb-2">
+                        <label class="flex items-center gap-1.5"><input type="radio" name="quem" value="turma" checked> Toda a turma</label>
+                        <label class="flex items-center gap-1.5"><input type="radio" name="quem" value="especificos"> Alunos específicos</label>
+                    </div>
+                    <div id="lista-alunos-especificos" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1 text-sm"></div>
+                </div>
+
+                <p id="msg-chamada" class="hidden text-sm font-bold p-2 rounded mb-2"></p>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">
+                    Abrir chamada
+                </button>
+            </form>
+
+            <!-- ================= ATIVAS ================= -->
+            <div class="mb-8">
+                <p class="text-xs font-bold text-gray-500 mb-3">Chamadas ativas agora</p>
+                <div id="lista-ativas" class="space-y-3">
+                    <p class="text-gray-400 text-sm">Carregando...</p>
+                </div>
+            </div>
+
+            <!-- ================= RESUMO DE HORAS ================= -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-bold text-gray-500">Resumo de horas da turma</p>
+                    <button id="btn-pdf-resumo" class="text-xs font-bold text-blue-700 hover:underline">Baixar PDF</button>
+                </div>
+                <div id="tabela-resumo" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <p class="text-gray-400 text-sm p-5">Carregando...</p>
+                </div>
+            </div>
+
+            <!-- ================= HISTÓRICO ================= -->
+            <div>
+                <p class="text-xs font-bold text-gray-500 mb-3">Histórico de chamadas</p>
+                <div id="lista-historico" class="space-y-3">
+                    <p class="text-gray-400 text-sm">Carregando...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= MODAL: DETALHE DA CHAMADA ================= -->
+    <div id="modal-detalhe" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-start">
+                <div>
+                    <h2 id="detalhe-titulo" class="text-lg font-black text-gray-900"></h2>
+                    <p id="detalhe-sub" class="text-xs text-gray-500 mt-0.5"></p>
+                </div>
+                <button onclick="fecharDetalhe()" class="text-gray-400 hover:text-gray-900 font-bold text-lg shrink-0">✖</button>
+            </div>
+            <div id="detalhe-lista" class="p-5 overflow-y-auto space-y-1.5 text-sm"></div>
+        </div>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let turmaAtual = null;
+        let alunosDaTurma = [];
+
+        function escaparHtml(texto) {
+            const div = document.createElement('div');
+            div.innerText = texto ?? '';
+            return div.innerHTML;
+        }
+
+        function formatarDataHora(iso) {
+            return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function tempoRestante(expiraEm) {
+            const ms = new Date(expiraEm).getTime() - Date.now();
+            if (ms <= 0) return 'encerrando...';
+            const min = Math.floor(ms / 60000);
+            const seg = Math.floor((ms % 60000) / 1000);
+            return `${min}m ${String(seg).padStart(2, '0')}s`;
+        }
+
+        async function chamar(funcao, extra) {
+            const { data, error } = await window.supabaseClient.functions.invoke(funcao, {
+                body: { tokenEquipe: TOKEN_EQUIPE, ...(extra || {}) },
+            });
+            if (error || !data || data.erro) {
+                alert((data && data.erro) || 'Erro ao executar a ação. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        // ---------------- turmas ----------------
+        async function carregarTurmas() {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-turmas', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'listar' },
+            });
+            const seletor = document.getElementById('seletor-turma-freq');
+            if (error || !data || data.erro || !data.turmas || data.turmas.length === 0) {
+                seletor.innerHTML = '<option value="">Nenhuma turma cadastrada</option>';
+                return;
+            }
+            seletor.innerHTML = data.turmas.map((t) => `<option value="${t.id}">${escaparHtml(t.nome)}${t.ativa ? '' : ' (pausada)'}</option>`).join('');
+            turmaAtual = data.turmas[0].id;
+            await carregarAlunosDaTurma();
+            carregarTudo();
+        }
+
+        document.getElementById('seletor-turma-freq').addEventListener('change', async (e) => {
+            turmaAtual = e.target.value;
+            await carregarAlunosDaTurma();
+            carregarTudo();
+        });
+
+        async function carregarAlunosDaTurma() {
+            const { data } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'listar' },
+            });
+            alunosDaTurma = (data && data.alunos) ? data.alunos.filter((a) => a.turma_id === turmaAtual) : [];
+            renderizarCheckboxAlunos();
+        }
+
+        function renderizarCheckboxAlunos() {
+            const container = document.getElementById('lista-alunos-especificos');
+            if (alunosDaTurma.length === 0) {
+                container.innerHTML = '<p class="text-gray-400">Não foi possível carregar a lista de alunos — use "Toda a turma".</p>';
+                return;
+            }
+            container.innerHTML = alunosDaTurma.map((a) => `
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" class="check-aluno-especifico" value="${a.id}">
+                    ${escaparHtml(a.nomeCompleto || a.nome_completo)}
+                </label>
+            `).join('');
+        }
+
+        document.querySelectorAll('input[name="quem"]').forEach((r) => {
+            r.addEventListener('change', () => {
+                document.getElementById('lista-alunos-especificos').classList.toggle('hidden', document.querySelector('input[name="quem"]:checked').value !== 'especificos');
+            });
+        });
+
+        function carregarTudo() {
+            carregarAtivas();
+            carregarHistorico();
+            carregarResumo();
+        }
+
+        // ---------------- criar chamada ----------------
+        document.getElementById('form-chamada').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg-chamada');
+            msg.classList.add('hidden');
+
+            const titulo = document.getElementById('chamada-titulo').value.trim();
+            const horas = document.getElementById('chamada-horas').value;
+            const duracaoMinutos = document.getElementById('chamada-duracao').value;
+            const quem = document.querySelector('input[name="quem"]:checked').value;
+
+            let alunosIds;
+            if (quem === 'especificos') {
+                alunosIds = [...document.querySelectorAll('.check-aluno-especifico:checked')].map((c) => c.value);
+                if (alunosIds.length === 0) {
+                    msg.innerText = 'Marque pelo menos um aluno.';
+                    msg.className = 'text-sm font-bold p-2 rounded mb-2 bg-red-50 text-red-600';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'criar', turmaId: turmaAtual, titulo, horas, duracaoMinutos, alunosIds });
+            if (!resultado) return;
+
+            msg.innerText = `Chamada aberta para ${resultado.totalElegiveis} aluno(s), disponível por ${duracaoMinutos} minuto(s).`;
+            msg.className = 'text-sm font-bold p-2 rounded mb-2 bg-green-50 text-green-700';
+            msg.classList.remove('hidden');
+            document.getElementById('form-chamada').reset();
+            document.getElementById('lista-alunos-especificos').classList.add('hidden');
+            carregarAtivas();
+        });
+
+        // ---------------- ativas ----------------
+        let temporizadorAtivas = null;
+
+        async function carregarAtivas() {
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'listar_ativas' });
+            const container = document.getElementById('lista-ativas');
+            if (!resultado) { container.innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar.</p>'; return; }
+
+            const chamadas = (resultado.chamadas || []).filter((c) => !turmaAtual || c.turma_id === turmaAtual);
+            if (chamadas.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-5 border border-gray-100">Nenhuma chamada ativa no momento.</p>';
+            } else {
+                container.innerHTML = chamadas.map((c) => `
+                    <div class="bg-white rounded-2xl border border-green-100 shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap">
+                        <div class="min-w-0">
+                            <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')} <span class="text-green-600 font-bold text-xs">● ativa</span></p>
+                            <p class="text-xs text-gray-500">${c.horas}h · ${c.totalRegistrados}/${c.totalElegiveis} registraram · fecha em <span class="contador" data-expira="${c.expira_em}">${tempoRestante(c.expira_em)}</span></p>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="verDetalhe('${c.id}')" class="text-xs font-bold text-blue-700 hover:underline">Ver quem registrou</button>
+                            <button onclick="encerrarChamada('${c.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-lg">Encerrar agora</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            if (temporizadorAtivas) clearInterval(temporizadorAtivas);
+            temporizadorAtivas = setInterval(() => {
+                document.querySelectorAll('.contador').forEach((el) => {
+                    el.innerText = tempoRestante(el.dataset.expira);
+                });
+            }, 1000);
+        }
+
+        window.encerrarChamada = async (chamadaId) => {
+            if (!confirm('Encerrar essa chamada agora? Quem ainda não registrou não vai mais conseguir.')) return;
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'encerrar', chamadaId });
+            if (resultado) { carregarAtivas(); carregarHistorico(); }
+        };
+
+        window.verDetalhe = async (chamadaId) => {
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'detalhe', chamadaId });
+            if (!resultado) return;
+            const c = resultado.chamada;
+            document.getElementById('detalhe-titulo').innerText = c.titulo || 'Chamada';
+            document.getElementById('detalhe-sub').innerText = `${c.horas}h · aberta em ${formatarDataHora(c.criado_em)}`;
+            document.getElementById('detalhe-lista').innerHTML = resultado.alunos.map((a) => `
+                <div class="flex items-center justify-between py-1.5 border-b border-gray-50">
+                    <span>${escaparHtml(a.nomeCompleto)}</span>
+                    ${a.presente
+                        ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700">Presente · ${formatarDataHora(a.registradoEm)}</span>`
+                        : `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Ausente</span>`}
+                </div>
+            `).join('');
+            document.getElementById('modal-detalhe').classList.remove('hidden');
+        };
+        window.fecharDetalhe = () => document.getElementById('modal-detalhe').classList.add('hidden');
+
+        // ---------------- histórico ----------------
+        async function carregarHistorico() {
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'listar_historico', turmaId: turmaAtual });
+            const container = document.getElementById('lista-historico');
+            if (!resultado) { container.innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar.</p>'; return; }
+
+            if ((resultado.chamadas || []).length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-5 border border-gray-100">Nenhuma chamada encerrada ainda.</p>';
+                return;
+            }
+            container.innerHTML = resultado.chamadas.map((c) => `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap">
+                    <div class="min-w-0">
+                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')}</p>
+                        <p class="text-xs text-gray-500">${c.horas}h · ${c.totalRegistrados}/${c.totalElegiveis} presentes · ${formatarDataHora(c.criado_em)}</p>
+                    </div>
+                    <button onclick="verDetalhe('${c.id}')" class="text-xs font-bold text-blue-700 hover:underline shrink-0">Ver detalhe</button>
+                </div>
+            `).join('');
+        }
+
+        // ---------------- resumo de horas ----------------
+        let resumoAtual = [];
+        let nomeTurmaAtual = '';
+
+        async function carregarResumo() {
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'resumo_horas', turmaId: turmaAtual });
+            const container = document.getElementById('tabela-resumo');
+            if (!resultado) { container.innerHTML = '<p class="text-red-500 text-sm p-5">Erro ao carregar.</p>'; return; }
+
+            resumoAtual = resultado.resumo || [];
+            nomeTurmaAtual = document.getElementById('seletor-turma-freq').selectedOptions[0]?.text || '';
+
+            if (resumoAtual.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm p-5">Nenhum aluno ativo nessa turma.</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="w-full text-sm">
+                    <thead><tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-100">
+                        <th class="p-3 font-bold">Aluno</th>
+                        <th class="p-3 font-bold text-right">Horas</th>
+                        <th class="p-3 font-bold text-right">Frequência</th>
+                    </tr></thead>
+                    <tbody>
+                        ${resumoAtual.map((r) => {
+                            const pct = r.horas_possiveis > 0 ? Math.round((r.horas_conquistadas / r.horas_possiveis) * 100) : 0;
+                            return `<tr class="border-b border-gray-50">
+                                <td class="p-3">${escaparHtml(r.nome_completo)}</td>
+                                <td class="p-3 text-right font-bold">${r.horas_conquistadas}h <span class="text-gray-400 font-normal">/ ${r.horas_possiveis}h</span></td>
+                                <td class="p-3 text-right">${pct}%</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        document.getElementById('btn-pdf-resumo').addEventListener('click', () => {
+            if (resumoAtual.length === 0) { alert('Nada para exportar ainda.'); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            const margem = 56;
+            let y = margem;
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+            doc.text('Resumo de frequência — ' + nomeTurmaAtual, margem, y);
+            y += 20;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+            doc.setTextColor(90);
+            doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), margem, y);
+            y += 26;
+            doc.setTextColor(20);
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+            doc.text('Aluno', margem, y);
+            doc.text('Horas', 340, y);
+            doc.text('Frequência', 420, y);
+            y += 6;
+            doc.setLineWidth(0.5);
+            doc.line(margem, y, 540, y);
+            y += 16;
+
+            doc.setFont('helvetica', 'normal');
+            resumoAtual.forEach((r) => {
+                const pct = r.horas_possiveis > 0 ? Math.round((r.horas_conquistadas / r.horas_possiveis) * 100) : 0;
+                doc.text(String(r.nome_completo), margem, y, { maxWidth: 270 });
+                doc.text(`${r.horas_conquistadas}h / ${r.horas_possiveis}h`, 340, y);
+                doc.text(`${pct}%`, 420, y);
+                y += 18;
+                if (y > 760) { doc.addPage(); y = margem; }
+            });
+
+            doc.save(`frequencia-${nomeTurmaAtual.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
+        });
+
+        iniciarShellEquipe('frequencia').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarTurmas();
+        });
+    </script>
+</body>
+</html>
