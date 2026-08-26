@@ -269,8 +269,8 @@ function montarBannerFrequencia() {
             <div class="max-w-3xl mx-auto flex items-center justify-center gap-3 flex-wrap text-[13px]">
                 <span class="w-4 h-4 shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg></span>
                 <span><strong id="freq-titulo">Chamada aberta</strong> — expira em <strong id="freq-contador">--</strong></span>
-                <input id="freq-pin" placeholder="PIN da sala" maxlength="5"
-                       class="text-[12px] font-bold text-center tracking-[0.15em] uppercase px-2 py-1 rounded-md w-24 text-gray-900" style="border: none;">
+                <input id="freq-pin" placeholder="PIN da sala" maxlength="5" inputmode="numeric" pattern="[0-9]*"
+                       class="text-[12px] font-bold text-center tracking-[0.15em] px-2 py-1 rounded-md w-24 text-gray-900" style="border: none;">
                 <button id="freq-botao" onclick="registrarFrequenciaAgora()" class="text-[12px] font-bold px-3 py-1 rounded-full transition"
                         style="background: var(--pibiex-dourado); color: #1a2e05;">
                     Registrar presença
