@@ -69,6 +69,7 @@ const ICONES = {
     atividades: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13.5h5M9.5 17h5"/></svg>',
     trabalhos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>',
     notas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l5 5v13H7z"/><path d="M15 3v5h5"/><path d="M9.5 12.5h6M9.5 16h4"/></svg>',
+    frequencia: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>',
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
     'ferramentas-ia': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a3.5 3.5 0 0 0-4.7 4.2L4 16.5V20h3.5l5.8-5.8a3.5 3.5 0 0 0 4.2-4.7l-2.6 2.6-2-2z"/></svg>',
     prompts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.9.9.9 1.6v.5h5.2v-.5c0-.7.4-1.2.9-1.6A6 6 0 0 0 12 3z"/></svg>',
@@ -93,6 +94,7 @@ const GRUPOS_MENU = [
             { id: 'atividades', label: 'Atividades',     href: 'atividades.html' },
             { id: 'trabalhos',  label: 'Meus Trabalhos', href: 'trabalhos.html' },
             { id: 'notas',      label: 'Minhas Notas',   href: 'notas.html' },
+            { id: 'frequencia', label: 'Minha Frequência', href: 'frequencia.html' },
             { id: 'chat',       label: 'Chat da Turma',  href: 'chat.html' },
         ],
     },
@@ -250,6 +252,112 @@ async function sairAluno() {
     localStorage.removeItem('pibiex_aluno_dados');
     window.location.href = '../login.html';
 }
+
+// ============================================================
+// 3.5) Aviso de chamada aberta (flutua em cima de qualquer página)
+// ============================================================
+// Não depende de um <div> específico em cada página (ao contrário do
+// menu/topo/assistente) — se injeta sozinho direto no <body>, então
+// funciona em toda página do aluno sem precisar editar cada uma.
+let chamadaAbertaId = null;
+let temporizadorChamada = null;
+
+function montarBannerFrequencia() {
+    if (document.getElementById('banner-frequencia')) return;
+    document.body.insertAdjacentHTML('afterbegin', `
+        <div id="banner-frequencia" class="hidden fixed top-0 inset-x-0 z-50 text-white px-4 py-2.5 shadow-lg" style="background: var(--pibiex-tinta);">
+            <div class="max-w-3xl mx-auto flex items-center justify-center gap-3 flex-wrap text-[13px]">
+                <span class="w-4 h-4 shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg></span>
+                <span><strong id="freq-titulo">Chamada aberta</strong> — expira em <strong id="freq-contador">--</strong></span>
+                <input id="freq-pin" placeholder="PIN da sala" maxlength="5"
+                       class="text-[12px] font-bold text-center tracking-[0.15em] uppercase px-2 py-1 rounded-md w-24 text-gray-900" style="border: none;">
+                <button id="freq-botao" onclick="registrarFrequenciaAgora()" class="text-[12px] font-bold px-3 py-1 rounded-full transition"
+                        style="background: var(--pibiex-dourado); color: #1a2e05;">
+                    Registrar presença
+                </button>
+            </div>
+        </div>
+    `);
+}
+
+async function verificarFrequenciaDisponivel() {
+    const token = localStorage.getItem('pibiex_aluno_token');
+    if (!token) return;
+
+    const { data, error } = await window.supabaseClient.functions.invoke('frequencia', {
+        body: { token, acao: 'disponivel' },
+    });
+    if (error || !data) return;
+
+    if (data.chamada) {
+        exibirBannerFrequencia(data.chamada);
+    } else if (chamadaAbertaId) {
+        esconderBannerFrequencia();
+    }
+}
+
+function exibirBannerFrequencia(chamada) {
+    chamadaAbertaId = chamada.id;
+    const banner = document.getElementById('banner-frequencia');
+    if (!banner) return;
+
+    document.getElementById('freq-titulo').innerText = chamada.titulo || 'Chamada aberta';
+    document.getElementById('freq-botao').disabled = false;
+    document.getElementById('freq-botao').innerText = 'Registrar presença';
+    document.getElementById('freq-botao').classList.remove('hidden');
+    document.getElementById('freq-pin').value = '';
+    document.getElementById('freq-pin').classList.remove('hidden');
+    banner.classList.remove('hidden');
+
+    if (temporizadorChamada) clearInterval(temporizadorChamada);
+    const atualizarContador = () => {
+        const ms = new Date(chamada.expira_em).getTime() - Date.now();
+        if (ms <= 0) { esconderBannerFrequencia(); return; }
+        const min = Math.floor(ms / 60000);
+        const seg = Math.floor((ms % 60000) / 1000);
+        const contador = document.getElementById('freq-contador');
+        if (contador) contador.innerText = `${min}m ${String(seg).padStart(2, '0')}s`;
+    };
+    atualizarContador();
+    temporizadorChamada = setInterval(atualizarContador, 1000);
+}
+
+function esconderBannerFrequencia() {
+    chamadaAbertaId = null;
+    if (temporizadorChamada) { clearInterval(temporizadorChamada); temporizadorChamada = null; }
+    const banner = document.getElementById('banner-frequencia');
+    if (banner) banner.classList.add('hidden');
+}
+
+window.registrarFrequenciaAgora = async () => {
+    if (!chamadaAbertaId) return;
+    const pin = (document.getElementById('freq-pin').value || '').trim();
+    if (!pin) {
+        alert('Digite o PIN anunciado pelo professor em sala.');
+        return;
+    }
+
+    const token = localStorage.getItem('pibiex_aluno_token');
+    const botao = document.getElementById('freq-botao');
+    botao.disabled = true;
+    botao.innerText = 'Registrando...';
+
+    const { data, error } = await window.supabaseClient.functions.invoke('frequencia', {
+        body: { token, acao: 'registrar', chamadaId: chamadaAbertaId, pin },
+    });
+
+    if (error || !data || data.erro) {
+        alert((data && data.erro) || 'Não foi possível registrar sua presença. Tente novamente.');
+        botao.disabled = false;
+        botao.innerText = 'Registrar presença';
+        return;
+    }
+
+    document.getElementById('freq-titulo').innerText = 'Presença registrada!';
+    document.getElementById('freq-botao').classList.add('hidden');
+    document.getElementById('freq-pin').classList.add('hidden');
+    setTimeout(esconderBannerFrequencia, 2500);
+};
 
 // ============================================================
 // 4) Assistente de IA flutuante
@@ -457,6 +565,15 @@ async function iniciarShellAluno(paginaAtivaId) {
     montarMenuLateral(paginaAtivaId);
     montarTopo(sessao.dados.nomeCompleto);
     montarAssistenteFlutuante();
+    montarBannerFrequencia();
+
+    // Confere na hora, e depois a cada 20s — tempo curto o bastante pra não
+    // deixar o aluno esperando muito pra ver a chamada abrir, mas sem gerar
+    // tráfego demais (não é a mesma chamada em toda página: cada view do
+    // shell é uma iniciarShellAluno nova, então o intervalo reinicia a cada
+    // navegação, o que é o comportamento certo aqui).
+    verificarFrequenciaDisponivel();
+    setInterval(verificarFrequenciaDisponivel, 20000);
 
     // Confirma no servidor por trás dos panos: pega o caso (raro) de a turma
     // ter sido pausada ou o termo de uso ter mudado de versão desde o último
