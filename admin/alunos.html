@@ -256,7 +256,10 @@
                                 Editar dados
                             </button>
                             ${a.email_confirmado
-                                ? `<button onclick="liberarEmail('${a.id}', '${escaparHtml(a.nome_completo).replace(/'/g, "\\'")}')" class="border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold px-4 py-2 rounded-lg shrink-0">
+                                ? `<button onclick="reenviarEmail('${a.id}', '${escaparHtml(a.nome_completo).replace(/'/g, "\\'")}')" class="border border-blue-200 hover:bg-blue-50 text-blue-700 text-xs font-bold px-4 py-2 rounded-lg shrink-0">
+                                       Reenviar acesso
+                                   </button>
+                                   <button onclick="liberarEmail('${a.id}', '${escaparHtml(a.nome_completo).replace(/'/g, "\\'")}')" class="border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold px-4 py-2 rounded-lg shrink-0">
                                        Liberar e-mail
                                    </button>`
                                 : ''}
@@ -308,6 +311,20 @@
                 btn.innerText = 'Copiado!';
                 setTimeout(() => { btn.innerText = 'Copiar'; }, 1500);
             });
+        };
+
+        window.reenviarEmail = async (alunoId, nome) => {
+            if (!confirm(`Reenviar o e-mail de acesso (usuário + senha atual) para ${nome}?`)) return;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'reenviar_email', alunoId },
+            });
+
+            if (error || !data || data.erro) {
+                alert((data && data.erro) || 'Erro ao reenviar o e-mail. Tente novamente.');
+                return;
+            }
+            alert(`E-mail reenviado para ${nome}.`);
         };
 
         window.liberarEmail = async (alunoId, nome) => {
