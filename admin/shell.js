@@ -102,6 +102,35 @@ const ICONES = {
     equipe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3"/><path d="M6.5 19c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5"/><circle cx="4.5" cy="10" r="2"/><circle cx="19.5" cy="10" r="2"/><path d="M2.5 19c.2-2 1.3-3.5 2.8-4M21.5 19c-.2-2-1.3-3.5-2.8-4"/></svg>',
 };
 
+// Mesmo avatar (foto ou iniciais coloridas) usado no lado do aluno — ver
+// aluno/shell.js para a explicação da escolha de cor estável por nome.
+const CORES_AVATAR = ['#1E3A8A', '#4D7C0F', '#9333EA', '#C2410C', '#0E7490', '#BE185D'];
+
+function iniciaisNome(nome) {
+    const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
+    if (partes.length === 0) return '?';
+    const primeira = partes[0][0] || '';
+    const ultima = partes.length > 1 ? partes[partes.length - 1][0] : '';
+    return (primeira + ultima).toUpperCase();
+}
+
+function corAvatar(nome) {
+    let soma = 0;
+    for (let i = 0; i < (nome || '').length; i++) soma += nome.charCodeAt(i);
+    return CORES_AVATAR[soma % CORES_AVATAR.length];
+}
+
+function avatarHtml(nome, fotoUrl, tamanhoPx) {
+    const tamanho = tamanhoPx || 32;
+    if (fotoUrl) {
+        return `<img src="${fotoUrl}" alt="${(nome || '').replace(/"/g, '')}" loading="lazy"
+                     style="width:${tamanho}px; height:${tamanho}px; border-radius:9999px; object-fit:cover; flex-shrink:0;">`;
+    }
+    return `<span style="width:${tamanho}px; height:${tamanho}px; border-radius:9999px; background:${corAvatar(nome || '')};
+                         color:#fff; font-weight:700; font-size:${Math.round(tamanho * 0.4)}px; flex-shrink:0;
+                         display:inline-flex; align-items:center; justify-content:center;">${iniciaisNome(nome)}</span>`;
+}
+
 function iconeSvg(id) {
     return `<span class="w-5 h-5 shrink-0">${ICONES[id] || ''}</span>`;
 }
