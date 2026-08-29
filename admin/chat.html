@@ -209,8 +209,9 @@
             }
 
             return `
-                <div class="linha-mensagem flex ${meu ? 'justify-end' : 'justify-start'} gap-1 items-start">
+                <div class="linha-mensagem flex ${meu ? 'justify-end' : 'justify-start'} gap-1.5 items-start">
                     ${meu ? `<div class="balao-menu flex items-center gap-0.5 text-[13px] self-center">${acoes.join('')}</div>` : ''}
+                    ${!meu && mostrarAutor ? `<div class="mt-0.5">${avatarHtml(m.autorNome, m.autorFotoUrl, 26)}</div>` : ''}
                     <div class="max-w-[85%]">
                         <div class="rounded-xl px-4 py-2 ${meu ? 'bg-gray-900 text-white rounded-br-sm' : 'bg-white border border-gray-100 rounded-bl-sm'}">
                             ${mostrarAutor && !meu ? `<p class="text-[11.5px] font-bold mb-0.5 ${m.autorTipo === 'equipe' ? 'text-red-600' : 'text-gray-500'}">${escaparHtml(m.autorNome)}${m.autorTipo === 'equipe' ? ' · equipe' : ''}</p>` : ''}
