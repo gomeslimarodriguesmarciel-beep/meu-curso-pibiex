@@ -58,6 +58,14 @@
                     </div>
                 </section>
             </div>
+
+            <section id="secao-ranking" class="mt-10 hidden">
+                <h2 class="flex items-center gap-2 text-[15px] font-bold mb-1" style="color: var(--pibiex-texto);">
+                    🏆 Ranking de acesso · esta semana
+                </h2>
+                <p class="text-[12.5px] mb-3" style="color: var(--pibiex-texto-suave);">Quem mais acessou a plataforma desde segunda-feira. Reinicia toda semana — todo mundo tem chance.</p>
+                <div id="lista-ranking" class="bg-white rounded-2xl border p-2" style="border-color: var(--pibiex-borda);"></div>
+            </section>
         </main>
     </div>
 
@@ -133,6 +141,36 @@
             `).join('');
         }
 
+        function renderizarRanking(ranking) {
+            const secao = document.getElementById('secao-ranking');
+            if (!ranking || ranking.length === 0) {
+                secao.classList.add('hidden');
+                return;
+            }
+            secao.classList.remove('hidden');
+
+            const medalhas = ['🥇', '🥈', '🥉', '', ''];
+            document.getElementById('lista-ranking').innerHTML = ranking.map((r, i) => `
+                <div class="flex items-center gap-3 px-3 py-2.5 ${i > 0 ? 'border-t' : ''}" style="border-color: var(--pibiex-borda);">
+                    <span class="w-6 text-center text-[13px] font-black shrink-0" style="color: var(--pibiex-texto-suave);">${i + 1}º</span>
+                    ${avatarHtml(r.nome_completo, r.foto_url, 32)}
+                    <span class="text-[13.5px] font-semibold min-w-0 truncate flex-1" style="color: var(--pibiex-texto);">
+                        ${escaparHtml(r.nome_completo)}${i === 0 ? ' 👑' : (medalhas[i] ? ' ' + medalhas[i] : '')}
+                    </span>
+                    <span class="text-[12px] font-bold shrink-0 rounded-full px-2.5 py-1" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">
+                        ${r.total_acessos} ${r.total_acessos === 1 ? 'acesso' : 'acessos'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        async function carregarRanking() {
+            const token = localStorage.getItem('pibiex_aluno_token');
+            const { data, error } = await window.supabaseClient.functions.invoke('ranking-acesso', { body: { token } });
+            if (error || !data || data.erro) return;
+            renderizarRanking(data.ranking);
+        }
+
         async function carregarConteudo(dadosAluno) {
             const { data: avisos } = await window.supabaseClient
                 .from('avisos')
@@ -163,6 +201,7 @@
             document.getElementById('icone-avisos').innerHTML = ICONES.avisos;
             document.getElementById('icone-cronograma').innerHTML = ICONES.cronograma;
             carregarConteudo(dados);
+            carregarRanking();
         });
     </script>
 </body>
