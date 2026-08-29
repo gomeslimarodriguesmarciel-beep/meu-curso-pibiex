@@ -235,8 +235,9 @@
             if (m.podeApagar) acoes.push(`<button onclick="apagar('${escopo}', '${m.id}')" title="Apagar" class="px-1">🗑️</button>`);
 
             return `
-                <div class="linha-mensagem flex ${meu ? 'justify-end' : 'justify-start'} gap-1 items-start">
+                <div class="linha-mensagem flex ${meu ? 'justify-end' : 'justify-start'} gap-1.5 items-start">
                     ${meu ? `<div class="balao-menu flex items-center gap-0.5 text-[13px] self-center">${acoes.join('')}</div>` : ''}
+                    ${!meu && mostrarAutor ? `<div class="mt-0.5">${avatarHtml(m.autorNome, m.autorFotoUrl, 26)}</div>` : ''}
                     <div class="max-w-[85%]">
                         <div class="rounded-lg px-4 py-2 ${meu ? 'text-white rounded-br-sm' : 'border rounded-bl-sm'}"
                              style="${meu ? 'background: var(--pibiex-tinta);' : 'background:#fff; border-color: var(--pibiex-borda);'}">
