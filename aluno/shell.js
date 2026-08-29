@@ -80,7 +80,39 @@ const ICONES = {
     recursos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 7l1.5-1.5a3.5 3.5 0 0 1 5 5L16 12M13 17l-1.5 1.5a3.5 3.5 0 0 1-5-5L8 12"/></svg>',
     avisos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l5 4V6L7 10z"/><path d="M15 9a3.5 3.5 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11"/></svg>',
     assistente: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H9l-3.5 3.5V15H4z"/><path d="M12 8v4M10 10h4"/></svg>',
+    perfil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-3.8 4-5.5 7-5.5s6 1.7 7 5.5"/></svg>',
 };
+
+// Avatar redondo: foto se tiver, senão as iniciais do nome sobre um fundo
+// gerado a partir do próprio nome (cor estável — o mesmo aluno sempre cai na
+// mesma cor, então dá pra reconhecer visualmente mesmo sem foto). Usado no
+// chat e no ranking de acesso.
+const CORES_AVATAR = ['#1E3A8A', '#4D7C0F', '#9333EA', '#C2410C', '#0E7490', '#BE185D'];
+
+function iniciaisNome(nome) {
+    const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
+    if (partes.length === 0) return '?';
+    const primeira = partes[0][0] || '';
+    const ultima = partes.length > 1 ? partes[partes.length - 1][0] : '';
+    return (primeira + ultima).toUpperCase();
+}
+
+function corAvatar(nome) {
+    let soma = 0;
+    for (let i = 0; i < (nome || '').length; i++) soma += nome.charCodeAt(i);
+    return CORES_AVATAR[soma % CORES_AVATAR.length];
+}
+
+function avatarHtml(nome, fotoUrl, tamanhoPx) {
+    const tamanho = tamanhoPx || 32;
+    if (fotoUrl) {
+        return `<img src="${fotoUrl}" alt="${(nome || '').replace(/"/g, '')}" loading="lazy"
+                     style="width:${tamanho}px; height:${tamanho}px; border-radius:9999px; object-fit:cover; flex-shrink:0;">`;
+    }
+    return `<span style="width:${tamanho}px; height:${tamanho}px; border-radius:9999px; background:${corAvatar(nome || '')};
+                         color:#fff; font-weight:700; font-size:${Math.round(tamanho * 0.4)}px; flex-shrink:0;
+                         display:inline-flex; align-items:center; justify-content:center;">${iniciaisNome(nome)}</span>`;
+}
 
 // Menu lateral agrupado por finalidade real (não é decoração — cada grupo é
 // uma categoria distinta do curso).
@@ -96,6 +128,7 @@ const GRUPOS_MENU = [
             { id: 'notas',      label: 'Minhas Notas',   href: 'notas.html' },
             { id: 'frequencia', label: 'Minha Frequência', href: 'frequencia.html' },
             { id: 'chat',       label: 'Chat da Turma',  href: 'chat.html' },
+            { id: 'perfil',     label: 'Meu Perfil',     href: 'perfil.html' },
         ],
     },
     {
