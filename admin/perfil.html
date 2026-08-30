@@ -18,7 +18,7 @@
 
         <main class="p-4 md:p-8 max-w-2xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">Meu Perfil</h1>
-            <p class="text-gray-500 mb-6">Sua foto, e-mail e senha. Nome completo, usuário, cargo e nível de acesso só são alterados por uma conta com acesso total, em "Equipe".</p>
+            <p class="text-gray-500 mb-6">Sua foto e e-mail. Nome completo, usuário, cargo e nível de acesso só são alterados por uma conta com acesso total, em "Equipe". Troca de senha é feita pela recuperação de senha, na tela de login.</p>
 
             <!-- Foto + identidade -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
@@ -54,19 +54,6 @@
                 </div>
                 <p id="msg-email" class="text-[12.5px] font-semibold mt-2 hidden"></p>
             </div>
-
-            <!-- Senha -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <p class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">Trocar senha</p>
-                <div class="space-y-2">
-                    <input type="password" id="senha-atual" placeholder="Senha atual" autocomplete="current-password" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    <input type="password" id="senha-nova" placeholder="Nova senha" autocomplete="new-password" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    <input type="password" id="senha-confirmar" placeholder="Confirmar nova senha" autocomplete="new-password" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                </div>
-                <p class="text-[11.5px] text-gray-400 mt-1.5">Mínimo 5 caracteres, com pelo menos 1 letra maiúscula.</p>
-                <button onclick="salvarSenha()" class="mt-3 text-[13px] font-bold px-4 py-2 rounded-lg text-white bg-gray-900 hover:bg-gray-800">Salvar nova senha</button>
-                <p id="msg-senha" class="text-[12.5px] font-semibold mt-2 hidden"></p>
-            </div>
         </main>
     </div>
 
@@ -95,6 +82,15 @@
         function desenharAvatar() {
             document.getElementById('avatar-atual').innerHTML = avatarHtml(PERFIL_ATUAL.nome_completo, PERFIL_ATUAL.foto_url, 64);
             document.getElementById('btn-remover-foto').classList.toggle('hidden', !PERFIL_ATUAL.foto_url);
+        }
+
+        // Guarda a foto nova no localStorage também — assim o avatar no topo
+        // (que vem do login, não recarrega sozinho) já aparece certo na
+        // próxima página, sem precisar sair e entrar de novo.
+        function atualizarFotoLocal(fotoUrl) {
+            const dados = JSON.parse(localStorage.getItem('pibiex_equipe_dados') || '{}');
+            dados.fotoUrl = fotoUrl;
+            localStorage.setItem('pibiex_equipe_dados', JSON.stringify(dados));
         }
 
         async function carregarPerfil() {
@@ -130,33 +126,6 @@
             mostrarMsg('msg-email', 'E-mail salvo.', true);
         };
 
-        window.salvarSenha = async () => {
-            const senhaAtual = document.getElementById('senha-atual').value;
-            const novaSenha = document.getElementById('senha-nova').value;
-            const confirmarNovaSenha = document.getElementById('senha-confirmar').value;
-
-            if (!senhaAtual || !novaSenha || !confirmarNovaSenha) {
-                mostrarMsg('msg-senha', 'Preencha os três campos.', false);
-                return;
-            }
-            if (novaSenha !== confirmarNovaSenha) {
-                mostrarMsg('msg-senha', 'A nova senha e a confirmação não são iguais.', false);
-                return;
-            }
-
-            const { data, error } = await window.supabaseClient.functions.invoke('perfil-equipe', {
-                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'trocar_senha', senhaAtual, novaSenha, confirmarNovaSenha },
-            });
-            if (error || !data || data.erro) {
-                mostrarMsg('msg-senha', await extrairMensagemErro(error, data, 'Erro ao trocar a senha.'), false);
-                return;
-            }
-            document.getElementById('senha-atual').value = '';
-            document.getElementById('senha-nova').value = '';
-            document.getElementById('senha-confirmar').value = '';
-            mostrarMsg('msg-senha', 'Senha alterada com sucesso.', true);
-        };
-
         window.removerFoto = async () => {
             if (!confirm('Remover sua foto de perfil?')) return;
             const { data, error } = await window.supabaseClient.functions.invoke('perfil-equipe', {
@@ -168,6 +137,7 @@
             }
             PERFIL_ATUAL.foto_url = null;
             desenharAvatar();
+            atualizarFotoLocal(null);
             mostrarMsg('msg-foto', 'Foto removida.', true);
         };
 
@@ -209,6 +179,7 @@
 
             PERFIL_ATUAL.foto_url = dadosSalvar.fotoUrl;
             desenharAvatar();
+            atualizarFotoLocal(dadosSalvar.fotoUrl);
             mostrarMsg('msg-foto', 'Foto atualizada.', true);
         });
 
