@@ -114,6 +114,21 @@ function avatarHtml(nome, fotoUrl, tamanhoPx) {
                          display:inline-flex; align-items:center; justify-content:center;">${iniciaisNome(nome)}</span>`;
 }
 
+// Mesmo avatar de sempre, mas com um selo (coroa/medalha) grudado no canto —
+// usado no ranking de acesso, onde a posição precisa aparecer JUNTO da foto
+// da pessoa, não como texto separado depois do nome.
+function avatarComSeloHtml(nome, fotoUrl, tamanhoPx, selo) {
+    const avatar = avatarHtml(nome, fotoUrl, tamanhoPx);
+    if (!selo) return `<div style="position:relative; flex-shrink:0;">${avatar}</div>`;
+    return `
+        <div style="position:relative; flex-shrink:0;">
+            ${avatar}
+            <span style="position:absolute; bottom:-3px; right:-4px; font-size:14px; line-height:1;
+                         background:#fff; border-radius:9999px; padding:1px; box-shadow:0 0 0 1.5px #fff;">${selo}</span>
+        </div>
+    `;
+}
+
 // Menu lateral agrupado por finalidade real (não é decoração — cada grupo é
 // uma categoria distinta do curso).
 const GRUPOS_MENU = [
