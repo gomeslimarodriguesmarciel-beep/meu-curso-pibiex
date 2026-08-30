@@ -405,10 +405,11 @@
                 return;
             }
 
-            const medalhas = ['🥇', '🥈', '🥉'];
+            const selos = ['👑', '🥈', '🥉'];
             container.innerHTML = data.ranking.map((r, i) => `
                 <div class="linha-ranking">
-                    <span class="posicao-ranking">${i === 0 ? '👑' : (medalhas[i] || (i + 1) + 'º')}</span>
+                    <span class="posicao-ranking">${i + 1}º</span>
+                    ${avatarComSeloHtml(r.nome_completo, r.foto_url, 30, selos[i])}
                     <span class="nome-ranking">${escaparHtml(r.nome_completo)}</span>
                     <span class="contagem-ranking">${r.total_acessos} ${r.total_acessos === 1 ? 'acesso' : 'acessos'}</span>
                 </div>
