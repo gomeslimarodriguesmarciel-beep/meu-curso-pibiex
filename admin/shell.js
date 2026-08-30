@@ -77,6 +77,7 @@ const ITENS_MENU_EQUIPE = [
     { id: 'faq',          label: 'FAQ',               href: 'faq.html' },
     { id: 'recursos',     label: 'Recursos Extras',   href: 'recursos.html' },
     { id: 'equipe',       label: 'Equipe',            href: 'equipe.html',       requerTotal: true },
+    { id: 'perfil',       label: 'Meu Perfil',        href: 'perfil.html' },
 ];
 
 // Ícones de linha (SVG inline, sem dependência externa) — mesmo padrão da
@@ -100,6 +101,7 @@ const ICONES = {
     faq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.7 2.2c-.7.4-1.2.9-1.2 1.7v.3"/><path d="M12 16.7h.01"/></svg>',
     recursos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 7l1.5-1.5a3.5 3.5 0 0 1 5 5L16 12M13 17l-1.5 1.5a3.5 3.5 0 0 1-5-5L8 12"/></svg>',
     equipe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3"/><path d="M6.5 19c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5"/><circle cx="4.5" cy="10" r="2"/><circle cx="19.5" cy="10" r="2"/><path d="M2.5 19c.2-2 1.3-3.5 2.8-4M21.5 19c-.2-2-1.3-3.5-2.8-4"/></svg>',
+    perfil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-3.8 4-5.5 7-5.5s6 1.7 7 5.5"/></svg>',
 };
 
 // Mesmo avatar (foto ou iniciais coloridas) usado no lado do aluno — ver
