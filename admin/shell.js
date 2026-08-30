@@ -77,7 +77,6 @@ const ITENS_MENU_EQUIPE = [
     { id: 'faq',          label: 'FAQ',               href: 'faq.html' },
     { id: 'recursos',     label: 'Recursos Extras',   href: 'recursos.html' },
     { id: 'equipe',       label: 'Equipe',            href: 'equipe.html',       requerTotal: true },
-    { id: 'perfil',       label: 'Meu Perfil',        href: 'perfil.html' },
 ];
 
 // Ícones de linha (SVG inline, sem dependência externa) — mesmo padrão da
@@ -243,14 +242,33 @@ function montarTopoEquipe(dados) {
             <div class="flex items-center gap-3 min-w-0">
                 <button onclick="window.abrirMenuEquipe()" class="md:hidden shrink-0 text-gray-500 hover:text-gray-900 text-2xl leading-none" aria-label="Abrir menu">☰</button>
                 <p class="text-gray-500 text-sm min-w-0 truncate">
-                    <span class="font-bold text-gray-800">${dados.nomeCompleto}</span>
-                    <span class="ml-2 text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">${dados.cargo}</span>
+                    <span class="font-bold text-gray-800">${escaparHtml(dados.nomeCompleto)}</span>
+                    <span class="ml-2 text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">${escaparHtml(dados.cargo)}</span>
                 </p>
             </div>
-            <button onclick="sairEquipe()" class="text-sm font-bold text-gray-500 hover:text-red-600 transition shrink-0">Sair</button>
+            <div class="relative shrink-0">
+                <button onclick="window.alternarMenuContaEquipe()" id="botao-conta-equipe" class="flex items-center rounded-full transition hover:opacity-80" aria-label="Minha conta">
+                    ${avatarHtml(dados.nomeCompleto, dados.fotoUrl, 36)}
+                </button>
+                <div id="menu-conta-equipe" class="hidden absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50">
+                    <a href="perfil.html" class="block px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Meu Perfil</a>
+                    <button onclick="sairEquipe()" class="w-full text-left px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">Sair</button>
+                </div>
+            </div>
         </header>
     `;
 }
+
+window.alternarMenuContaEquipe = () => {
+    document.getElementById('menu-conta-equipe').classList.toggle('hidden');
+};
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('menu-conta-equipe');
+    const botao = document.getElementById('botao-conta-equipe');
+    if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && !botao.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
 
 async function sairEquipe() {
     const token = localStorage.getItem('pibiex_equipe_token');
