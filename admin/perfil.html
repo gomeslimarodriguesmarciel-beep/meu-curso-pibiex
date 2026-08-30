@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX 2026 · Meu Perfil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-4 md:p-8 max-w-2xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">Meu Perfil</h1>
+            <p class="text-gray-500 mb-6">Sua foto, e-mail e senha. Nome completo, usuário, cargo e nível de acesso só são alterados por uma conta com acesso total, em "Equipe".</p>
+
+            <!-- Foto + identidade -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+                <div class="flex items-center gap-4">
+                    <div id="avatar-atual"></div>
+                    <div class="min-w-0">
+                        <p id="perfil-nome" class="font-bold text-[15px] text-gray-800 truncate">—</p>
+                        <p id="perfil-cargo" class="text-[12.5px] text-gray-500 truncate">—</p>
+                        <p id="perfil-usuario" class="text-[12px] font-mono text-gray-400 truncate">—</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 mt-4">
+                    <input type="file" id="input-foto" accept="image/jpeg,image/png,image/webp" class="hidden">
+                    <button onclick="document.getElementById('input-foto').click()"
+                            class="text-[13px] font-bold px-4 py-2 rounded-lg text-white bg-gray-900 hover:bg-gray-800">
+                        Trocar foto
+                    </button>
+                    <button id="btn-remover-foto" onclick="removerFoto()" class="hidden text-[13px] font-bold px-4 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
+                        Remover foto
+                    </button>
+                </div>
+                <p class="text-[11.5px] text-gray-400 mt-2">JPG, PNG ou WEBP, até 2MB. Aparece no painel e nas mensagens do chat.</p>
+                <p id="msg-foto" class="text-[12.5px] font-semibold mt-2 hidden"></p>
+            </div>
+
+            <!-- E-mail -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+                <p class="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">E-mail</p>
+                <p class="text-[12.5px] text-gray-500 mb-3">Usado pra recuperação de senha e para receber avisos administrativos.</p>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="email" id="input-email" placeholder="seuemail@exemplo.com" class="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]">
+                    <button onclick="salvarEmail()" class="text-[13px] font-bold px-4 py-2 rounded-lg text-white bg-gray-900 hover:bg-gray-800">Salvar</button>
+                </div>
+                <p id="msg-email" class="text-[12.5px] font-semibold mt-2 hidden"></p>
+            </div>
+
+            <!-- Senha -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">Trocar senha</p>
+                <div class="space-y-2">
+                    <input type="password" id="senha-atual" placeholder="Senha atual" autocomplete="current-password" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <input type="password" id="senha-nova" placeholder="Nova senha" autocomplete="new-password" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <input type="password" id="senha-confirmar" placeholder="Confirmar nova senha" autocomplete="new-password" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <p class="text-[11.5px] text-gray-400 mt-1.5">Mínimo 5 caracteres, com pelo menos 1 letra maiúscula.</p>
+                <button onclick="salvarSenha()" class="mt-3 text-[13px] font-bold px-4 py-2 rounded-lg text-white bg-gray-900 hover:bg-gray-800">Salvar nova senha</button>
+                <p id="msg-senha" class="text-[12.5px] font-semibold mt-2 hidden"></p>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        let PERFIL_ATUAL = null;
+
+        function mostrarMsg(idElemento, texto, sucesso) {
+            const el = document.getElementById(idElemento);
+            el.innerText = texto;
+            el.className = `text-[12.5px] font-semibold mt-2 ${sucesso ? 'text-green-600' : 'text-red-600'}`;
+        }
+
+        async function extrairMensagemErro(error, data, mensagemPadrao) {
+            if (data && data.erro) return data.erro;
+            if (error && error.context) {
+                try {
+                    const corpo = await error.context.json();
+                    if (corpo && corpo.erro) return corpo.erro;
+                } catch (e) { /* corpo não era JSON */ }
+            }
+            return mensagemPadrao;
+        }
+
+        function desenharAvatar() {
+            document.getElementById('avatar-atual').innerHTML = avatarHtml(PERFIL_ATUAL.nome_completo, PERFIL_ATUAL.foto_url, 64);
+            document.getElementById('btn-remover-foto').classList.toggle('hidden', !PERFIL_ATUAL.foto_url);
+        }
+
+        async function carregarPerfil() {
+            const { data, error } = await window.supabaseClient.functions.invoke('perfil-equipe', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'ver' },
+            });
+            if (error || !data || data.erro) {
+                document.getElementById('perfil-nome').innerText = 'Erro ao carregar';
+                return;
+            }
+
+            PERFIL_ATUAL = data.perfil;
+            document.getElementById('perfil-nome').innerText = PERFIL_ATUAL.nome_completo;
+            document.getElementById('perfil-cargo').innerText =
+                (PERFIL_ATUAL.cargo === 'administrador' ? 'Administrador' : 'Professor') +
+                ' · Acesso ' + (PERFIL_ATUAL.nivel_acesso === 'total' ? 'total' : 'restrito');
+            document.getElementById('perfil-usuario').innerText = PERFIL_ATUAL.usuario;
+            document.getElementById('input-email').value = PERFIL_ATUAL.email || '';
+            desenharAvatar();
+        }
+
+        window.salvarEmail = async () => {
+            const email = document.getElementById('input-email').value.trim();
+            if (!email) return;
+
+            const { data, error } = await window.supabaseClient.functions.invoke('perfil-equipe', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'trocar_email', email },
+            });
+            if (error || !data || data.erro) {
+                mostrarMsg('msg-email', await extrairMensagemErro(error, data, 'Erro ao salvar.'), false);
+                return;
+            }
+            mostrarMsg('msg-email', 'E-mail salvo.', true);
+        };
+
+        window.salvarSenha = async () => {
+            const senhaAtual = document.getElementById('senha-atual').value;
+            const novaSenha = document.getElementById('senha-nova').value;
+            const confirmarNovaSenha = document.getElementById('senha-confirmar').value;
+
+            if (!senhaAtual || !novaSenha || !confirmarNovaSenha) {
+                mostrarMsg('msg-senha', 'Preencha os três campos.', false);
+                return;
+            }
+            if (novaSenha !== confirmarNovaSenha) {
+                mostrarMsg('msg-senha', 'A nova senha e a confirmação não são iguais.', false);
+                return;
+            }
+
+            const { data, error } = await window.supabaseClient.functions.invoke('perfil-equipe', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'trocar_senha', senhaAtual, novaSenha, confirmarNovaSenha },
+            });
+            if (error || !data || data.erro) {
+                mostrarMsg('msg-senha', await extrairMensagemErro(error, data, 'Erro ao trocar a senha.'), false);
+                return;
+            }
+            document.getElementById('senha-atual').value = '';
+            document.getElementById('senha-nova').value = '';
+            document.getElementById('senha-confirmar').value = '';
+            mostrarMsg('msg-senha', 'Senha alterada com sucesso.', true);
+        };
+
+        window.removerFoto = async () => {
+            if (!confirm('Remover sua foto de perfil?')) return;
+            const { data, error } = await window.supabaseClient.functions.invoke('perfil-equipe', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'remover_foto' },
+            });
+            if (error || !data || data.erro) {
+                mostrarMsg('msg-foto', await extrairMensagemErro(error, data, 'Erro ao remover a foto.'), false);
+                return;
+            }
+            PERFIL_ATUAL.foto_url = null;
+            desenharAvatar();
+            mostrarMsg('msg-foto', 'Foto removida.', true);
+        };
+
+        document.getElementById('input-foto').addEventListener('change', async (e) => {
+            const arquivo = e.target.files[0];
+            e.target.value = '';
+            if (!arquivo) return;
+
+            if (arquivo.size > 2 * 1024 * 1024) {
+                mostrarMsg('msg-foto', 'A imagem passa de 2MB. Escolha uma menor.', false);
+                return;
+            }
+
+            mostrarMsg('msg-foto', 'Enviando...', true);
+
+            const { data: dadosUpload, error: erroUpload } = await window.supabaseClient.functions.invoke('perfil-equipe', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'gerar_url_upload_foto', nomeArquivo: arquivo.name },
+            });
+            if (erroUpload || !dadosUpload || dadosUpload.erro) {
+                mostrarMsg('msg-foto', await extrairMensagemErro(erroUpload, dadosUpload, 'Erro ao preparar o envio.'), false);
+                return;
+            }
+
+            const { error: erroEnvio } = await window.supabaseClient.storage
+                .from('avatares')
+                .uploadToSignedUrl(dadosUpload.caminho, dadosUpload.token, arquivo);
+            if (erroEnvio) {
+                mostrarMsg('msg-foto', 'Erro ao enviar a imagem. Tente novamente.', false);
+                return;
+            }
+
+            const { data: dadosSalvar, error: erroSalvar } = await window.supabaseClient.functions.invoke('perfil-equipe', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao: 'salvar_foto', caminho: dadosUpload.caminho },
+            });
+            if (erroSalvar || !dadosSalvar || dadosSalvar.erro) {
+                mostrarMsg('msg-foto', await extrairMensagemErro(erroSalvar, dadosSalvar, 'Erro ao salvar a foto.'), false);
+                return;
+            }
+
+            PERFIL_ATUAL.foto_url = dadosSalvar.fotoUrl;
+            desenharAvatar();
+            mostrarMsg('msg-foto', 'Foto atualizada.', true);
+        });
+
+        iniciarShellEquipe('perfil').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregarPerfil();
+        });
+    </script>
+</body>
+</html>
