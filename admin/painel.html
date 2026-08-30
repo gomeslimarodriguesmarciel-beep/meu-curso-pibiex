@@ -158,6 +158,12 @@
 
         .painel-fundo .etiqueta-inativo { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--status-warning); background: rgba(250,178,25,.14); border: 1px solid rgba(250,178,25,.3); padding: 2px 7px; border-radius: 999px; margin-left: 7px; }
 
+        .painel-fundo .linha-ranking { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-top: 1px solid var(--border); }
+        .painel-fundo .linha-ranking:first-child { border-top: none; }
+        .painel-fundo .posicao-ranking { width: 22px; text-align: center; font-size: 12.5px; font-weight: 800; color: var(--text-muted); flex-shrink: 0; }
+        .painel-fundo .nome-ranking { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .painel-fundo .contagem-ranking { font-size: 11.5px; font-weight: 700; color: var(--text-secondary); background: var(--surface-card-2); padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
+
         .painel-fundo .num { font-variant-numeric: tabular-nums; }
         .painel-fundo .sem-resultado { text-align: center; padding: 34px 12px; color: var(--text-muted); font-size: 13px; }
     </style>
@@ -245,6 +251,16 @@
                     </div>
                 </section>
 
+                <section class="cartao entra" style="animation-delay:.22s">
+                    <div class="cartao-titulo">
+                        <div>
+                            <h2>🏆 Ranking de acesso · esta semana</h2>
+                            <p>Reinicia toda segunda-feira — o mesmo ranking que os alunos veem no início deles</p>
+                        </div>
+                    </div>
+                    <div id="lista-ranking-semanal"><p class="sem-resultado">Carregando…</p></div>
+                </section>
+
                 <section class="cartao entra" style="animation-delay:.24s">
                     <div class="cartao-titulo">
                         <div>
@@ -328,6 +344,8 @@
         }
 
         // ---------------- seletor de turma ----------------
+        let turmasCarregadas = [];
+
         async function carregarTurmas() {
             const seletor = document.getElementById('seletor-turma');
             const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-turmas', {
@@ -335,6 +353,7 @@
             });
             if (error || !data || data.erro || !data.turmas) return;
 
+            turmasCarregadas = data.turmas;
             for (const t of data.turmas) {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -346,11 +365,18 @@
             // pra escolher — com uma só, "Todas as turmas" e "aquela turma"
             // são a mesma coisa, e o controle só ocuparia espaço à toa.
             if (data.turmas.length < 2) seletor.style.display = 'none';
+
+            // O ranking semanal (diferente dos outros cartões) sempre precisa
+            // de UMA turma específica pra calcular — "todas as turmas" não é
+            // uma opção válida pra ele. Com uma turma só cadastrada, usa ela
+            // direto sem pedir pro professor escolher à toa.
+            carregarRankingSemanal();
         }
 
         document.getElementById('seletor-turma').addEventListener('change', (e) => {
             turmaAtual = e.target.value;
             carregarTudo();
+            carregarRankingSemanal();
         });
 
         function carregarTudo() {
@@ -359,6 +385,34 @@
             carregarRanking();
             carregarMapaCalor();
             carregarAlunos();
+        }
+
+        // ---------------- ranking semanal (o mesmo que o aluno vê) ----------------
+        async function carregarRankingSemanal() {
+            const container = document.getElementById('lista-ranking-semanal');
+            const turmaId = turmaAtual || (turmasCarregadas[0] && turmasCarregadas[0].id);
+
+            if (!turmaId) {
+                container.innerHTML = '<p class="sem-resultado">Nenhuma turma cadastrada ainda.</p>';
+                return;
+            }
+
+            const { data, error } = await window.supabaseClient.functions.invoke('ranking-acesso', {
+                body: { tokenEquipe: TOKEN_EQUIPE, turmaId },
+            });
+            if (error || !data || data.erro || !data.ranking || data.ranking.length === 0) {
+                container.innerHTML = '<p class="sem-resultado">Ainda não há acesso suficiente essa semana pra montar um ranking.</p>';
+                return;
+            }
+
+            const medalhas = ['🥇', '🥈', '🥉'];
+            container.innerHTML = data.ranking.map((r, i) => `
+                <div class="linha-ranking">
+                    <span class="posicao-ranking">${i === 0 ? '👑' : (medalhas[i] || (i + 1) + 'º')}</span>
+                    <span class="nome-ranking">${escaparHtml(r.nome_completo)}</span>
+                    <span class="contagem-ranking">${r.total_acessos} ${r.total_acessos === 1 ? 'acesso' : 'acessos'}</span>
+                </div>
+            `).join('');
         }
 
         // ---------------- relógio ----------------
