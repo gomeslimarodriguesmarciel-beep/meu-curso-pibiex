@@ -709,7 +709,12 @@
         }
         function statusDe(a) {
             if (!a.ultimo_acesso) return 'offline';
-            return (Date.now() - new Date(a.ultimo_acesso).getTime()) < 5 * 60000 ? 'online' : 'offline';
+            // 2 minutos: o "último acesso" do aluno se atualiza no máximo 1x
+            // por minuto enquanto a aba dele fica aberta (banner de frequência
+            // faz ping a cada 20s) — 2min dá margem sem marcar "offline" à
+            // toa, e detecta bem mais rápido que os 5min de antes (a maioria
+            // dos alunos fecha a aba sem clicar em "Sair").
+            return (Date.now() - new Date(a.ultimo_acesso).getTime()) < 2 * 60000 ? 'online' : 'offline';
         }
         function inativoDe(a) {
             if (!a.ultimo_acesso) return true;
@@ -789,6 +794,16 @@
 
             carregarTurmas();
             carregarTudo();
+
+            // Sem isso, "quem está online" só atualizava quando o professor
+            // dava F5 — podia ficar minutos desatualizado olhando a tela
+            // parada. A cada 30s refaz só a parte "ao vivo" (KPIs + tabela de
+            // alunos); gráfico/mapa de calor não precisam desse ritmo, então
+            // ficam de fora pra não gastar chamada à toa.
+            setInterval(() => {
+                carregarResumo();
+                carregarAlunos();
+            }, 30000);
         });
     </script>
 </body>
