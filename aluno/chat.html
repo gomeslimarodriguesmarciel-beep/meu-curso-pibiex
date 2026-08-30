@@ -557,12 +557,40 @@
                     removerArquivo(escopo);
                 }
 
+                // Mostra a mensagem na tela na hora, sem esperar o próximo
+                // recarregamento — só pra texto puro (anexo já tem a espera
+                // própria do upload). O recarregamento logo em seguida troca
+                // essa prévia pela mensagem de verdade vinda do servidor.
+                if (!anexo) {
+                    const lista = escopo === 'turma' ? ULTIMAS_TURMA : ULTIMAS_PRIVADAS;
+                    lista.push({
+                        id: 'temp-' + Date.now(),
+                        autorTipo: 'aluno',
+                        autorId: ALUNO.id,
+                        autorNome: ALUNO.nomeCompleto,
+                        autorFotoUrl: ALUNO.fotoUrl || null,
+                        souEu: true,
+                        mensagem: texto,
+                        apagada: false,
+                        editada: false,
+                        criadoEm: new Date().toISOString(),
+                        podeEditar: false,
+                        podeApagar: false,
+                        anexo: null,
+                        reacoes: [],
+                    });
+                    desenharMensagens(
+                        escopo === 'turma' ? 'lista-turma' : 'lista-privada',
+                        lista, escopo, escopo === 'turma', ''
+                    );
+                }
+
                 const corpo = { acao: 'enviar', mensagem: texto };
                 if (escopo === 'privado') corpo.conversaId = CONVERSA_ABERTA;
                 if (anexo) corpo.arquivo = anexo;
 
                 const r = await chamar(funcao, corpo);
-                if (r.erro) { alert(r.erro); campo.value = texto; return false; }
+                if (r.erro) { alert(r.erro); campo.value = texto; }
             }
 
             escopo === 'turma' ? carregarTurma() : carregarMensagensPrivadas();
@@ -753,8 +781,12 @@
 
             // Sem tempo real: uma recarga leve a cada 6 segundos dá conta de uma
             // turma desse tamanho. Não recarrega enquanto o aluno está editando,
-            // para não trocar o texto embaixo do dedo dele.
+            // para não trocar o texto embaixo do dedo dele — e nem enquanto a
+            // aba está em segundo plano (celular bloqueado, outra aba aberta),
+            // que é quando essa recarga não serve pra nada além de gastar rede
+            // e chamada à toa.
             RELOGIO = setInterval(() => {
+                if (document.hidden) return;
                 if (EDITANDO) return;
                 if (ABA === 'turma') carregarTurma();
                 else if (CONVERSA_ABERTA) carregarMensagensPrivadas();
