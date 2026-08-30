@@ -143,7 +143,6 @@ const GRUPOS_MENU = [
             { id: 'notas',      label: 'Minhas Notas',   href: 'notas.html' },
             { id: 'frequencia', label: 'Minha Frequência', href: 'frequencia.html' },
             { id: 'chat',       label: 'Chat da Turma',  href: 'chat.html' },
-            { id: 'perfil',     label: 'Meu Perfil',     href: 'perfil.html' },
         ],
     },
     {
@@ -267,11 +266,11 @@ window.fecharMenuAluno = () => {
 // ============================================================
 // 3) Barra do topo
 // ============================================================
-function montarTopo(nomeCompleto) {
+function montarTopo(dados) {
     const container = document.getElementById('topo-pagina');
     if (!container) return;
 
-    const primeiroNome = (nomeCompleto || '').split(' ')[0];
+    const primeiroNome = (dados.nomeCompleto || '').split(' ')[0];
 
     container.outerHTML = `
         <header id="topo-pagina" class="flex items-center justify-between gap-3 px-4 md:px-9 py-4 md:py-5 bg-white border-b" style="border-color: var(--pibiex-borda);">
@@ -281,14 +280,29 @@ function montarTopo(nomeCompleto) {
                     Bem-vindo(a), <span class="font-semibold" style="color: var(--pibiex-texto);">${primeiroNome}</span>
                 </p>
             </div>
-            <button onclick="sairAluno()" class="text-[13px] font-semibold tracking-wide uppercase transition shrink-0"
-                    style="color: var(--pibiex-texto-suave);"
-                    onmouseover="this.style.color='var(--pibiex-tinta)'" onmouseout="this.style.color='var(--pibiex-texto-suave)'">
-                Sair
-            </button>
+            <div class="relative shrink-0">
+                <button onclick="window.alternarMenuContaAluno()" id="botao-conta-aluno" class="flex items-center rounded-full transition hover:opacity-80" aria-label="Minha conta">
+                    ${avatarHtml(dados.nomeCompleto, dados.fotoUrl, 34)}
+                </button>
+                <div id="menu-conta-aluno" class="hidden absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-lg border py-1.5 z-50" style="border-color: var(--pibiex-borda);">
+                    <a href="perfil.html" class="block px-4 py-2 text-[13.5px] font-semibold hover:bg-black/[.03]" style="color: var(--pibiex-texto);">Meu Perfil</a>
+                    <button onclick="sairAluno()" class="w-full text-left px-4 py-2 text-[13.5px] font-semibold text-red-600 hover:bg-red-50">Sair</button>
+                </div>
+            </div>
         </header>
     `;
 }
+
+window.alternarMenuContaAluno = () => {
+    document.getElementById('menu-conta-aluno').classList.toggle('hidden');
+};
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('menu-conta-aluno');
+    const botao = document.getElementById('botao-conta-aluno');
+    if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && !botao.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
 
 async function sairAluno() {
     const token = localStorage.getItem('pibiex_aluno_token');
@@ -611,7 +625,7 @@ async function iniciarShellAluno(paginaAtivaId) {
     // então desenhar o menu e SÓ DEPOIS começar a buscar o conteúdo real —
     // duas idas e voltas ao servidor em fila, uma atrás da outra.
     montarMenuLateral(paginaAtivaId);
-    montarTopo(sessao.dados.nomeCompleto);
+    montarTopo(sessao.dados);
     montarAssistenteFlutuante();
     montarBannerFrequencia();
 
