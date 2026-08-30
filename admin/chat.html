@@ -112,6 +112,7 @@
         let RELOGIO = null;
         let ULTIMAS_TURMA = [];
         let ULTIMAS_PRIVADAS = [];
+        let EU_EQUIPE = null;
 
         const EMOJIS_RAPIDOS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
         const EMOJIS = [
@@ -505,13 +506,42 @@
                     removerArquivo(escopo);
                 }
 
+                // Mostra a mensagem na tela na hora, sem esperar o próximo
+                // recarregamento — só pra texto puro (anexo já tem a espera
+                // própria do upload). O recarregamento logo em seguida troca
+                // essa prévia pela mensagem de verdade vinda do servidor.
+                if (!anexo && EU_EQUIPE) {
+                    const lista = escopo === 'turma' ? ULTIMAS_TURMA : ULTIMAS_PRIVADAS;
+                    lista.push({
+                        id: 'temp-' + Date.now(),
+                        autorTipo: 'equipe',
+                        autorId: EU_EQUIPE.id,
+                        autorNome: EU_EQUIPE.nomeCompleto,
+                        autorFotoUrl: EU_EQUIPE.fotoUrl || null,
+                        souEu: true,
+                        mensagem: texto,
+                        apagada: false,
+                        editada: false,
+                        criadoEm: new Date().toISOString(),
+                        podeEditar: false,
+                        podeApagar: false,
+                        podeModerar: false,
+                        anexo: null,
+                        reacoes: [],
+                    });
+                    desenharMensagens(
+                        escopo === 'turma' ? 'lista-turma' : 'lista-privada',
+                        lista, escopo, escopo === 'turma', '', false
+                    );
+                }
+
                 const corpo = escopo === 'turma'
                     ? { acao: 'enviar', turmaId: TURMA_ATUAL, mensagem: texto }
                     : { acao: 'enviar_privado', conversaId: CONVERSA_ABERTA, mensagem: texto };
                 if (anexo) corpo.arquivo = anexo;
 
                 const r = await chamar(corpo);
-                if (r.erro) { alert(r.erro); campo.value = texto; return false; }
+                if (r.erro) { alert(r.erro); campo.value = texto; }
             }
 
             escopo === 'turma' ? carregarTurma() : carregarMensagensPrivadas();
@@ -724,6 +754,7 @@
         iniciarShellEquipe('chat').then(async (sessao) => {
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
+            EU_EQUIPE = sessao.dados;
 
             TURMA_ATUAL = await montarSeletorTurma('seletor-turma', async (turmaId) => {
                 TURMA_ATUAL = turmaId;
@@ -746,7 +777,10 @@
             await carregarTurma();
             await carregarConversas();
 
+            // Não recarrega com a aba em segundo plano — aí é só gasto de
+            // rede e chamada à toa, sem ninguém vendo.
             RELOGIO = setInterval(() => {
+                if (document.hidden) return;
                 if (EDITANDO) return;
                 if (ABA === 'turma') carregarTurma();
                 else if (ABA === 'privado' && CONVERSA_ABERTA) carregarMensagensPrivadas();
