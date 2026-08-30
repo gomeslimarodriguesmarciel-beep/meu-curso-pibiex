@@ -418,7 +418,36 @@ async function montarSeletorTurma(idContainer, aoTrocar) {
 // ============================================================
 // Ponto de entrada — cada página chama isso passando seu próprio id
 // ============================================================
+// Injeta favicon, manifest.json (PWA) e cor do tema no <head> das telas do
+// painel — assim qualquer página do admin oferece "Instalar aplicativo" no
+// navegador, não só o login. Sem isso, cada arquivo HTML precisaria da tag
+// repetida na mão.
+function injetarManifestoEIcone() {
+    const head = document.head;
+    if (!head.querySelector('link[rel="icon"]')) {
+        const favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        favicon.type = 'image/png';
+        favicon.href = '/logo pibiex.png';
+        head.appendChild(favicon);
+    }
+    if (!head.querySelector('link[rel="manifest"]')) {
+        const manifesto = document.createElement('link');
+        manifesto.rel = 'manifest';
+        manifesto.href = '/manifest.json';
+        head.appendChild(manifesto);
+    }
+    if (!head.querySelector('meta[name="theme-color"]')) {
+        const corTema = document.createElement('meta');
+        corTema.name = 'theme-color';
+        corTema.content = '#1e3a8a';
+        head.appendChild(corTema);
+    }
+}
+
 async function iniciarShellEquipe(paginaAtivaId) {
+    injetarManifestoEIcone();
+
     const sessao = protegerPaginaEquipe();
     if (!sessao) return null;
 
