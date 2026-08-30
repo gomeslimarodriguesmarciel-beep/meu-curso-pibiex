@@ -149,13 +149,13 @@
             }
             secao.classList.remove('hidden');
 
-            const medalhas = ['🥇', '🥈', '🥉', '', ''];
+            const selos = ['👑', '🥈', '🥉'];
             document.getElementById('lista-ranking').innerHTML = ranking.map((r, i) => `
                 <div class="flex items-center gap-3 px-3 py-2.5 ${i > 0 ? 'border-t' : ''}" style="border-color: var(--pibiex-borda);">
-                    <span class="w-6 text-center text-[13px] font-black shrink-0" style="color: var(--pibiex-texto-suave);">${i + 1}º</span>
-                    ${avatarHtml(r.nome_completo, r.foto_url, 32)}
+                    <span class="w-5 text-center text-[13px] font-black shrink-0" style="color: var(--pibiex-texto-suave);">${i + 1}º</span>
+                    ${avatarComSeloHtml(r.nome_completo, r.foto_url, 34, selos[i])}
                     <span class="text-[13.5px] font-semibold min-w-0 truncate flex-1" style="color: var(--pibiex-texto);">
-                        ${escaparHtml(r.nome_completo)}${i === 0 ? ' 👑' : (medalhas[i] ? ' ' + medalhas[i] : '')}
+                        ${escaparHtml(r.nome_completo)}
                     </span>
                     <span class="text-[12px] font-bold shrink-0 rounded-full px-2.5 py-1" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">
                         ${r.total_acessos} ${r.total_acessos === 1 ? 'acesso' : 'acessos'}
