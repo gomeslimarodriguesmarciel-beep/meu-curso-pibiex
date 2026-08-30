@@ -133,6 +133,20 @@ function avatarHtml(nome, fotoUrl, tamanhoPx) {
                          display:inline-flex; align-items:center; justify-content:center;">${iniciaisNome(nome)}</span>`;
 }
 
+// Mesmo avatar de sempre, mas com um selo (coroa/medalha) grudado no canto —
+// usado no ranking de acesso do painel, igual ao lado do aluno.
+function avatarComSeloHtml(nome, fotoUrl, tamanhoPx, selo) {
+    const avatar = avatarHtml(nome, fotoUrl, tamanhoPx);
+    if (!selo) return `<div style="position:relative; flex-shrink:0;">${avatar}</div>`;
+    return `
+        <div style="position:relative; flex-shrink:0;">
+            ${avatar}
+            <span style="position:absolute; bottom:-3px; right:-4px; font-size:14px; line-height:1;
+                         background:#0d1330; border-radius:9999px; padding:1px; box-shadow:0 0 0 1.5px #0d1330;">${selo}</span>
+        </div>
+    `;
+}
+
 function iconeSvg(id) {
     return `<span class="w-5 h-5 shrink-0">${ICONES[id] || ''}</span>`;
 }
