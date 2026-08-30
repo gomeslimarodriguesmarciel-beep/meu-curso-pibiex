@@ -1,0 +1,18 @@
+{
+  "name": "PIBIEX 2026 — Painel do Professor",
+  "short_name": "PIBIEX Painel",
+  "description": "Painel da equipe da plataforma PIBIEX 2026.",
+  "start_url": "/login.html?perfil=professor",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    {
+      "src": "/logo%20pibiex.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
