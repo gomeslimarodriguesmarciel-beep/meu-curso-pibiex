@@ -108,6 +108,15 @@
             document.getElementById('btn-remover-foto').classList.toggle('hidden', !PERFIL_ATUAL.foto_url);
         }
 
+        // Guarda a foto nova no localStorage também — assim o avatar no topo
+        // (que vem do login, não recarrega sozinho) já aparece certo na
+        // próxima página, sem precisar sair e entrar de novo.
+        function atualizarFotoLocal(fotoUrl) {
+            const dados = JSON.parse(localStorage.getItem('pibiex_aluno_dados') || '{}');
+            dados.fotoUrl = fotoUrl;
+            localStorage.setItem('pibiex_aluno_dados', JSON.stringify(dados));
+        }
+
         async function carregarPerfil() {
             const { data, error } = await window.supabaseClient.functions.invoke('perfil-aluno', {
                 body: { token: TOKEN_ALUNO, acao: 'ver' },
@@ -191,6 +200,7 @@
             }
             PERFIL_ATUAL.foto_url = null;
             desenharAvatar();
+            atualizarFotoLocal(null);
             mostrarMsg('msg-foto', 'Foto removida.', true);
         };
 
@@ -232,6 +242,7 @@
 
             PERFIL_ATUAL.foto_url = dadosSalvar.fotoUrl;
             desenharAvatar();
+            atualizarFotoLocal(dadosSalvar.fotoUrl);
             mostrarMsg('msg-foto', 'Foto atualizada.', true);
         });
 
