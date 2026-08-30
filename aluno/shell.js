@@ -291,6 +291,27 @@ function montarTopo(dados) {
             </div>
         </header>
     `;
+
+    // Sessão de antes da foto passar a vir junto do login: "fotoUrl" nem
+    // existe no localStorage ainda (diferente de "existe e é null", que
+    // significa "sem foto mesmo"). Busca 1x só, guarda pra próxima vez, e
+    // nunca mais precisa — depois desse ajuste a chave sempre vem preenchida.
+    if (dados.fotoUrl === undefined) {
+        atualizarFotoDoTopoUmaVez(dados);
+    }
+}
+
+async function atualizarFotoDoTopoUmaVez(dados) {
+    const token = localStorage.getItem('pibiex_aluno_token');
+    const { data } = await window.supabaseClient.functions.invoke('perfil-aluno', { body: { token, acao: 'ver' } });
+    if (!data || !data.perfil) return;
+
+    const dadosSalvos = JSON.parse(localStorage.getItem('pibiex_aluno_dados') || '{}');
+    dadosSalvos.fotoUrl = data.perfil.foto_url;
+    localStorage.setItem('pibiex_aluno_dados', JSON.stringify(dadosSalvos));
+
+    const botao = document.getElementById('botao-conta-aluno');
+    if (botao) botao.innerHTML = avatarHtml(dados.nomeCompleto, data.perfil.foto_url, 34);
 }
 
 window.alternarMenuContaAluno = () => {
