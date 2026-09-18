@@ -106,6 +106,14 @@
                                                value="${e.nota !== null && e.nota !== undefined ? e.nota : ''}"
                                                class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                                     </div>
+                                    ${atv.horas_maximas ? `
+                                    <div class="w-28">
+                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Horas (até ${atv.horas_maximas}h)</label>
+                                        <input id="horas-${e.id}" type="number" step="0.5" min="0" max="${atv.horas_maximas}" placeholder="0 a ${atv.horas_maximas}"
+                                               value="${e.horas_concedidas !== null && e.horas_concedidas !== undefined ? e.horas_concedidas : ''}"
+                                               class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                    </div>
+                                    ` : ''}
                                     <div class="flex-1 min-w-[200px]">
                                         <label class="block text-[11px] font-bold text-gray-500 mb-1">Comentário para o aluno (opcional)</label>
                                         <input id="feedback-${e.id}" value="${escaparHtml(e.feedback_professor || '')}"
@@ -139,8 +147,10 @@
         window.salvarCorrecao = async (trabalhoId) => {
             const nota = document.getElementById(`nota-${trabalhoId}`).value.trim();
             const feedback = document.getElementById(`feedback-${trabalhoId}`).value.trim();
+            const campoHoras = document.getElementById(`horas-${trabalhoId}`);
+            const horasConcedidas = campoHoras && campoHoras.value.trim() !== '' ? Number(campoHoras.value.trim()) : null;
 
-            const resultado = await chamarCorrigirTrabalho('corrigir', { trabalhoId, nota, feedback });
+            const resultado = await chamarCorrigirTrabalho('corrigir', { trabalhoId, nota, feedback, horasConcedidas });
             if (resultado) carregarTrabalhos();
         };
 
