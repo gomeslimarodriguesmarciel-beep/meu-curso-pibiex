@@ -62,9 +62,12 @@
                                 <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(atv.titulo)}</p>
                                 ${atv.modulos ? `<p class="text-xs mt-0.5" style="color: var(--pibiex-texto-suave);">${escaparHtml(atv.modulos.titulo)}</p>` : ''}
                             </div>
-                            ${prazo ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">Prazo: ${prazo}</span>` : ''}
+                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                ${prazo ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">Prazo: ${prazo}</span>` : ''}
+                                ${atv.horas_maximas ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background: #fef3c7; color: #92400e;">Vale até ${atv.horas_maximas}h</span>` : ''}
+                            </div>
                         </div>
-                        ${atv.descricao ? `<p class="text-sm mt-3" style="color: var(--pibiex-texto-suave);">${escaparHtml(atv.descricao)}</p>` : ''}
+                        ${atv.descricao ? `<p class="text-sm mt-3 whitespace-pre-wrap" style="color: var(--pibiex-texto-suave);">${escaparHtml(atv.descricao)}</p>` : ''}
                     </div>
                 `;
             }).join('');
@@ -73,7 +76,7 @@
         async function carregarAtividades(dadosAluno) {
             const { data, error } = await window.supabaseClient
                 .from('atividades')
-                .select('id, titulo, descricao, data_entrega, modulos(titulo, turma_id)')
+                .select('id, titulo, descricao, data_entrega, horas_maximas, modulos(titulo, turma_id)')
                 .order('data_entrega', { ascending: true });
 
             if (error) {
