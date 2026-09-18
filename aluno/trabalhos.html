@@ -85,6 +85,7 @@
                         ${status === 'avaliado' ? `
                             <div class="rounded-md p-3 mb-3" style="background: var(--pibiex-papel);">
                                 <p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Nota: ${trabalho.nota ?? '—'}</p>
+                                ${trabalho.horas_concedidas !== null && trabalho.horas_concedidas !== undefined ? `<p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Horas concedidas: ${trabalho.horas_concedidas}h</p>` : ''}
                                 ${trabalho.feedback_professor ? `<p class="text-xs" style="color: var(--pibiex-texto-suave);">${escaparHtml(trabalho.feedback_professor)}</p>` : ''}
                             </div>
                         ` : ''}
