@@ -86,7 +86,7 @@
                         return `
                             <div class="px-5 py-4 border-t border-gray-100">
                                 <div class="flex items-start justify-between gap-3 mb-2">
-                                    <div class="min-w-0">
+                                    <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <p class="text-sm font-bold text-gray-800">${escaparHtml(e.alunoNome)}</p>
                                             ${avaliado
@@ -94,9 +94,14 @@
                                                 : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Aguardando correção</span>'}
                                         </div>
                                         <p class="text-[11px] text-gray-400 mt-0.5">Enviado em ${formatarData(e.enviado_em)}</p>
+                                        ${e.resposta_texto ? `
+                                            <div class="mt-2 border border-blue-100 bg-blue-50/40 rounded-lg p-3">
+                                                <p class="text-[10px] font-bold uppercase text-blue-700 mb-1">Resposta escrita</p>
+                                                <p class="text-sm text-gray-800 whitespace-pre-wrap break-words">${escaparHtml(e.resposta_texto)}</p>
+                                            </div>` : ''}
                                         ${e.comentario_aluno ? `<p class="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5 mt-2 whitespace-pre-wrap">${escaparHtml(e.comentario_aluno)}</p>` : ''}
                                     </div>
-                                    ${e.arquivo_url ? `<a href="${escaparHtml(e.arquivo_url)}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir trabalho →</a>` : ''}
+                                    ${e.arquivo_url ? `<a href="${escaparHtml(/^https?:\/\//i.test(e.arquivo_url) ? e.arquivo_url : '#')}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir trabalho →</a>` : ''}
                                 </div>
 
                                 <div class="flex flex-wrap items-end gap-2 pt-2">

@@ -19,7 +19,8 @@
         <main class="p-4 md:p-9 max-w-4xl mx-auto">
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Atividades</h1>
             <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">
-                Prazos e enunciados de cada atividade do curso. Para enviar seu trabalho, use a página
+                Leia o enunciado e escreva sua resposta aqui mesmo — cada atividade aceita uma única resposta. Se quiser
+                anexar arquivo ou link junto com o texto, faça o envio completo em
                 <a href="trabalhos.html" class="underline font-semibold" style="color: var(--pibiex-tinta);">Meus Trabalhos</a>.
             </p>
 
@@ -45,6 +46,94 @@
             return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
+        let TOKEN_ALUNO = null;
+        let TRABALHOS = {};
+
+        const ROTULO_STATUS = {
+            enviado:  { texto: 'Enviado · aguardando correção', cor: '#8A6D1E', fundo: '#FBF3DC' },
+            avaliado: { texto: 'Corrigido', cor: '#15803D', fundo: '#E9F7EE' },
+        };
+
+        function blocoResposta(atv) {
+            const t = TRABALHOS[atv.id];
+            const rotulo = t ? ROTULO_STATUS[t.status] : null;
+            const corrigido = t && t.status === 'avaliado';
+            return `
+                <div class="mt-4 pt-4 border-t" style="border-color: var(--pibiex-borda);">
+                    <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                        <label for="resposta-${atv.id}" class="text-xs font-semibold" style="color: var(--pibiex-texto);">Sua resposta</label>
+                        ${rotulo ? `<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style="background: ${rotulo.fundo}; color: ${rotulo.cor};">${rotulo.texto}</span>` : ''}
+                    </div>
+                    ${corrigido ? `
+                        <div class="rounded-md p-3 mb-2" style="background: var(--pibiex-papel);">
+                            <p class="text-xs font-semibold" style="color: var(--pibiex-texto);">Nota: ${t.nota ?? '—'}${t.horas_concedidas !== null && t.horas_concedidas !== undefined ? ` · Horas: ${t.horas_concedidas}h` : ''}</p>
+                            ${t.feedback_professor ? `<p class="text-xs mt-1" style="color: var(--pibiex-texto-suave);">${escaparHtml(t.feedback_professor)}</p>` : ''}
+                        </div>` : ''}
+                    ${t ? `
+                        <div class="rounded-md px-3 py-2 text-sm whitespace-pre-wrap break-words" style="background: var(--pibiex-papel); color: var(--pibiex-texto);">${t.resposta_texto ? escaparHtml(t.resposta_texto) : (t.arquivo_url ? 'Você respondeu com arquivo/link (veja em Meus Trabalhos).' : '')}</div>
+                        <p class="text-[11px] mt-2" style="color: var(--pibiex-texto-suave);">Resposta enviada — não é possível enviar outra para esta atividade.</p>
+                    ` : `
+                        <textarea id="resposta-${atv.id}" rows="5" maxlength="20000" placeholder="Escreva aqui sua resposta..."
+                                  oninput="atualizarContador('${atv.id}')"
+                                  class="w-full border rounded-md px-3 py-2 text-sm resize-y" style="border-color: var(--pibiex-borda);"></textarea>
+                        <div class="flex items-center justify-between gap-2 mt-2 flex-wrap">
+                            <span id="contador-${atv.id}" class="text-[11px]" style="color: var(--pibiex-texto-suave);"></span>
+                            <button onclick="enviarResposta('${atv.id}')" id="btn-resposta-${atv.id}"
+                                    class="text-white text-xs font-semibold px-4 py-2 rounded-md" style="background: var(--pibiex-tinta);">
+                                Enviar resposta
+                            </button>
+                        </div>
+                        <p class="text-[11px] mt-1" style="color: var(--pibiex-texto-suave);">Atenção: você só pode enviar uma vez. Depois de enviar, não dá para alterar nem enviar outra.</p>
+                    `}
+                    <p id="msg-resposta-${atv.id}" class="text-xs mt-2 hidden"></p>
+                </div>
+            `;
+        }
+
+        window.atualizarContador = (id) => {
+            const campo = document.getElementById(`resposta-${id}`);
+            const contador = document.getElementById(`contador-${id}`);
+            if (campo && contador) contador.innerText = `${campo.value.length} / 20000`;
+        };
+
+        window.enviarResposta = async (atividadeId) => {
+            const campo = document.getElementById(`resposta-${atividadeId}`);
+            const btn = document.getElementById(`btn-resposta-${atividadeId}`);
+            const msg = document.getElementById(`msg-resposta-${atividadeId}`);
+            const texto = campo.value.trim();
+            msg.classList.add('hidden');
+
+            if (!texto) {
+                msg.innerText = 'Escreva sua resposta antes de enviar.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                return;
+            }
+            if (!confirm('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?')) {
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'Enviando...';
+            try {
+                const { data, error } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                    body: { token: TOKEN_ALUNO, acao: 'enviar', atividadeId, respostaTexto: texto },
+                });
+                if (error || !data || data.erro) throw new Error((data && data.erro) || 'Erro ao enviar a resposta.');
+                TRABALHOS[atividadeId] = { ...(TRABALHOS[atividadeId] || {}), ...data.trabalho };
+                renderizarAtividades(ATIVIDADES);
+                const novaMsg = document.getElementById(`msg-resposta-${atividadeId}`);
+                novaMsg.innerText = 'Resposta enviada! O professor já pode ver.';
+                novaMsg.className = 'text-xs mt-2 text-green-700';
+            } catch (erro) {
+                msg.innerText = erro.message || 'Erro ao enviar. Tente novamente.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                btn.disabled = false;
+                btn.innerText = 'Enviar resposta';
+            }
+        };
+
+        let ATIVIDADES = [];
+
         function renderizarAtividades(atividades) {
             const container = document.getElementById('lista-atividades');
 
@@ -68,6 +157,7 @@
                             </div>
                         </div>
                         ${atv.descricao ? `<p class="text-sm mt-3 whitespace-pre-wrap" style="color: var(--pibiex-texto-suave);">${escaparHtml(atv.descricao)}</p>` : ''}
+                        ${blocoResposta(atv)}
                     </div>
                 `;
             }).join('');
@@ -87,6 +177,15 @@
             }
 
             const daTurma = (data || []).filter(a => a.modulos && a.modulos.turma_id === dadosAluno.turmaId);
+
+            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            const { data: resultado } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                body: { token: TOKEN_ALUNO, acao: 'listar' },
+            });
+            TRABALHOS = {};
+            (resultado && resultado.trabalhos ? resultado.trabalhos : []).forEach(t => { TRABALHOS[t.atividade_id] = t; });
+
+            ATIVIDADES = daTurma;
             renderizarAtividades(daTurma);
         }
 

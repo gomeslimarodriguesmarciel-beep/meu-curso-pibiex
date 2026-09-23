@@ -18,7 +18,7 @@
 
         <main class="p-4 md:p-9 max-w-4xl mx-auto">
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Meus Trabalhos</h1>
-            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Envie seus arquivos e acompanhe notas e comentários do professor.</p>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Escreva sua resposta ou envie um arquivo, e acompanhe notas e comentários do professor.</p>
 
             <div id="lista-trabalhos" class="space-y-4">
                 <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>
@@ -31,6 +31,7 @@
     <script src="shell.js"></script>
     <script>
         let TOKEN_ALUNO = null;
+        let TRABALHOS_ATUAIS = {};
 
         function escaparHtml(texto) {
             const div = document.createElement('div');
@@ -90,15 +91,28 @@
                             </div>
                         ` : ''}
 
-                        <div class="flex flex-wrap items-end gap-2 pt-2 border-t" style="border-color: var(--pibiex-borda);">
+                        ${trabalho ? `
+                        <div class="pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                            ${trabalho.resposta_texto ? `
+                                <p class="text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Sua resposta</p>
+                                <div class="rounded-md px-3 py-2 text-sm whitespace-pre-wrap break-words" style="background: var(--pibiex-papel); color: var(--pibiex-texto);">${escaparHtml(trabalho.resposta_texto)}</div>
+                            ` : ''}
+                            <p class="text-[11px] mt-2" style="color: var(--pibiex-texto-suave);">Resposta enviada — não é possível enviar outra para esta atividade.</p>
+                        </div>
+                        ` : `
+                        <div class="pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                            <label for="texto-${atv.id}" class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Sua resposta (escreva aqui)</label>
+                            <textarea id="texto-${atv.id}" rows="5" maxlength="20000" placeholder="Digite sua resposta para esta atividade..."
+                                      class="w-full border rounded-md px-3 py-2 text-sm resize-y" style="border-color: var(--pibiex-borda);"></textarea>
+                        </div>
+
+                        <div class="flex flex-wrap items-end gap-2 pt-2">
                             <div class="flex-1 min-w-[160px]">
-                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">
-                                    ${trabalho ? 'Reenviar arquivo (substitui o anterior)' : 'Arquivo'}
-                                </label>
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Arquivo (opcional)</label>
                                 <input type="file" id="arquivo-${atv.id}" class="text-xs w-full">
                             </div>
                             <div class="flex-1 min-w-[160px]">
-                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Ou cole um link</label>
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Ou cole um link (opcional)</label>
                                 <input type="url" id="link-${atv.id}" placeholder="https://..." class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                             </div>
                             <div class="flex-1 min-w-[160px]">
@@ -110,7 +124,9 @@
                                 Enviar
                             </button>
                         </div>
+                        <p class="text-[11px] mt-2" style="color: var(--pibiex-texto-suave);">Atenção: você só pode enviar uma vez por atividade. Depois de enviar, não dá para alterar nem enviar outra.</p>
                         <p id="msg-${atv.id}" class="text-xs mt-2 hidden"></p>
+                        `}
                     </div>
                 `;
             }).join('');
@@ -120,18 +136,21 @@
             const inputArquivo = document.getElementById(`arquivo-${atividadeId}`);
             const inputLink = document.getElementById(`link-${atividadeId}`);
             const inputComentario = document.getElementById(`comentario-${atividadeId}`);
+            const inputTexto = document.getElementById(`texto-${atividadeId}`);
+            const respostaTexto = inputTexto ? inputTexto.value.trim() : '';
             const btn = document.getElementById(`btn-enviar-${atividadeId}`);
             const msg = document.getElementById(`msg-${atividadeId}`);
             msg.classList.add('hidden');
 
             const arquivo = inputArquivo.files[0];
             const link = inputLink.value.trim();
-            if (!arquivo && !link) {
-                msg.innerText = 'Selecione um arquivo ou cole um link antes de enviar.';
+            if (!arquivo && !link && !respostaTexto) {
+                msg.innerText = 'Escreva sua resposta ou envie um arquivo/link antes de enviar.';
                 msg.className = 'text-xs mt-2 text-red-600';
                 msg.classList.remove('hidden');
                 return;
             }
+            if (!confirm('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?')) return;
 
             btn.innerText = 'Enviando...';
             btn.disabled = true;
@@ -161,6 +180,7 @@
                     body: {
                         token: TOKEN_ALUNO, acao: 'enviar', atividadeId,
                         arquivoUrl,
+                        respostaTexto,
                         comentario: inputComentario.value.trim(),
                     },
                 });
@@ -193,6 +213,7 @@
             const trabalhosPorAtividade = {};
             (resultado && resultado.trabalhos ? resultado.trabalhos : []).forEach(t => { trabalhosPorAtividade[t.atividade_id] = t; });
 
+            TRABALHOS_ATUAIS = trabalhosPorAtividade;
             renderizarTrabalhos(daTurma, trabalhosPorAtividade);
         }
 
