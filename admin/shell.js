@@ -428,7 +428,7 @@ function injetarManifestoEIcone() {
         const favicon = document.createElement('link');
         favicon.rel = 'icon';
         favicon.type = 'image/png';
-        favicon.href = '/logo pibiex.png';
+        favicon.href = '/icone-pibiex-digital.png';
         head.appendChild(favicon);
     }
     if (!head.querySelector('link[rel="manifest"]')) {
