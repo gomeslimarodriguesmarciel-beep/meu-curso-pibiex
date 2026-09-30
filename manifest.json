@@ -1,7 +1,7 @@
 {
-  "name": "PIBIEX 2026 — Painel do Professor",
+  "name": "PIBIEX Digital — Painel do Professor",
   "short_name": "PIBIEX Painel",
-  "description": "Painel da equipe da plataforma PIBIEX 2026.",
+  "description": "Painel da equipe da plataforma PIBIEX Digital.",
   "start_url": "/login.html?perfil=professor",
   "scope": "/",
   "display": "standalone",

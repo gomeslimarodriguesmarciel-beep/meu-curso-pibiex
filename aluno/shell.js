@@ -240,7 +240,7 @@ function montarMenuLateral(paginaAtivaId) {
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-dourado);">
                         <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(163,230,53,.35);"></div>
-                        <span class="fonte-display text-[var(--pibiex-dourado)] text-[10px] leading-none relative">P26</span>
+                        <span class="fonte-display text-[var(--pibiex-dourado)] text-[10px] leading-none relative">PD</span>
                     </div>
                     <div class="min-w-0">
                         <p class="fonte-display text-white text-[15px] leading-tight truncate">PIBIEX</p>

@@ -207,10 +207,10 @@ function montarMenuLateralEquipe(paginaAtivaId) {
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-acento);">
                         <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(239,68,68,.35);"></div>
-                        <span class="text-[var(--pibiex-acento)] text-[10px] font-black leading-none relative">P26</span>
+                        <span class="text-[var(--pibiex-acento)] text-[10px] font-black leading-none relative">PD</span>
                     </div>
                     <div class="min-w-0">
-                        <p class="text-white font-black text-[15px] leading-tight truncate">PIBIEX 2026</p>
+                        <p class="text-white font-black text-[15px] leading-tight truncate">PIBIEX DIGITAL</p>
                         <p class="text-[var(--pibiex-acento)] text-[9.5px] font-bold uppercase tracking-wide">Painel da equipe</p>
                     </div>
                 </div>
