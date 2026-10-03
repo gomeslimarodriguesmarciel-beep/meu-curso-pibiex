@@ -165,46 +165,61 @@
         </div>
 
         <div class="grid lg:grid-cols-3 gap-6 mb-10">
-            <div class="bg-white rounded-3xl p-8 border flex flex-col" style="border-color: var(--pibiex-borda);">
-                <img src="logo-unitins.png" alt="Logo UNITINS" class="h-20 w-auto object-contain object-left mb-6 self-start" onerror="this.style.display='none'">
-                <h3 class="text-xl font-black mb-3" style="color: var(--pibiex-texto);">Universidade Estadual do Tocantins</h3>
+            <!-- Os três cartões seguem a mesma estrutura: logo, rótulo, título, texto e etiqueta no rodapé -->
+            <article class="bg-white rounded-3xl p-8 border flex flex-col" style="border-color: var(--pibiex-borda);">
+                <div class="h-20 flex items-center">
+                    <img src="logo-unitins.png" alt="Logo UNITINS" class="max-h-full w-auto object-contain" onerror="this.style.display='none'">
+                </div>
+                <hr class="my-6" style="border-color: var(--pibiex-borda);">
+                <p class="text-[11px] font-black uppercase tracking-[0.16em] mb-2" style="color: var(--pibiex-lima-profundo);">Instituição</p>
+                <h3 class="text-[19px] leading-snug font-black mb-4 lg:min-h-[3.4rem]" style="color: var(--pibiex-texto);">Universidade Estadual do Tocantins</h3>
                 <p class="text-sm leading-relaxed mb-3" style="color: var(--pibiex-texto-suave);">
                     A UNITINS é uma instituição pública de ensino superior do Estado do Tocantins, criada em 1990 e
                     sediada em Palmas. Desde 2016, é uma autarquia estadual de regime especial e adota o nome
                     Universidade Estadual do Tocantins.
                 </p>
-                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                <p class="text-sm leading-relaxed mb-6" style="color: var(--pibiex-texto-suave);">
                     Atua com ensino, pesquisa e extensão universitária, levando formação e ações de impacto social
                     a diferentes regiões do estado.
                 </p>
-            </div>
+                <span class="mt-auto self-start text-[11px] font-bold px-3 py-1 rounded-full" style="background: #EEF2FF; color: var(--pibiex-tinta, #1E3A8A);">Palmas · Tocantins</span>
+            </article>
 
-            <div class="bg-white rounded-3xl p-8 border flex flex-col" style="border-color: var(--pibiex-borda);">
-                <h3 class="text-xl font-black mb-1" style="color: var(--pibiex-texto);">PIBIEX</h3>
-                <p class="text-[11px] font-black uppercase tracking-[0.12em] mb-3" style="color: var(--pibiex-lima-profundo);">Programa Institucional de Bolsas de Iniciação à Extensão</p>
+            <article class="bg-white rounded-3xl p-8 border flex flex-col" style="border-color: var(--pibiex-borda);">
+                <div class="h-20 flex items-center">
+                    <span class="text-[44px] leading-none font-black tracking-tight" style="color: #1E3A8A;">PIBIEX</span>
+                </div>
+                <hr class="my-6" style="border-color: var(--pibiex-borda);">
+                <p class="text-[11px] font-black uppercase tracking-[0.16em] mb-2" style="color: var(--pibiex-lima-profundo);">Programa</p>
+                <h3 class="text-[19px] leading-snug font-black mb-4 lg:min-h-[3.4rem]" style="color: var(--pibiex-texto);">Programa Institucional de Bolsas de Iniciação à Extensão</h3>
                 <p class="text-sm leading-relaxed mb-3" style="color: var(--pibiex-texto-suave);">
                     O PIBIEX é um programa da UNITINS que concede bolsas a estudantes de graduação para que atuem
                     em ações de extensão universitária, fortalecendo a relação entre a universidade e a sociedade.
                 </p>
-                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                <p class="text-sm leading-relaxed mb-6" style="color: var(--pibiex-texto-suave);">
                     Nesta edição, o projeto PIBIEX Digital oferece um curso de extensão em Inteligência Artificial,
                     com foco em aplicações práticas.
                 </p>
-            </div>
+                <span class="mt-auto self-start text-[11px] font-bold px-3 py-1 rounded-full" style="background: #EEF2FF; color: var(--pibiex-tinta, #1E3A8A);">Extensão universitária</span>
+            </article>
 
-            <div class="rounded-3xl p-8 flex flex-col" style="background: var(--pibiex-gradiente);">
-                <img src="logo-pibiex-digital-branca.png" alt="Logo PIBIEX Digital" class="h-16 w-auto object-contain object-left mb-6 self-start">
-                <h3 class="text-white text-xl font-black mb-1">PIBIEX Digital</h3>
-                <p class="text-[11px] font-black uppercase tracking-[0.12em] mb-3" style="color: var(--pibiex-lima);">Plataforma de apoio ao curso</p>
+            <article class="rounded-3xl p-8 flex flex-col" style="background: var(--pibiex-gradiente);">
+                <div class="h-20 flex items-center">
+                    <img src="logo-pibiex-digital-branca.png" alt="Logo PIBIEX Digital" class="max-h-full w-auto object-contain">
+                </div>
+                <hr class="my-6 border-white/15">
+                <p class="text-[11px] font-black uppercase tracking-[0.16em] mb-2" style="color: var(--pibiex-lima);">Plataforma</p>
+                <h3 class="text-white text-[19px] leading-snug font-black mb-4 lg:min-h-[3.4rem]">PIBIEX Digital</h3>
                 <p class="text-blue-100/85 text-sm leading-relaxed mb-3">
                     O PIBIEX Digital é a plataforma web que organiza o curso: conteúdo por módulo, atividades,
                     desafios semanais, frequência, notas e comunicação com a turma.
                 </p>
-                <p class="text-blue-100/85 text-sm leading-relaxed">
+                <p class="text-blue-100/85 text-sm leading-relaxed mb-6">
                     Foi desenvolvida de forma independente por um bolsista do curso de TADS da UNITINS.
                     <strong class="text-white">Não é um site oficial da UNITINS.</strong>
                 </p>
-            </div>
+                <span class="mt-auto self-start text-[11px] font-bold px-3 py-1 rounded-full" style="background: rgba(163,230,53,.16); color: var(--pibiex-lima);">Independente · não oficial</span>
+            </article>
         </div>
 
         <div class="rounded-3xl p-8 md:p-10" style="background: var(--pibiex-gradiente);">
