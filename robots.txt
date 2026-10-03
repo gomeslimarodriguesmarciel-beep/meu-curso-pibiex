@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /aluno/
+Disallow: /admin/
+Disallow: /painel.html
+Disallow: /trocar-senha.html
+
+Sitemap: https://pibiexdigital.com.br/sitemap.xml
