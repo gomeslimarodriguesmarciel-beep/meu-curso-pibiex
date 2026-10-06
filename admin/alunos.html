@@ -399,6 +399,11 @@
             return termoAtual;
         }
 
+        // Cada aluno vê o texto da versão que ele realmente assinou (ver termos-conteudo.js).
+        function conteudoDoTermo(versao) {
+            return (window.TERMOS_VERSOES && window.TERMOS_VERSOES[versao]) || TERMOS_CONTEUDO;
+        }
+
         window.visualizarTermo = async (alunoId) => {
             const termo = await buscarDetalheTermo(alunoId);
             if (!termo) return;
@@ -407,11 +412,12 @@
                 `${termo.aluno.nome_completo} (${termo.aluno.usuario}) · aceito em ${formatarDataHora(termo.aceite.aceito_em)} · versão ${termo.aceite.versao}` +
                 (termo.aceite.ip ? ` · IP ${termo.aceite.ip}` : '');
 
+            const conteudo = conteudoDoTermo(termo.aceite.versao);
             const blocos = [
-                `<p class="text-gray-900 font-black text-base">${escaparHtml(TERMOS_CONTEUDO.titulo)}</p>`,
-                `<p>${escaparHtml(TERMOS_CONTEUDO.preambulo)}</p>`,
+                `<p class="text-gray-900 font-black text-base">${escaparHtml(conteudo.titulo)}</p>`,
+                `<p>${escaparHtml(conteudo.preambulo)}</p>`,
             ];
-            TERMOS_CONTEUDO.clausulas.forEach((c) => {
+            conteudo.clausulas.forEach((c) => {
                 blocos.push(`<p class="text-gray-900 font-bold mt-3">${escaparHtml(c.titulo)}</p>`);
                 c.itens.forEach((item) => blocos.push(`<p>${escaparHtml(item)}</p>`));
             });
@@ -457,7 +463,8 @@
 
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
-            doc.text(TERMOS_CONTEUDO.titulo, margem, y, { maxWidth: largura });
+            const conteudo = conteudoDoTermo(termoAtual.aceite.versao);
+            doc.text(conteudo.titulo, margem, y, { maxWidth: largura });
             avancar(24);
 
             doc.setFont('helvetica', 'normal');
@@ -476,8 +483,8 @@
             avancar(8);
             doc.setTextColor(20);
 
-            escreverParagrafo(TERMOS_CONTEUDO.preambulo, false);
-            TERMOS_CONTEUDO.clausulas.forEach((c) => {
+            escreverParagrafo(conteudo.preambulo, false);
+            conteudo.clausulas.forEach((c) => {
                 escreverParagrafo(c.titulo, true);
                 c.itens.forEach((item) => escreverParagrafo(item, false));
             });
