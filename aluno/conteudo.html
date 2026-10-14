@@ -29,6 +29,7 @@
     <div id="assistente-flutuante"></div>
 
     <script src="shell.js"></script>
+    <script src="../leitor-material.js"></script>
     <script>
         function escaparHtml(texto) {
             const div = document.createElement('div');
@@ -38,6 +39,40 @@
         function urlSegura(url) {
             return /^https?:\/\//i.test(url ?? '') ? url : '#';
         }
+
+        const ITENS = {};
+
+        function formatarTamanho(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+        }
+
+        async function pedirMaterial(conteudoId, baixar) {
+            const token = localStorage.getItem('pibiex_aluno_token');
+            const { data, error } = await window.supabaseClient.functions.invoke('ver-material', {
+                body: { token, conteudoId, baixar: !!baixar },
+            });
+            if (error || !data || data.erro) {
+                let mensagem = data && data.erro;
+                if (!mensagem && error && error.context) {
+                    try { mensagem = (await error.context.json()).erro; } catch (e) { /* sem corpo */ }
+                }
+                throw new Error(mensagem || 'Não foi possível abrir o material. Tente de novo.');
+            }
+            return data;
+        }
+
+        window.abrirMaterial = (id) => {
+            const item = ITENS[id];
+            if (!item) return;
+            abrirLeitorMaterial({
+                titulo: item.titulo,
+                chaveProgresso: 'material:' + id,
+                obterArquivo: () => pedirMaterial(id, false),
+                obterDownload: async () => (await pedirMaterial(id, true)).url,
+            });
+        };
 
         const ICONE_POR_TIPO = {
             pdf: '📄', slide: '📊', video: '🎬', link: '🔗', documento: '📁',
@@ -54,17 +89,33 @@
             container.innerHTML = modulos.map((modulo) => {
                 const itensHtml = (modulo.conteudos || []).length === 0
                     ? '<p class="text-gray-400 text-sm px-5 pb-4">Nenhum conteúdo neste módulo ainda.</p>'
-                    : modulo.conteudos.map(item => `
-                        <a href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener"
-                           class="flex items-center gap-4 px-5 py-3 border-t border-gray-100 hover:bg-blue-50/50 transition group">
+                    : modulo.conteudos.map(item => {
+                        ITENS[item.id] = item;
+                        const miolo = `
                             <div class="text-2xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</div>
                             <div class="flex-1 min-w-0">
                                 <p class="font-bold text-gray-800 text-sm group-hover:text-blue-700">${escaparHtml(item.titulo)}</p>
                                 ${item.descricao ? `<p class="text-gray-500 text-xs truncate">${escaparHtml(item.descricao)}</p>` : ''}
-                            </div>
-                            <span class="text-gray-300 group-hover:text-blue-500 text-sm shrink-0">Abrir →</span>
-                        </a>
-                    `).join('');
+                            </div>`;
+
+                        // Material em arquivo: abre no leitor da própria plataforma.
+                        if (item.arquivo_caminho) {
+                            const tamanho = item.arquivo_tamanho ? ` · ${formatarTamanho(item.arquivo_tamanho)}` : '';
+                            return `
+                                <button type="button" onclick="abrirMaterial('${item.id}')"
+                                        class="w-full text-left flex items-center gap-4 px-5 py-3 border-t border-gray-100 hover:bg-blue-50/50 transition group">
+                                    ${miolo}
+                                    <span class="text-blue-600 group-hover:text-blue-800 text-sm font-semibold shrink-0">Ler agora<span class="text-gray-400 font-normal text-xs">${tamanho}</span></span>
+                                </button>`;
+                        }
+
+                        return `
+                            <a href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener"
+                               class="flex items-center gap-4 px-5 py-3 border-t border-gray-100 hover:bg-blue-50/50 transition group">
+                                ${miolo}
+                                <span class="text-gray-300 group-hover:text-blue-500 text-sm shrink-0">Abrir →</span>
+                            </a>`;
+                    }).join('');
 
                 return `
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -81,7 +132,7 @@
         async function carregarConteudo(dadosAluno) {
             const { data: modulos, error } = await window.supabaseClient
                 .from('modulos')
-                .select('id, titulo, descricao, ordem, conteudos(id, titulo, tipo, url, descricao, ordem)')
+                .select('id, titulo, descricao, ordem, conteudos(id, titulo, tipo, url, descricao, ordem, arquivo_caminho, arquivo_nome, arquivo_tipo, arquivo_tamanho)')
                 .eq('turma_id', dadosAluno.turmaId)
                 .order('ordem', { ascending: true });
 

@@ -7,7 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .zona-arquivo { border: 2px dashed #cbd5e1; border-radius: 12px; background: #fff; transition: border-color .15s, background .15s; }
+        .zona-arquivo.arrastando { border-color: #2563eb; background: #eff6ff; }
+        .barra-envio { height: 4px; border-radius: 4px; background: #e2e8f0; overflow: hidden; }
+        .barra-envio > div { height: 100%; width: 40%; background: #2563eb; border-radius: 4px; animation: vai-e-vem 1.1s ease-in-out infinite; }
+        @keyframes vai-e-vem { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+        @media (prefers-reduced-motion: reduce) { .barra-envio > div { animation: none; width: 100%; } }
+    </style>
 </head>
 <body class="flex min-h-screen bg-gray-50">
 
@@ -19,8 +27,9 @@
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">📚 Gerenciar Conteúdo</h1>
             <p class="text-gray-500 mb-6">
-                Adicione slides, PDFs, vídeos e links dentro de cada módulo. Para criar ou editar módulos,
-                use a página <a href="cronograma.html" class="underline font-semibold text-gray-700">Cronograma</a>.
+                Envie arquivos (slides em PDF, imagens, vídeos) ou cole links dentro de cada módulo. O aluno lê os
+                arquivos direto na plataforma. Para criar ou editar módulos, use a página
+                <a href="cronograma.html" class="underline font-semibold text-gray-700">Cronograma</a>.
             </p>
 
             <div id="seletor-turma" class="mb-6"></div>
@@ -32,10 +41,15 @@
     </div>
 
     <script src="shell.js"></script>
+    <script src="../leitor-material.js"></script>
     <script>
+        const LIMITE_BYTES = 20 * 1024 * 1024; // 20 MB por arquivo
+        const EXTENSOES = ['pdf', 'pptx', 'ppt', 'png', 'jpg', 'jpeg', 'webp', 'mp4'];
+
         let TOKEN_EQUIPE = null;
         let TURMA_ATUAL = null;
         let idEmEdicao = null; // conteudoId em edição
+        const ITENS = {};
 
         const TIPOS = [
             { valor: 'pdf', label: 'PDF' },
@@ -50,21 +64,68 @@
             return TIPOS.map(t => `<option value="${t.valor}" ${t.valor === selecionado ? 'selected' : ''}>${t.label}</option>`).join('');
         }
 
-        async function chamarGerenciarConteudo(acao, dados) {
+        function extensaoDe(nome) {
+            const i = (nome || '').lastIndexOf('.');
+            return i > 0 ? nome.slice(i + 1).toLowerCase() : '';
+        }
+
+        function formatarTamanho(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+        }
+
+        // PDF -> "PDF", PPTX -> "Slide", MP4 -> "Vídeo", imagem -> "Documento"
+        function tipoSugerido(ext) {
+            if (ext === 'pdf') return 'pdf';
+            if (ext === 'pptx' || ext === 'ppt') return 'slide';
+            if (ext === 'mp4') return 'video';
+            return 'documento';
+        }
+
+        function validarArquivoNoNavegador(arquivo) {
+            const ext = extensaoDe(arquivo.name);
+            if (!EXTENSOES.includes(ext)) return 'Tipo não permitido. Envie PDF, PPTX, PNG, JPG, WEBP ou MP4.';
+            if (arquivo.size > LIMITE_BYTES) return `O arquivo tem ${formatarTamanho(arquivo.size)} e o limite é 20 MB. Reduza o tamanho (ex.: comprima as imagens do slide) e tente de novo.`;
+            if (arquivo.size === 0) return 'O arquivo está vazio.';
+            return null;
+        }
+
+        async function mensagemDeErro(error, data, padrao) {
+            if (data && data.erro) return data.erro;
+            if (error && error.context) {
+                try { const corpo = await error.context.json(); if (corpo && corpo.erro) return corpo.erro; } catch (e) { /* sem corpo */ }
+            }
+            return padrao;
+        }
+
+        async function chamarGerenciarConteudo(acao, dados, silencioso) {
             const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-conteudo', {
                 body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
             });
             if (error || !data || data.erro) {
-                alert((data && data.erro) ? data.erro : 'Erro ao salvar. Tente novamente.');
+                const msg = await mensagemDeErro(error, data, 'Erro ao salvar. Tente novamente.');
+                if (silencioso) throw new Error(msg);
+                alert(msg);
                 return null;
             }
             return data;
         }
 
+        // Envia o arquivo direto ao armazenamento privado e devolve os dados para salvar no item.
+        async function enviarArquivo(moduloId, arquivo) {
+            const preparo = await chamarGerenciarConteudo('gerar_url_upload', { moduloId, nomeArquivo: arquivo.name, tamanho: arquivo.size }, true);
+            const { error } = await window.supabaseClient.storage
+                .from('materiais')
+                .uploadToSignedUrl(preparo.caminho, preparo.token, arquivo, { contentType: preparo.mime });
+            if (error) throw new Error('Não foi possível enviar o arquivo. Tente de novo.');
+            return { arquivoCaminho: preparo.caminho, arquivoNome: arquivo.name, arquivoTamanho: arquivo.size };
+        }
+
         async function carregarModulos() {
             const { data: modulos, error } = await window.supabaseClient
                 .from('modulos')
-                .select('id, titulo, descricao, ordem, conteudos(id, titulo, tipo, url, descricao, ordem)')
+                .select('id, titulo, descricao, ordem, conteudos(id, modulo_id, titulo, tipo, url, descricao, ordem, arquivo_caminho, arquivo_nome, arquivo_tipo, arquivo_tamanho, permite_baixar)')
                 .eq('turma_id', TURMA_ATUAL)
                 .order('ordem', { ascending: true });
 
@@ -78,6 +139,95 @@
             renderizarModulos(modulos || []);
         }
 
+        function linhaDoItem(item) {
+            const tamanho = item.arquivo_tamanho ? ` · ${formatarTamanho(item.arquivo_tamanho)}` : '';
+            const origem = item.arquivo_caminho
+                ? `<button onclick="previaArquivo('${item.id}')" class="text-blue-600 text-xs truncate block hover:underline text-left max-w-full">👁️ Pré-visualizar · ${escaparHtml(item.arquivo_nome || 'arquivo')}${tamanho}${item.permite_baixar ? '' : ' · sem download'}</button>`
+                : `<a href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${escaparHtml(item.url)}</a>`;
+            return `
+                <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="text-xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</span>
+                        <div class="min-w-0">
+                            <p class="font-bold text-gray-800 text-sm truncate">${escaparHtml(item.titulo)}</p>
+                            ${origem}
+                        </div>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="editarConteudo('${item.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">✏️</button>
+                        <button onclick="excluirConteudo('${item.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">🗑️</button>
+                    </div>
+                </div>`;
+        }
+
+        function formEdicao(item) {
+            const temArquivo = !!item.arquivo_caminho;
+            const campoOrigem = temArquivo
+                ? `<div class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
+                        <p class="text-gray-700">📎 <b>${escaparHtml(item.arquivo_nome || 'arquivo')}</b><span class="text-gray-400">${item.arquivo_tamanho ? ' · ' + formatarTamanho(item.arquivo_tamanho) : ''}</span></p>
+                        <label class="block text-xs font-bold text-gray-500 mt-2 mb-1">Trocar o arquivo (opcional)</label>
+                        <input type="file" id="edit-arquivo-${item.id}" accept=".pdf,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.mp4" class="block w-full text-xs text-gray-600">
+                        <label class="flex items-center gap-2 text-xs text-gray-600 mt-2">
+                            <input type="checkbox" id="edit-baixar-${item.id}" ${item.permite_baixar ? 'checked' : ''}> Permitir que o aluno baixe
+                        </label>
+                   </div>`
+                : `<input id="edit-url-${item.id}" value="${escaparHtml(item.url || '')}" placeholder="URL" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">`;
+            return `
+                <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
+                    <input id="edit-titulo-${item.id}" value="${escaparHtml(item.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                    ${campoOrigem}
+                    <input id="edit-descricao-${item.id}" value="${escaparHtml(item.descricao || '')}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                    <div class="flex gap-2 flex-wrap items-center">
+                        <select id="edit-tipo-${item.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">${opcoesTipo(item.tipo)}</select>
+                        <input id="edit-ordem-${item.id}" type="number" value="${item.ordem}" class="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" aria-label="Ordem">
+                        <button id="btn-salvar-${item.id}" onclick="salvarConteudo('${item.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Salvar</button>
+                        <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-lg">Cancelar</button>
+                        <span id="msg-edit-${item.id}" class="text-xs text-gray-500"></span>
+                    </div>
+                </div>`;
+        }
+
+        function formNovoConteudo(modulo) {
+            const id = modulo.id;
+            return `
+                <form onsubmit="return criarConteudo(event, '${id}')" class="px-5 py-4 border-t border-gray-100 bg-gray-50 space-y-3">
+                    <div class="flex gap-2 flex-wrap">
+                        <input required placeholder="Título" id="novo-titulo-${id}" class="flex-1 min-w-[140px] border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                        <select id="novo-tipo-${id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">${opcoesTipo('pdf')}</select>
+                    </div>
+
+                    <div class="flex gap-4 text-xs font-bold text-gray-600">
+                        <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="modo-${id}" value="arquivo" checked onchange="alternarModo('${id}')"> Enviar arquivo</label>
+                        <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="modo-${id}" value="link" onchange="alternarModo('${id}')"> Colar link</label>
+                    </div>
+
+                    <div id="bloco-arquivo-${id}">
+                        <label id="zona-${id}" class="zona-arquivo flex flex-col items-center justify-center gap-1 px-4 py-6 text-center cursor-pointer"
+                               ondragover="return arrastando(event, '${id}', true)" ondragleave="return arrastando(event, '${id}', false)" ondrop="return soltou(event, '${id}')">
+                            <span class="text-2xl">📤</span>
+                            <span id="zona-texto-${id}" class="text-sm font-semibold text-gray-700">Arraste o arquivo aqui ou clique para escolher</span>
+                            <span class="text-xs text-gray-400">PDF, PPTX, PNG, JPG, WEBP ou MP4 · até 20 MB</span>
+                            <input type="file" id="novo-arquivo-${id}" class="sr-only" accept=".pdf,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.mp4" onchange="escolheuArquivo('${id}')">
+                        </label>
+                        <p id="dica-${id}" class="hidden text-xs text-amber-700 mt-2"></p>
+                        <label class="flex items-center gap-2 text-xs text-gray-600 mt-2">
+                            <input type="checkbox" id="novo-baixar-${id}" checked> Permitir que o aluno baixe o arquivo
+                        </label>
+                    </div>
+                    <input placeholder="URL (link do arquivo, vídeo ou site)" id="novo-url-${id}" class="hidden w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+
+                    <div class="flex gap-2">
+                        <input placeholder="Descrição (opcional)" id="novo-descricao-${id}" class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                        <button type="submit" id="btn-criar-${id}" class="bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-lg shrink-0">+ Conteúdo</button>
+                    </div>
+                    <div id="envio-${id}" class="hidden">
+                        <p id="envio-texto-${id}" class="text-xs text-gray-600 mb-1">Enviando…</p>
+                        <div class="barra-envio" aria-hidden="true"><div></div></div>
+                    </div>
+                    <p id="erro-${id}" class="hidden text-xs text-red-600 font-semibold"></p>
+                </form>`;
+        }
+
         function renderizarModulos(modulos) {
             const container = document.getElementById('lista-modulos');
 
@@ -88,54 +238,9 @@
 
             container.innerHTML = modulos.map((modulo) => {
                 const itensHtml = (modulo.conteudos || []).map((item) => {
-                    const editando = idEmEdicao === item.id;
-
-                    if (editando) {
-                        return `
-                            <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
-                                <input id="edit-titulo-${item.id}" value="${escaparHtml(item.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                <input id="edit-url-${item.id}" value="${escaparHtml(item.url)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                <input id="edit-descricao-${item.id}" value="${escaparHtml(item.descricao || '')}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                <div class="flex gap-2 flex-wrap">
-                                    <select id="edit-tipo-${item.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">${opcoesTipo(item.tipo)}</select>
-                                    <input id="edit-ordem-${item.id}" type="number" value="${item.ordem}" class="w-20 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                    <button onclick="salvarConteudo('${item.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Salvar</button>
-                                    <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-lg">Cancelar</button>
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    return `
-                        <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <span class="text-xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</span>
-                                <div class="min-w-0">
-                                    <p class="font-bold text-gray-800 text-sm truncate">${escaparHtml(item.titulo)}</p>
-                                    <a href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${escaparHtml(item.url)}</a>
-                                </div>
-                            </div>
-                            <div class="flex gap-2 shrink-0">
-                                <button onclick="editarConteudo('${item.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
-                                <button onclick="excluirConteudo('${item.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
-                            </div>
-                        </div>
-                    `;
+                    ITENS[item.id] = item;
+                    return idEmEdicao === item.id ? formEdicao(item) : linhaDoItem(item);
                 }).join('');
-
-                const formNovoConteudo = `
-                    <form onsubmit="return criarConteudo(event, '${modulo.id}')" class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
-                        <div class="flex gap-2 flex-wrap">
-                            <input required placeholder="Título" id="novo-titulo-${modulo.id}" class="flex-1 min-w-[140px] border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                            <select id="novo-tipo-${modulo.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">${opcoesTipo('pdf')}</select>
-                        </div>
-                        <input required placeholder="URL (link do arquivo, vídeo ou site)" id="novo-url-${modulo.id}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                        <div class="flex gap-2">
-                            <input placeholder="Descrição (opcional)" id="novo-descricao-${modulo.id}" class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                            <button type="submit" class="bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-lg shrink-0">+ Conteúdo</button>
-                        </div>
-                    </form>
-                `;
 
                 return `
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -144,44 +249,182 @@
                             ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${escaparHtml(modulo.descricao)}</p>` : ''}
                         </div>
                         ${itensHtml || '<p class="text-gray-400 text-sm px-5 py-4">Nenhum conteúdo neste módulo ainda.</p>'}
-                        ${formNovoConteudo}
-                    </div>
-                `;
+                        ${formNovoConteudo(modulo)}
+                    </div>`;
             }).join('');
+        }
+
+        // ---------- formulário de novo conteúdo ----------
+        window.alternarModo = (id) => {
+            const modo = document.querySelector(`input[name="modo-${id}"]:checked`).value;
+            document.getElementById(`bloco-arquivo-${id}`).classList.toggle('hidden', modo !== 'arquivo');
+            document.getElementById(`novo-url-${id}`).classList.toggle('hidden', modo !== 'link');
+            if (modo === 'link') document.getElementById(`novo-tipo-${id}`).value = 'link';
+        };
+
+        window.arrastando = (evento, id, dentro) => {
+            evento.preventDefault();
+            document.getElementById(`zona-${id}`).classList.toggle('arrastando', dentro);
+            return false;
+        };
+
+        window.soltou = (evento, id) => {
+            evento.preventDefault();
+            document.getElementById(`zona-${id}`).classList.remove('arrastando');
+            const arquivos = evento.dataTransfer && evento.dataTransfer.files;
+            if (arquivos && arquivos.length) {
+                document.getElementById(`novo-arquivo-${id}`).files = arquivos;
+                window.escolheuArquivo(id);
+            }
+            return false;
+        };
+
+        window.escolheuArquivo = (id) => {
+            const campo = document.getElementById(`novo-arquivo-${id}`);
+            const texto = document.getElementById(`zona-texto-${id}`);
+            const dica = document.getElementById(`dica-${id}`);
+            const erro = document.getElementById(`erro-${id}`);
+            erro.classList.add('hidden');
+            dica.classList.add('hidden');
+            const arquivo = campo.files[0];
+            if (!arquivo) { texto.textContent = 'Arraste o arquivo aqui ou clique para escolher'; return; }
+
+            const problema = validarArquivoNoNavegador(arquivo);
+            if (problema) {
+                campo.value = '';
+                texto.textContent = 'Arraste o arquivo aqui ou clique para escolher';
+                erro.textContent = problema;
+                erro.classList.remove('hidden');
+                return;
+            }
+
+            texto.textContent = `${arquivo.name} · ${formatarTamanho(arquivo.size)}`;
+            const ext = extensaoDe(arquivo.name);
+            document.getElementById(`novo-tipo-${id}`).value = tipoSugerido(ext);
+            const titulo = document.getElementById(`novo-titulo-${id}`);
+            if (!titulo.value.trim()) titulo.value = arquivo.name.replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ');
+            if (ext === 'pptx' || ext === 'ppt') {
+                dica.textContent = 'Dica: o PowerPoint só pode ser baixado. Para o aluno ler dentro da plataforma, exporte o slide em PDF (Arquivo → Salvar como → PDF) e envie o PDF.';
+                dica.classList.remove('hidden');
+            }
+        };
+
+        function mostrarEnvio(id, texto) {
+            document.getElementById(`envio-${id}`).classList.toggle('hidden', !texto);
+            if (texto) document.getElementById(`envio-texto-${id}`).textContent = texto;
         }
 
         window.criarConteudo = async (event, moduloId) => {
             event.preventDefault();
+            const erro = document.getElementById(`erro-${moduloId}`);
+            erro.classList.add('hidden');
+
             const titulo = document.getElementById(`novo-titulo-${moduloId}`).value.trim();
             const tipo = document.getElementById(`novo-tipo-${moduloId}`).value;
-            const url = document.getElementById(`novo-url-${moduloId}`).value.trim();
             const descricao = document.getElementById(`novo-descricao-${moduloId}`).value.trim();
-            if (!titulo || !url) return false;
+            const modo = document.querySelector(`input[name="modo-${moduloId}"]:checked`).value;
+            if (!titulo) return false;
 
-            const resultado = await chamarGerenciarConteudo('criar', { moduloId, titulo, tipo, url, descricao });
-            if (resultado) carregarModulos();
+            const botao = document.getElementById(`btn-criar-${moduloId}`);
+            const dados = { moduloId, titulo, tipo, descricao };
+
+            try {
+                botao.disabled = true;
+                if (modo === 'arquivo') {
+                    const arquivo = document.getElementById(`novo-arquivo-${moduloId}`).files[0];
+                    if (!arquivo) throw new Error('Escolha um arquivo para enviar.');
+                    const problema = validarArquivoNoNavegador(arquivo);
+                    if (problema) throw new Error(problema);
+
+                    mostrarEnvio(moduloId, `Enviando ${arquivo.name} (${formatarTamanho(arquivo.size)})…`);
+                    Object.assign(dados, await enviarArquivo(moduloId, arquivo));
+                    dados.permiteBaixar = document.getElementById(`novo-baixar-${moduloId}`).checked;
+                } else {
+                    dados.url = document.getElementById(`novo-url-${moduloId}`).value.trim();
+                    if (!dados.url) throw new Error('Cole o link do conteúdo.');
+                }
+
+                mostrarEnvio(moduloId, 'Salvando…');
+                await chamarGerenciarConteudo('criar', dados, true);
+                carregarModulos();
+            } catch (e) {
+                mostrarEnvio(moduloId, '');
+                erro.textContent = e.message || 'Não foi possível salvar. Tente de novo.';
+                erro.classList.remove('hidden');
+                botao.disabled = false;
+            }
             return false;
         };
 
+        // ---------- edição ----------
         window.editarConteudo = (conteudoId) => { idEmEdicao = conteudoId; carregarModulos(); };
         window.cancelarEdicao = () => { idEmEdicao = null; carregarModulos(); };
 
         window.salvarConteudo = async (conteudoId) => {
+            const item = ITENS[conteudoId];
             const titulo = document.getElementById(`edit-titulo-${conteudoId}`).value.trim();
             const tipo = document.getElementById(`edit-tipo-${conteudoId}`).value;
-            const url = document.getElementById(`edit-url-${conteudoId}`).value.trim();
             const descricao = document.getElementById(`edit-descricao-${conteudoId}`).value.trim();
             const ordem = parseInt(document.getElementById(`edit-ordem-${conteudoId}`).value || '0', 10);
-            if (!titulo || !url) return;
+            if (!titulo) return;
 
-            const resultado = await chamarGerenciarConteudo('atualizar', { conteudoId, titulo, tipo, url, descricao, ordem });
-            if (resultado) { idEmEdicao = null; carregarModulos(); }
+            const msg = document.getElementById(`msg-edit-${conteudoId}`);
+            const botao = document.getElementById(`btn-salvar-${conteudoId}`);
+            const dados = { conteudoId, titulo, tipo, descricao, ordem };
+
+            try {
+                botao.disabled = true;
+                if (item.arquivo_caminho) {
+                    dados.permiteBaixar = document.getElementById(`edit-baixar-${conteudoId}`).checked;
+                    const novo = document.getElementById(`edit-arquivo-${conteudoId}`).files[0];
+                    if (novo) {
+                        const problema = validarArquivoNoNavegador(novo);
+                        if (problema) throw new Error(problema);
+                        msg.textContent = `Enviando ${formatarTamanho(novo.size)}…`;
+                        Object.assign(dados, await enviarArquivo(item.modulo_id || await moduloDoItem(conteudoId), novo));
+                    }
+                } else {
+                    dados.url = document.getElementById(`edit-url-${conteudoId}`).value.trim();
+                    if (!dados.url) throw new Error('Informe o link.');
+                }
+                msg.textContent = 'Salvando…';
+                await chamarGerenciarConteudo('atualizar', dados, true);
+                idEmEdicao = null;
+                carregarModulos();
+            } catch (e) {
+                msg.textContent = '';
+                alert(e.message || 'Não foi possível salvar.');
+                botao.disabled = false;
+            }
         };
 
+        // O módulo do item (necessário para guardar o arquivo novo na pasta certa).
+        async function moduloDoItem(conteudoId) {
+            const { data } = await window.supabaseClient.from('conteudos').select('modulo_id').eq('id', conteudoId).maybeSingle();
+            if (!data) throw new Error('Não encontrei o módulo deste conteúdo.');
+            return data.modulo_id;
+        }
+
         window.excluirConteudo = async (conteudoId) => {
-            if (!confirm('Excluir este conteúdo?')) return;
+            const item = ITENS[conteudoId];
+            const aviso = item && item.arquivo_caminho
+                ? 'Excluir este conteúdo? O arquivo enviado também será apagado.'
+                : 'Excluir este conteúdo?';
+            if (!confirm(aviso)) return;
             const resultado = await chamarGerenciarConteudo('excluir', { conteudoId });
             if (resultado) carregarModulos();
+        };
+
+        // ---------- prévia no mesmo leitor do aluno ----------
+        window.previaArquivo = (conteudoId) => {
+            const item = ITENS[conteudoId];
+            if (!item) return;
+            abrirLeitorMaterial({
+                titulo: item.titulo,
+                chaveProgresso: 'previa:' + conteudoId,
+                obterArquivo: async () => chamarGerenciarConteudo('ver_arquivo', { conteudoId }, true),
+                obterDownload: async () => (await chamarGerenciarConteudo('ver_arquivo', { conteudoId }, true)).url,
+            });
         };
 
         iniciarShellEquipe('conteudo').then(async (sessao) => {
