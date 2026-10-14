@@ -254,7 +254,7 @@
                 <section class="cartao entra" style="animation-delay:.22s">
                     <div class="cartao-titulo">
                         <div>
-                            <h2>🏆 Ranking de acesso · esta semana</h2>
+                            <h2>Ranking de acesso · esta semana</h2>
                             <p>Reinicia toda segunda-feira — o mesmo ranking que os alunos veem no início deles</p>
                         </div>
                     </div>
@@ -405,7 +405,9 @@
                 return;
             }
 
-            const selos = ['👑', '🥈', '🥉'];
+            // Selo de posição (1º ouro, 2º prata, 3º bronze) em vez de emoji.
+            const selo = (n, cor) => `<b style="display:inline-flex;width:16px;height:16px;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${cor}">${n}</b>`;
+            const selos = [selo(1, '#FBBF24'), selo(2, '#CBD5E1'), selo(3, '#FB923C')];
             container.innerHTML = data.ranking.map((r, i) => `
                 <div class="linha-ranking">
                     <span class="posicao-ranking">${i + 1}º</span>

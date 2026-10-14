@@ -17,7 +17,7 @@
         <div id="topo-pagina"></div>
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
-            <h1 class="text-2xl font-black text-gray-800 mb-1">📅 Gerenciar Cronograma</h1>
+            <h1 class="text-2xl font-black text-gray-800 mb-1">Gerenciar Cronograma</h1>
             <p class="text-gray-500 mb-6">Crie módulos e aulas. Isso aparece automaticamente na área do aluno.</p>
 
             <div id="seletor-turma" class="mb-6"></div>
@@ -112,8 +112,8 @@
                             ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${escaparHtml(modulo.descricao)}</p>` : ''}
                         </div>
                         <div class="flex gap-2 shrink-0">
-                            <button onclick="editarModulo('${modulo.id}')" class="text-gray-300 hover:text-white text-xs">✏️</button>
-                            <button onclick="excluirModulo('${modulo.id}')" class="text-gray-300 hover:text-red-400 text-xs">🗑️</button>
+                            <button onclick="editarModulo('${modulo.id}')" class="text-gray-300 hover:text-white text-xs" aria-label="Editar">${icone('editar')}</button>
+                            <button onclick="excluirModulo('${modulo.id}')" class="text-gray-300 hover:text-red-400 text-xs" aria-label="Excluir">${icone('excluir')}</button>
                         </div>
                     </div>
                 `;
@@ -151,8 +151,8 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 shrink-0">
-                                <button onclick="editarAula('${aula.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
-                                <button onclick="excluirAula('${aula.id}', '${modulo.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                                <button onclick="editarAula('${aula.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
+                                <button onclick="excluirAula('${aula.id}', '${modulo.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
                             </div>
                         </div>
                     `;

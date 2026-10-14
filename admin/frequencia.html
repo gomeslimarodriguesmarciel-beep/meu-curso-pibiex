@@ -99,7 +99,7 @@
                     <h2 id="detalhe-titulo" class="text-lg font-black text-gray-900"></h2>
                     <p id="detalhe-sub" class="text-xs text-gray-500 mt-0.5"></p>
                 </div>
-                <button onclick="fecharDetalhe()" class="text-gray-400 hover:text-gray-900 font-bold text-lg shrink-0">✖</button>
+                <button onclick="fecharDetalhe()" class="text-gray-400 hover:text-gray-900 font-bold text-lg shrink-0" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
             </div>
             <div id="detalhe-lista" class="p-5 overflow-y-auto space-y-1.5 text-sm"></div>
         </div>
@@ -245,7 +245,7 @@
                 container.innerHTML = chamadas.map((c) => `
                     <div class="bg-white rounded-2xl border border-green-100 shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap">
                         <div class="min-w-0">
-                            <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')} <span class="text-green-600 font-bold text-xs">● ativa</span></p>
+                            <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')} <span class="text-green-600 font-bold text-xs"><span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mr-1 align-middle"></span>ativa</span></p>
                             <p class="text-xs text-gray-500">${c.horas}h · ${c.totalRegistrados}/${c.totalElegiveis} registraram · fecha em <span class="contador" data-expira="${c.expira_em}">${tempoRestante(c.expira_em)}</span></p>
                             <p class="text-xs text-gray-500 mt-0.5">PIN: <span class="font-black tracking-[0.15em] text-gray-800">${escaparHtml(c.pin)}</span></p>
                         </div>

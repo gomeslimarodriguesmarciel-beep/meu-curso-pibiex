@@ -37,7 +37,7 @@
     <!-- ================= MODAL: CADASTRAR ALUNO ================= -->
     <div id="modal-cadastro" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7 relative">
-            <button onclick="fecharModalCadastro()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg">✖</button>
+            <button onclick="fecharModalCadastro()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
             <div id="cadastro-formulario">
                 <h2 class="text-xl font-black text-gray-900 mb-1">Cadastrar novo aluno</h2>
                 <p class="text-sm text-gray-500 mb-6">O sistema gera o usuário (a partir do nome) e uma senha provisória de 5 dígitos, automaticamente. Se você informar o e-mail do aluno, a senha é enviada direto para ele — senão, ela aparece aqui para você repassar.</p>
@@ -73,7 +73,7 @@
             <!-- a senha some do destaque (já foi entregue); senão, ela é a única -->
             <!-- forma do professor conseguir repassar, então fica em destaque. -->
             <div id="cadastro-sucesso" class="hidden text-center">
-                <div class="text-4xl mb-2">✅</div>
+                <div class="mb-2 text-green-600"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg></div>
                 <h2 class="text-lg font-black text-gray-900 mb-1">Aluno cadastrado!</h2>
                 <p id="sucesso-instrucao" class="text-sm text-gray-500 mb-5"></p>
 
@@ -101,7 +101,7 @@
     <!-- ================= MODAL: EDITAR ALUNO ================= -->
     <div id="modal-editar" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7 relative">
-            <button onclick="fecharModalEditar()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg">✖</button>
+            <button onclick="fecharModalEditar()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 font-bold text-lg" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
             <h2 class="text-xl font-black text-gray-900 mb-1">Editar dados do aluno</h2>
             <p class="text-sm text-gray-500 mb-6">Corrija nome, data de nascimento ou e-mail. O usuário e a senha não mudam aqui.</p>
 
@@ -137,7 +137,7 @@
                     <h2 class="text-lg font-black text-gray-900">Termo de Uso e Responsabilidade</h2>
                     <p id="termo-assinatura" class="text-xs text-gray-500 mt-1"></p>
                 </div>
-                <button onclick="fecharModalTermo()" class="text-gray-400 hover:text-gray-900 font-bold text-lg shrink-0">✖</button>
+                <button onclick="fecharModalTermo()" class="text-gray-400 hover:text-gray-900 font-bold text-lg shrink-0" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
             </div>
             <div id="termo-conteudo" class="px-7 py-5 overflow-y-auto text-sm leading-relaxed text-gray-600 space-y-4"></div>
             <div class="px-7 py-4 border-t border-gray-100 flex justify-end shrink-0">
@@ -223,14 +223,14 @@
                                 <p class="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
                                     <span class="font-mono">${escaparHtml(a.usuario)}</span>
                                     ${a.email_confirmado
-                                        ? `· ${escaparHtml(a.email)} <span class="text-green-600 font-bold">✓ cadastrado pelo aluno</span>`
+                                        ? `· ${escaparHtml(a.email)} <span class="text-green-600 font-bold">cadastrado pelo aluno</span>`
                                         : `· <span class="text-gray-400 italic">e-mail ainda não cadastrado</span>`}
                                     · <span id="senha-texto-${a.id}" class="font-mono">••••••</span>
                                     <button onclick="alternarSenhaVisivel('${a.id}')" id="senha-botao-${a.id}" class="font-bold text-blue-700 hover:underline">Ver senha</button>
                                 </p>
                                 <p class="text-xs mt-2 flex items-center gap-2 flex-wrap">
                                     ${a.termoAceito
-                                        ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700 shrink-0">✓ Termo assinado</span>
+                                        ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700 shrink-0">Termo assinado</span>
                                            <span class="text-gray-500">em ${formatarDataHora(a.termoAceito.aceitoEm)}</span>
                                            <button onclick="visualizarTermo('${a.id}')" class="font-bold text-blue-700 hover:underline">Visualizar</button>
                                            <button onclick="baixarTermoPdf('${a.id}')" class="font-bold text-blue-700 hover:underline">Baixar PDF</button>`

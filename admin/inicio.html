@@ -47,18 +47,18 @@
     <script src="shell.js"></script>
     <script>
         const ATALHOS = [
-            { label: 'Cadastrar Aluno', href: 'alunos.html', icone: '🎓', cor: 'bg-blue-50 text-blue-700' },
-            { label: 'Conteúdo',        href: 'conteudo.html', icone: '📚', cor: 'bg-purple-50 text-purple-700' },
-            { label: 'Atividades',      href: 'atividades.html', icone: '📝', cor: 'bg-amber-50 text-amber-700' },
-            { label: 'Avisos',          href: 'avisos.html', icone: '📢', cor: 'bg-red-50 text-red-700' },
-            { label: 'Chat da Turma',   href: 'chat.html', icone: '💬', cor: 'bg-green-50 text-green-700' },
-            { label: 'Galeria',         href: 'galeria.html', icone: '🖼️', cor: 'bg-pink-50 text-pink-700' },
+            { label: 'Cadastrar Aluno', href: 'alunos.html', icone: 'alunos', cor: 'bg-blue-50 text-blue-700' },
+            { label: 'Conteúdo',        href: 'conteudo.html', icone: 'conteudo', cor: 'bg-purple-50 text-purple-700' },
+            { label: 'Atividades',      href: 'atividades.html', icone: 'atividades', cor: 'bg-amber-50 text-amber-700' },
+            { label: 'Avisos',          href: 'avisos.html', icone: 'avisos', cor: 'bg-red-50 text-red-700' },
+            { label: 'Chat da Turma',   href: 'chat.html', icone: 'chat', cor: 'bg-green-50 text-green-700' },
+            { label: 'Galeria',         href: 'galeria.html', icone: 'galeria', cor: 'bg-pink-50 text-pink-700' },
         ];
 
         function renderizarAtalhos() {
             document.getElementById('atalhos').innerHTML = ATALHOS.map(a => `
                 <a href="${a.href}" class="flex items-center gap-3 ${a.cor} rounded-xl p-4 font-bold text-sm hover:opacity-80 transition">
-                    <span class="text-xl">${a.icone}</span>
+                    ${iconeSvg(a.icone)}
                     <span>${a.label}</span>
                 </a>
             `).join('');

@@ -25,7 +25,7 @@
         <div id="topo-pagina"></div>
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
-            <h1 class="text-2xl font-black text-gray-800 mb-1">📚 Gerenciar Conteúdo</h1>
+            <h1 class="text-2xl font-black text-gray-800 mb-1">Gerenciar Conteúdo</h1>
             <p class="text-gray-500 mb-6">
                 Envie arquivos (slides em PDF, imagens, vídeos) ou cole links dentro de cada módulo. O aluno lê os
                 arquivos direto na plataforma. Para criar ou editar módulos, use a página
@@ -58,7 +58,7 @@
             { valor: 'link', label: 'Link' },
             { valor: 'documento', label: 'Documento' },
         ];
-        const ICONE_POR_TIPO = { pdf: '📄', slide: '📊', video: '🎬', link: '🔗', documento: '📁' };
+        const ICONE_POR_TIPO = { pdf: 'pdf', slide: 'slide', video: 'video', link: 'link', documento: 'documento' };
 
         function opcoesTipo(selecionado) {
             return TIPOS.map(t => `<option value="${t.valor}" ${t.valor === selecionado ? 'selected' : ''}>${t.label}</option>`).join('');
@@ -142,20 +142,20 @@
         function linhaDoItem(item) {
             const tamanho = item.arquivo_tamanho ? ` · ${formatarTamanho(item.arquivo_tamanho)}` : '';
             const origem = item.arquivo_caminho
-                ? `<button onclick="previaArquivo('${item.id}')" class="text-blue-600 text-xs truncate block hover:underline text-left max-w-full">👁️ Pré-visualizar · ${escaparHtml(item.arquivo_nome || 'arquivo')}${tamanho}${item.permite_baixar ? '' : ' · sem download'}</button>`
+                ? `<button onclick="previaArquivo('${item.id}')" class="text-blue-600 text-xs truncate block hover:underline text-left max-w-full">${icone('olho', 14)} Pré-visualizar · ${escaparHtml(item.arquivo_nome || 'arquivo')}${tamanho}${item.permite_baixar ? '' : ' · sem download'}</button>`
                 : `<a href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${escaparHtml(item.url)}</a>`;
             return `
                 <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
-                        <span class="text-xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</span>
+                        <span class="shrink-0 text-gray-500">${icone(ICONE_POR_TIPO[item.tipo] || 'documento', 22)}</span>
                         <div class="min-w-0">
                             <p class="font-bold text-gray-800 text-sm truncate">${escaparHtml(item.titulo)}</p>
                             ${origem}
                         </div>
                     </div>
                     <div class="flex gap-2 shrink-0">
-                        <button onclick="editarConteudo('${item.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">✏️</button>
-                        <button onclick="excluirConteudo('${item.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">🗑️</button>
+                        <button onclick="editarConteudo('${item.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
+                        <button onclick="excluirConteudo('${item.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
                     </div>
                 </div>`;
         }
@@ -164,7 +164,7 @@
             const temArquivo = !!item.arquivo_caminho;
             const campoOrigem = temArquivo
                 ? `<div class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
-                        <p class="text-gray-700">📎 <b>${escaparHtml(item.arquivo_nome || 'arquivo')}</b><span class="text-gray-400">${item.arquivo_tamanho ? ' · ' + formatarTamanho(item.arquivo_tamanho) : ''}</span></p>
+                        <p class="text-gray-700">${icone('anexo', 14)} <b>${escaparHtml(item.arquivo_nome || 'arquivo')}</b><span class="text-gray-400">${item.arquivo_tamanho ? ' · ' + formatarTamanho(item.arquivo_tamanho) : ''}</span></p>
                         <label class="block text-xs font-bold text-gray-500 mt-2 mb-1">Trocar o arquivo (opcional)</label>
                         <input type="file" id="edit-arquivo-${item.id}" accept=".pdf,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.mp4" class="block w-full text-xs text-gray-600">
                         <label class="flex items-center gap-2 text-xs text-gray-600 mt-2">
@@ -204,7 +204,7 @@
                     <div id="bloco-arquivo-${id}">
                         <label id="zona-${id}" class="zona-arquivo flex flex-col items-center justify-center gap-1 px-4 py-6 text-center cursor-pointer"
                                ondragover="return arrastando(event, '${id}', true)" ondragleave="return arrastando(event, '${id}', false)" ondrop="return soltou(event, '${id}')">
-                            <span class="text-2xl">📤</span>
+                            <span class="text-gray-400"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
                             <span id="zona-texto-${id}" class="text-sm font-semibold text-gray-700">Arraste o arquivo aqui ou clique para escolher</span>
                             <span class="text-xs text-gray-400">PDF, PPTX, PNG, JPG, WEBP ou MP4 · até 20 MB</span>
                             <input type="file" id="novo-arquivo-${id}" class="sr-only" accept=".pdf,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.mp4" onchange="escolheuArquivo('${id}')">

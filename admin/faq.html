@@ -17,7 +17,7 @@
         <div id="topo-pagina"></div>
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
-            <h1 class="text-2xl font-black text-gray-800 mb-1">❓ Gerenciar FAQ</h1>
+            <h1 class="text-2xl font-black text-gray-800 mb-1">Gerenciar FAQ</h1>
             <p class="text-gray-500 mb-6">Perguntas e respostas exibidas na área do aluno. Itens inativos ficam ocultos.</p>
 
             <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
@@ -120,8 +120,8 @@
                                 <p class="text-[11px] text-gray-400 mt-2">Ordem: ${f.ordem ?? 0}</p>
                             </div>
                             <div class="flex gap-2 shrink-0">
-                                <button onclick="editarFaq('${f.id}')" class="text-gray-400 hover:text-gray-700 text-xs">✏️</button>
-                                <button onclick="excluirFaq('${f.id}')" class="text-gray-400 hover:text-red-600 text-xs">🗑️</button>
+                                <button onclick="editarFaq('${f.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
+                                <button onclick="excluirFaq('${f.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
                             </div>
                         </div>
                     </div>

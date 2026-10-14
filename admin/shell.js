@@ -150,6 +150,35 @@ function iconeSvg(id) {
     return `<span class="w-5 h-5 shrink-0">${ICONES[id] || ''}</span>`;
 }
 
+// Ícones de linha para botões e listas (herdam a cor do texto). Substituem os
+// emojis: no painel da equipe a interface usa só ícones desenhados, como no menu.
+const CAMINHOS_ICONE = {
+    editar: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/>',
+    excluir: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12h10l1-12"/><path d="M9 7V4h6v3"/>',
+    fechar: '<path d="M6 6l12 12M18 6 6 18"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    anexo: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
+    enviar: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
+    voltar: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    olho: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+    sorriso: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',
+    sucesso: '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/>',
+    pdf: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13.5h5M9.5 17h5"/>',
+    slide: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>',
+    video: '<circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z"/>',
+    link: '<path d="M9.5 14.5 14.5 9.5"/><path d="M11 7l1.5-1.5a3.5 3.5 0 0 1 5 5L16 12M13 17l-1.5 1.5a3.5 3.5 0 0 1-5-5L8 12"/>',
+    documento: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    livro: '<path d="M4 5.5A2 2 0 0 1 6 4h12v16H6a2 2 0 0 1-2-2z"/><path d="M8 8h6M8 12h6"/>',
+    globo: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    jornal: '<path d="M5 4h12v16H7a2 2 0 0 1-2-2z"/><path d="M17 8h3v10a2 2 0 0 1-2 2"/><path d="M8.5 8h5M8.5 12h5M8.5 16h3"/>',
+};
+
+function icone(nome, tamanho) {
+    const t = tamanho || 15;
+    return `<svg viewBox="0 0 24 24" width="${t}" height="${t}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px">${CAMINHOS_ICONE[nome] || ''}</svg>`;
+}
+
 // ============================================================
 // 1) Proteção de sessão da equipe
 // ============================================================
@@ -195,7 +224,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
     }).join('');
 
     // No celular a barra lateral vira uma gaveta: fica fora da tela (translate)
-    // até o ☰ no topo abrir. Do md pra cima ela volta a ficar fixa no lugar,
+    // até o botão de menu no topo abrir. Do md pra cima ela volta a ficar fixa no lugar,
     // como sempre foi — 'md:translate-x-0' cancela o deslocamento.
     container.outerHTML = `
         <div id="sidebar-fundo" onclick="window.fecharMenuEquipe()"
@@ -214,7 +243,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
                         <p class="text-[var(--pibiex-acento)] text-[9.5px] font-bold uppercase tracking-wide">Painel da equipe</p>
                     </div>
                 </div>
-                <button onclick="window.fecharMenuEquipe()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">✕</button>
+                <button onclick="window.fecharMenuEquipe()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">${icone('fechar', 18)}</button>
             </div>
             <div class="relative flex flex-col gap-1">${itensHtml}</div>
         </aside>
@@ -240,7 +269,7 @@ function montarTopoEquipe(dados) {
     container.outerHTML = `
         <header id="topo-pagina" class="flex items-center justify-between gap-3 px-4 md:px-8 py-4 md:py-5 bg-white border-b border-gray-100">
             <div class="flex items-center gap-3 min-w-0">
-                <button onclick="window.abrirMenuEquipe()" class="md:hidden shrink-0 text-gray-500 hover:text-gray-900 text-2xl leading-none" aria-label="Abrir menu">☰</button>
+                <button onclick="window.abrirMenuEquipe()" class="md:hidden shrink-0 text-gray-500 hover:text-gray-900 leading-none" aria-label="Abrir menu">${icone('menu', 24)}</button>
                 <p class="text-gray-500 text-sm min-w-0 truncate">
                     <span class="font-bold text-gray-800">${escaparHtml(dados.nomeCompleto)}</span>
                     <span class="ml-2 text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">${escaparHtml(dados.cargo)}</span>
