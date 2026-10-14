@@ -75,10 +75,10 @@
                         <p class="text-[11px] mb-2" style="color: var(--pibiex-texto-suave);">${escaparHtml(p.autorNome)} · ${formatarData(p.criado_em)}</p>
                         ${p.descricao ? `<p class="text-sm mb-3" style="color: var(--pibiex-texto-suave);">${escaparHtml(p.descricao)}</p>` : ''}
 
-                        <button onclick="alternarCurtida('${p.id}', ${p.euCurti})"
+                        <button onclick="alternarCurtida('${p.id}', ${p.euCurti})" aria-label="${p.euCurti ? 'Descurtir' : 'Curtir'}"
                                 class="text-xs font-semibold px-3 py-1 rounded-full mb-3"
                                 style="${p.euCurti ? 'background: var(--pibiex-tinta); color: white;' : 'background: var(--pibiex-papel); color: var(--pibiex-texto-suave);'}">
-                            ${p.euCurti ? '♥' : '♡'} ${p.totalCurtidas}
+                            ${icone('coracao', 14, p.euCurti)} ${p.totalCurtidas}
                         </button>
 
                         <div class="space-y-1.5 mb-3">

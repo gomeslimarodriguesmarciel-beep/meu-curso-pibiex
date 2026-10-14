@@ -201,6 +201,34 @@ function iconeSvg(id) {
     return `<span class="w-5 h-5 shrink-0">${ICONES[id] || ''}</span>`;
 }
 
+// Ícones de linha para botões e listas (herdam a cor do texto). Substituem os
+// emojis: a área do aluno usa só ícones desenhados, como o menu lateral.
+const CAMINHOS_ICONE = {
+    editar: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/>',
+    excluir: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12h10l1-12"/><path d="M9 7V4h6v3"/>',
+    fechar: '<path d="M6 6l12 12M18 6 6 18"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    anexo: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
+    enviar: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
+    voltar: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    sorriso: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',
+    sucesso: '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/>',
+    coracao: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    pdf: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13.5h5M9.5 17h5"/>',
+    slide: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>',
+    video: '<circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z"/>',
+    link: '<path d="M9.5 14.5 14.5 9.5"/><path d="M11 7l1.5-1.5a3.5 3.5 0 0 1 5 5L16 12M13 17l-1.5 1.5a3.5 3.5 0 0 1-5-5L8 12"/>',
+    documento: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    livro: '<path d="M4 5.5A2 2 0 0 1 6 4h12v16H6a2 2 0 0 1-2-2z"/><path d="M8 8h6M8 12h6"/>',
+    globo: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+    jornal: '<path d="M5 4h12v16H7a2 2 0 0 1-2-2z"/><path d="M17 8h3v10a2 2 0 0 1-2 2"/><path d="M8.5 8h5M8.5 12h5M8.5 16h3"/>',
+};
+
+function icone(nome, tamanho, cheio) {
+    const t = tamanho || 15;
+    return `<svg viewBox="0 0 24 24" width="${t}" height="${t}" fill="${cheio ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px">${CAMINHOS_ICONE[nome] || ''}</svg>`;
+}
+
 function montarMenuLateral(paginaAtivaId) {
     const container = document.getElementById('sidebar-container');
     if (!container) return;
@@ -228,7 +256,7 @@ function montarMenuLateral(paginaAtivaId) {
         `;
     }).join('');
 
-    // No celular a barra vira uma gaveta fora da tela até o ☰ do topo abrir.
+    // No celular a barra vira uma gaveta fora da tela até o botão de menu do topo abrir.
     // Do md pra cima ela volta ao lugar de sempre ('md:translate-x-0').
     container.outerHTML = `
         <div id="sidebar-fundo" onclick="window.fecharMenuAluno()"
@@ -247,7 +275,7 @@ function montarMenuLateral(paginaAtivaId) {
                         <p class="text-[9.5px] font-bold uppercase tracking-[0.14em] text-[var(--pibiex-dourado)]">Inteligência Artificial</p>
                     </div>
                 </div>
-                <button onclick="window.fecharMenuAluno()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">✕</button>
+                <button onclick="window.fecharMenuAluno()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">${icone('fechar', 18)}</button>
             </div>
             <nav class="px-3 overflow-y-auto flex-1 relative">${gruposHtml}</nav>
         </aside>
@@ -275,7 +303,7 @@ function montarTopo(dados) {
     container.outerHTML = `
         <header id="topo-pagina" class="flex items-center justify-between gap-3 px-4 md:px-9 py-4 md:py-5 bg-white border-b" style="border-color: var(--pibiex-borda);">
             <div class="flex items-center gap-3 min-w-0">
-                <button onclick="window.abrirMenuAluno()" class="md:hidden shrink-0 text-xl leading-none" style="color: var(--pibiex-texto-suave);" aria-label="Abrir menu">☰</button>
+                <button onclick="window.abrirMenuAluno()" class="md:hidden shrink-0 leading-none" style="color: var(--pibiex-texto-suave);" aria-label="Abrir menu">${icone('menu', 24)}</button>
                 <p class="text-[13.5px] min-w-0 truncate" style="color: var(--pibiex-texto-suave);">
                     Bem-vindo(a), <span class="font-semibold" style="color: var(--pibiex-texto);">${primeiroNome}</span>
                 </p>
@@ -472,7 +500,7 @@ function montarAssistenteFlutuante() {
                                 style="color: var(--pibiex-dourado); border-color: var(--pibiex-dourado);">
                             Novo chat
                         </button>
-                        <button onclick="alternarPainelAssistente()" class="text-white/70 hover:text-white font-bold">✕</button>
+                        <button onclick="alternarPainelAssistente()" class="text-white/70 hover:text-white" aria-label="Fechar assistente">${icone('fechar', 16)}</button>
                     </div>
                 </div>
                 <div id="mensagens-assistente" class="flex-1 overflow-y-auto p-4 space-y-3 text-[13.5px]" style="background: var(--pibiex-papel);"></div>
@@ -481,7 +509,7 @@ function montarAssistenteFlutuante() {
                            class="flex-1 border rounded-full px-4 py-2 text-[13.5px] outline-none focus:ring-1"
                            style="border-color: var(--pibiex-borda);">
                     <button type="submit" class="text-white rounded-full w-10 h-10 flex items-center justify-center shrink-0"
-                            style="background: var(--pibiex-tinta);">➤</button>
+                            style="background: var(--pibiex-tinta);" aria-label="Enviar">${icone('enviar', 18)}</button>
                 </form>
             </div>
         </div>

@@ -39,7 +39,7 @@
             return /^https?:\/\//i.test(url ?? '') ? url : '#';
         }
 
-        const ICONE_POR_TIPO = { video: '🎬', ebook: '📖', site: '🌐', artigo: '📰' };
+        const ICONE_POR_TIPO = { video: 'video', ebook: 'livro', site: 'globo', artigo: 'jornal' };
         const ROTULO_TIPO = { video: 'Vídeo', ebook: 'E-book', site: 'Site', artigo: 'Artigo' };
 
         function renderizar(recursos) {
@@ -53,7 +53,7 @@
             container.innerHTML = recursos.map(r => `
                 <a href="${escaparHtml(urlSegura(r.url))}" target="_blank" rel="noopener"
                    class="flex items-center gap-4 bg-white rounded-lg p-4 border hover:shadow-sm transition" style="border-color: var(--pibiex-borda);">
-                    <div class="text-2xl shrink-0">${ICONE_POR_TIPO[r.tipo] || '🔗'}</div>
+                    <div class="shrink-0" style="color: var(--pibiex-texto-suave);">${icone(ICONE_POR_TIPO[r.tipo] || 'link', 26)}</div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
                             <p class="font-semibold text-[14.5px]" style="color: var(--pibiex-texto);">${escaparHtml(r.titulo)}</p>

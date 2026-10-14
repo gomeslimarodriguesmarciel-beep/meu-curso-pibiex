@@ -64,7 +64,7 @@
                 <div id="tela-contatos" class="hidden bg-white border rounded-lg overflow-hidden"
                      style="border-color: var(--pibiex-borda);">
                     <div class="px-5 py-3 border-b flex items-center gap-3" style="border-color: var(--pibiex-borda);">
-                        <button onclick="voltarParaConversas()" class="text-lg leading-none" style="color: var(--pibiex-texto-suave);">←</button>
+                        <button onclick="voltarParaConversas()" aria-label="Voltar" class="text-lg leading-none" style="color: var(--pibiex-texto-suave);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
                         <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Falar com quem?</p>
                     </div>
                     <input id="busca-contato" oninput="renderizarContatos()" placeholder="Buscar pelo nome..."
@@ -76,7 +76,7 @@
                 <div id="tela-conversa" class="hidden bg-white border rounded-lg overflow-hidden flex flex-col"
                      style="border-color: var(--pibiex-borda); height: 68vh;">
                     <div class="px-5 py-3 border-b flex items-center gap-3" style="border-color: var(--pibiex-borda);">
-                        <button onclick="voltarParaConversas()" class="text-lg leading-none" style="color: var(--pibiex-texto-suave);">←</button>
+                        <button onclick="voltarParaConversas()" aria-label="Voltar" class="text-lg leading-none" style="color: var(--pibiex-texto-suave);"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
                         <div class="min-w-0">
                             <p id="titulo-conversa" class="font-semibold text-[15px] truncate" style="color: var(--pibiex-texto);"></p>
                             <p id="subtitulo-conversa" class="text-xs" style="color: var(--pibiex-texto-suave);"></p>
@@ -211,7 +211,7 @@
                        </a>`
                     : `<a href="${m.anexo.url}" target="_blank" rel="noopener"
                           class="flex items-center gap-2 mb-1 rounded-md px-3 py-2 ${meu ? 'bg-white/10' : 'bg-black/[.04]'}">
-                           <span class="text-xl shrink-0">📎</span>
+                           <span class="shrink-0" style="color: var(--pibiex-texto-suave);">${icone('anexo', 22)}</span>
                            <span class="min-w-0">
                                <span class="block text-[13px] font-semibold truncate">${escaparHtml(m.anexo.nome)}</span>
                                <span class="block text-[11px] ${meu ? 'text-white/60' : ''}"
@@ -230,9 +230,9 @@
             `).join('');
 
             const acoes = [];
-            acoes.push(`<button onclick="abrirReacoes('${escopo}', '${m.id}', this)" title="Reagir" class="px-1">🙂</button>`);
-            if (m.podeEditar) acoes.push(`<button onclick="comecarEdicao('${escopo}', '${m.id}')" title="Editar" class="px-1">✏️</button>`);
-            if (m.podeApagar) acoes.push(`<button onclick="apagar('${escopo}', '${m.id}')" title="Apagar" class="px-1">🗑️</button>`);
+            acoes.push(`<button onclick="abrirReacoes('${escopo}', '${m.id}', this)" title="Reagir" aria-label="Reagir" class="px-1">${icone('sorriso')}</button>`);
+            if (m.podeEditar) acoes.push(`<button onclick="comecarEdicao('${escopo}', '${m.id}')" title="Editar" aria-label="Editar" class="px-1">${icone('editar')}</button>`);
+            if (m.podeApagar) acoes.push(`<button onclick="apagar('${escopo}', '${m.id}')" title="Apagar" aria-label="Apagar" class="px-1">${icone('excluir')}</button>`);
 
             return `
                 <div class="linha-mensagem flex ${meu ? 'justify-end' : 'justify-start'} gap-1.5 items-start">
@@ -296,16 +296,16 @@
                            onchange="aoEscolherArquivo('${escopo}')">
 
                     <form onsubmit="return enviar(event, '${escopo}')" class="p-3 border-t flex gap-2 items-end" style="border-color: var(--pibiex-borda);">
-                        <button type="button" onclick="alternarEmojis('${escopo}')" title="Emojis"
-                                class="text-xl shrink-0 leading-none px-1">🙂</button>
-                        <button type="button" onclick="document.getElementById('arquivo-${escopo}').click()" title="Anexar imagem ou arquivo"
-                                class="text-xl shrink-0 leading-none px-1">📎</button>
+                        <button type="button" onclick="alternarEmojis('${escopo}')" title="Emojis" aria-label="Emojis"
+                                class="shrink-0 leading-none px-1" style="color: var(--pibiex-texto-suave);">${icone('sorriso', 22)}</button>
+                        <button type="button" onclick="document.getElementById('arquivo-${escopo}').click()" title="Anexar imagem ou arquivo" aria-label="Anexar"
+                                class="shrink-0 leading-none px-1" style="color: var(--pibiex-texto-suave);">${icone('anexo', 22)}</button>
                         <textarea id="campo-${escopo}" rows="1" placeholder="Escreva uma mensagem..."
                                   oninput="aoDigitar('${escopo}')" onkeydown="atalhoEnviar(event, '${escopo}')"
                                   class="flex-1 border rounded-2xl px-4 py-2 text-[13.5px] outline-none resize-none max-h-32"
                                   style="border-color: var(--pibiex-borda);"></textarea>
                         <button type="submit" class="text-white rounded-full w-10 h-10 flex items-center justify-center shrink-0"
-                                style="background: var(--pibiex-tinta);">➤</button>
+                                style="background: var(--pibiex-tinta);" aria-label="Enviar">${icone('enviar', 18)}</button>
                     </form>
                 </div>
             `;
@@ -355,7 +355,7 @@
             // A miniatura sai do próprio arquivo escolhido, antes de subir.
             const previa = ehImagem
                 ? `<img src="${URL.createObjectURL(arquivo)}" class="rounded-md h-14 w-14 object-cover shrink-0">`
-                : `<span class="text-2xl shrink-0">📎</span>`;
+                : `<span class="shrink-0" style="color: var(--pibiex-texto-suave);">${icone('anexo', 28)}</span>`;
 
             caixa.innerHTML = `
                 <div class="flex items-center gap-3 border rounded-lg px-3 py-2" style="border-color: var(--pibiex-borda);">
@@ -365,7 +365,7 @@
                         <p class="text-[11px]" style="color: var(--pibiex-texto-suave);">${formatarTamanho(arquivo.size)}</p>
                     </div>
                     <button type="button" onclick="removerArquivo('${escopo}')" class="text-sm font-bold shrink-0"
-                            style="color: var(--pibiex-texto-suave);">✕</button>
+                            style="color: var(--pibiex-texto-suave);" aria-label="Remover anexo">${icone('fechar', 16)}</button>
                 </div>
             `;
             caixa.classList.remove('hidden');

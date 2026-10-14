@@ -61,7 +61,7 @@
 
             <section id="secao-ranking" class="mt-10 hidden">
                 <h2 class="flex items-center gap-2 text-[15px] font-bold mb-1" style="color: var(--pibiex-texto);">
-                    🏆 Ranking de acesso · esta semana
+                    Ranking de acesso · esta semana
                 </h2>
                 <p class="text-[12.5px] mb-3" style="color: var(--pibiex-texto-suave);">Quem mais acessou a plataforma desde segunda-feira. Reinicia toda semana — todo mundo tem chance.</p>
                 <div id="lista-ranking" class="bg-white rounded-2xl border p-2" style="border-color: var(--pibiex-borda);"></div>
@@ -149,7 +149,9 @@
             }
             secao.classList.remove('hidden');
 
-            const selos = ['👑', '🥈', '🥉'];
+            // Selo de posição (1º ouro, 2º prata, 3º bronze) em vez de emoji.
+        const selo = (n, cor) => `<b style="display:inline-flex;width:16px;height:16px;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${cor}">${n}</b>`;
+        const selos = [selo(1, '#CA8A04'), selo(2, '#64748B'), selo(3, '#C2410C')];
             document.getElementById('lista-ranking').innerHTML = ranking.map((r, i) => `
                 <div class="flex items-center gap-3 px-3 py-2.5 ${i > 0 ? 'border-t' : ''}" style="border-color: var(--pibiex-borda);">
                     <span class="w-5 text-center text-[13px] font-black shrink-0" style="color: var(--pibiex-texto-suave);">${i + 1}º</span>

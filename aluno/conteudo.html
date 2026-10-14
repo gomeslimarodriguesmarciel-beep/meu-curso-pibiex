@@ -17,7 +17,7 @@
         <div id="topo-pagina"></div>
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
-            <h1 class="text-2xl font-black text-gray-800 mb-1">📚 Conteúdo dos módulos</h1>
+            <h1 class="text-2xl font-black text-gray-800 mb-1">Conteúdo dos módulos</h1>
             <p class="text-gray-500 mb-6">Slides, PDFs, vídeos e links de cada módulo do curso.</p>
 
             <div id="lista-modulos" class="space-y-6">
@@ -75,7 +75,7 @@
         };
 
         const ICONE_POR_TIPO = {
-            pdf: '📄', slide: '📊', video: '🎬', link: '🔗', documento: '📁',
+            pdf: 'pdf', slide: 'slide', video: 'video', link: 'link', documento: 'documento',
         };
 
         function renderizarConteudo(modulos) {
@@ -92,7 +92,7 @@
                     : modulo.conteudos.map(item => {
                         ITENS[item.id] = item;
                         const miolo = `
-                            <div class="text-2xl shrink-0">${ICONE_POR_TIPO[item.tipo] || '📁'}</div>
+                            <div class="shrink-0" style="color: var(--pibiex-texto-suave);">${icone(ICONE_POR_TIPO[item.tipo] || 'documento', 26)}</div>
                             <div class="flex-1 min-w-0">
                                 <p class="font-bold text-gray-800 text-sm group-hover:text-blue-700">${escaparHtml(item.titulo)}</p>
                                 ${item.descricao ? `<p class="text-gray-500 text-xs truncate">${escaparHtml(item.descricao)}</p>` : ''}

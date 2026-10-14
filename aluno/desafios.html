@@ -21,7 +21,7 @@
         <div id="topo-pagina"></div>
 
         <main class="p-4 md:p-9 max-w-4xl mx-auto">
-            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">🏆 Desafios Semanais</h1>
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Desafios Semanais</h1>
             <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Cumpra os desafios, ganhe pontos e suba no ranking da turma.</p>
 
             <!-- Meu progresso -->
@@ -74,7 +74,8 @@
             return `${dia}/${mes}`;
         }
 
-        const MEDALHA = { 1: '🥇', 2: '🥈', 3: '🥉' };
+        // Pódio sem emoji: a posição em dourado, prata e bronze.
+        const COR_POSICAO = { 1: '#CA8A04', 2: '#64748B', 3: '#C2410C' };
 
         // ============================================================
         // Cartão de progresso (nível, pontos, barra até o próximo nível)
@@ -123,9 +124,9 @@
 
             const podioHtml = dados.podio.map((p) => `
                 <div class="flex flex-col items-center ${p.posicao === 1 ? 'order-2' : p.posicao === 2 ? 'order-1' : 'order-3'}">
-                    <div class="rounded-full flex items-center justify-center text-2xl mb-1.5 ${p.posicao === 1 ? 'w-16 h-16' : 'w-12 h-12'}"
-                         style="background: var(--pibiex-papel); border: 2px solid ${p.souEu ? 'var(--pibiex-dourado)' : 'var(--pibiex-borda)'};">
-                        ${MEDALHA[p.posicao]}
+                    <div class="rounded-full flex items-center justify-center font-black ${p.posicao === 1 ? 'w-16 h-16 text-xl' : 'w-12 h-12 text-base'} mb-1.5"
+                         style="background: var(--pibiex-papel); border: 2px solid ${p.souEu ? 'var(--pibiex-dourado)' : 'var(--pibiex-borda)'}; color: ${COR_POSICAO[p.posicao]};">
+                        ${p.posicao}º
                     </div>
                     <p class="text-[13px] font-bold text-center max-w-[92px] truncate" style="color: var(--pibiex-texto);">
                         ${p.souEu ? 'Você' : escaparHtml(p.nome.split(' ')[0])}
@@ -187,7 +188,7 @@
 
                 let selo = '';
                 if (envio && envio.avaliado) {
-                    selo = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background: #DCFCE7; color: #15803D;">✓ ${envio.pontos} / ${d.valeQuantosPontos} pts</span>`;
+                    selo = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background: #DCFCE7; color: #15803D;">${icone('sucesso', 12)} ${envio.pontos} / ${d.valeQuantosPontos} pts</span>`;
                 } else if (envio) {
                     selo = `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background: #FEF9C3; color: #A16207;">Aguardando correção</span>`;
                 } else if (encerrado) {
@@ -201,7 +202,7 @@
                                 <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(d.titulo)}</p>
                                 <div class="flex items-center gap-2 mt-1">
                                     ${d.semana ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">Semana ${d.semana}</span>` : ''}
-                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style="background: var(--pibiex-dourado); color: var(--pibiex-tinta);">🏆 ${d.valeQuantosPontos} pts</span>
+                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style="background: var(--pibiex-dourado); color: var(--pibiex-tinta);">${d.valeQuantosPontos} pts</span>
                                     ${d.dataFim ? `<span class="text-[10px]" style="color: var(--pibiex-texto-suave);">até ${formatarData(d.dataFim)}</span>` : ''}
                                 </div>
                             </div>
