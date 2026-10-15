@@ -70,6 +70,7 @@ const ICONES = {
     trabalhos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>',
     notas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l5 5v13H7z"/><path d="M15 3v5h5"/><path d="M9.5 12.5h6M9.5 16h4"/></svg>',
     frequencia: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>',
+    enquetes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 20v-7M12 20V5M17 20v-10"/></svg>',
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
     'ferramentas-ia': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a3.5 3.5 0 0 0-4.7 4.2L4 16.5V20h3.5l5.8-5.8a3.5 3.5 0 0 0 4.2-4.7l-2.6 2.6-2-2z"/></svg>',
     prompts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.9.9.9 1.6v.5h5.2v-.5c0-.7.4-1.2.9-1.6A6 6 0 0 0 12 3z"/></svg>',
@@ -143,6 +144,7 @@ const GRUPOS_MENU = [
             { id: 'notas',      label: 'Minhas Notas',   href: 'notas.html' },
             { id: 'frequencia', label: 'Minha Frequência', href: 'frequencia.html' },
             { id: 'chat',       label: 'Chat da Turma',  href: 'chat.html' },
+            { id: 'enquetes',   label: 'Enquetes',       href: 'enquetes.html' },
         ],
     },
     {
@@ -308,6 +310,8 @@ function montarTopo(dados) {
                     Bem-vindo(a), <span class="font-semibold" style="color: var(--pibiex-texto);">${primeiroNome}</span>
                 </p>
             </div>
+            <div class="flex items-center gap-3 shrink-0">
+            <div id="indicador-enquete" class="min-w-0"></div>
             <div class="relative shrink-0">
                 <button onclick="window.alternarMenuContaAluno()" id="botao-conta-aluno" class="flex items-center rounded-full transition hover:opacity-80" aria-label="Minha conta">
                     ${avatarHtml(dados.nomeCompleto, dados.fotoUrl, 34)}
@@ -316,6 +320,7 @@ function montarTopo(dados) {
                     <a href="perfil.html" class="block px-4 py-2 text-[13.5px] font-semibold hover:bg-black/[.03]" style="color: var(--pibiex-texto);">Meu Perfil</a>
                     <button onclick="sairAluno()" class="w-full text-left px-4 py-2 text-[13.5px] font-semibold text-red-600 hover:bg-red-50">Sair</button>
                 </div>
+            </div>
             </div>
         </header>
     `;
@@ -661,6 +666,55 @@ function encerrarSessaoLocal(motivo) {
 }
 
 // ============================================================
+// Enquetes: tela de bloqueio + indicador ao lado do perfil
+// ============================================================
+// O servidor é quem decide o que o aluno vê. Esta parte só desenha. A tela de
+// bloqueio é uma trava de uso (não de segurança): enquanto houver enquete aberta
+// e não respondida, o aluno é levado a ela em toda página.
+function carregarEnquetesUI() {
+    return new Promise((resolve) => {
+        if (window.EnquetesUI) return resolve();
+        const s = document.createElement('script');
+        s.src = '/enquetes-ui.js';
+        s.onload = () => resolve();
+        s.onerror = () => resolve();
+        document.head.appendChild(s);
+    });
+}
+
+async function chamarEnquetesAluno(acao, extra) {
+    const token = localStorage.getItem('pibiex_aluno_token');
+    const { data, error } = await window.supabaseClient.functions.invoke('enquetes-aluno', {
+        body: { token, acao, ...(extra || {}) },
+    });
+    if (error || !data || data.erro) throw new Error((data && data.erro) || 'Erro ao consultar as enquetes.');
+    return data;
+}
+
+async function iniciarEnquetesAluno(paginaAtivaId) {
+    await carregarEnquetesUI();
+    if (!window.EnquetesUI) return;
+
+    // Guardado para a página de enquetes atualizar o indicador logo depois de votar.
+    window.__indicadorEnquetes = EnquetesUI.montarIndicador({
+        papel: 'aluno',
+        buscar: async () => (await chamarEnquetesAluno('acompanhar')).enquetes,
+    });
+
+    // Na própria página de enquetes o aluno já está votando: sem bloqueio aqui.
+    if (paginaAtivaId === 'enquetes') return;
+
+    async function conferirPendentes() {
+        try {
+            const { pendentes } = await chamarEnquetesAluno('pendentes');
+            EnquetesUI.bloquearTela(pendentes, (id) => `enquetes.html?id=${encodeURIComponent(id)}`);
+        } catch (e) { /* sem rede: não trava o aluno à toa */ }
+    }
+    conferirPendentes();
+    setInterval(conferirPendentes, 20000);
+}
+
+// ============================================================
 // Ponto de entrada — cada página chama isso passando seu próprio id
 // ============================================================
 async function iniciarShellAluno(paginaAtivaId) {
@@ -685,6 +739,7 @@ async function iniciarShellAluno(paginaAtivaId) {
     // navegação, o que é o comportamento certo aqui).
     verificarFrequenciaDisponivel();
     setInterval(verificarFrequenciaDisponivel, 20000);
+    iniciarEnquetesAluno(paginaAtivaId);
 
     // Confirma no servidor por trás dos panos: pega o caso (raro) de a turma
     // ter sido pausada ou o termo de uso ter mudado de versão desde o último

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX Digital · Enquetes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .opcao { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--pibiex-borda); border-radius: 12px; cursor: pointer; background: #fff; transition: border-color .12s, background .12s; }
+        .opcao:hover { border-color: #94A3B8; }
+        .opcao:has(input:checked) { border-color: var(--pibiex-tinta); background: #EEF2FF; }
+        .opcao:has(input:focus-visible) { outline: 2px solid var(--pibiex-tinta); outline-offset: 2px; }
+        .opcao input { accent-color: #1E3A8A; width: 18px; height: 18px; flex-shrink: 0; }
+        .nota { flex: 1; min-width: 44px; text-align: center; padding: 12px 0; border: 1.5px solid var(--pibiex-borda); border-radius: 12px; cursor: pointer; font-weight: 800; background: #fff; }
+        .nota:has(input:checked) { border-color: var(--pibiex-tinta); background: var(--pibiex-tinta); color: #fff; }
+        .nota:has(input:focus-visible) { outline: 2px solid var(--pibiex-tinta); outline-offset: 2px; }
+        .nota input { position: absolute; opacity: 0; pointer-events: none; }
+        .campo-erro { border-color: #DC2626 !important; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-4 md:p-9 max-w-3xl mx-auto">
+            <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Enquetes</h1>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Participe das votações da turma e acompanhe o resultado.</p>
+
+            <div id="conteudo"><p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p></div>
+        </main>
+    </div>
+
+    <div id="assistente-flutuante"></div>
+
+    <script src="shell.js"></script>
+    <script>
+        const esc = (t) => (window.EnquetesUI ? EnquetesUI.esc(t) : String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
+        const $conteudo = () => document.getElementById('conteudo');
+
+        let PERGUNTAS = [];
+        let ENQUETE = null;
+        let temporizadorResultado = null;
+
+        function formatarPrazo(iso) {
+            return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function aguardarUI() {
+            for (let i = 0; i < 40 && !window.EnquetesUI; i++) await new Promise((r) => setTimeout(r, 100));
+            if (window.EnquetesUI) EnquetesUI.injetarEstilo();
+        }
+
+        // ------------------------------------------------------------------
+        // Lista
+        // ------------------------------------------------------------------
+        async function mostrarLista() {
+            clearInterval(temporizadorResultado);
+            history.replaceState(null, '', 'enquetes.html');
+            const { enquetes } = await chamarEnquetesAluno('listar');
+
+            if (!enquetes.length) {
+                $conteudo().innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhuma enquete por enquanto.</p>`;
+                return;
+            }
+
+            $conteudo().innerHTML = '<div class="space-y-3">' + enquetes.map((e) => {
+                const aberta = e.status === 'aberta';
+                let acao = '';
+                if (aberta && !e.jaVotou) acao = `<button onclick="abrirEnquete('${e.id}')" class="text-white text-sm font-bold px-5 py-2.5 rounded-lg" style="background: var(--pibiex-tinta);">Responder agora</button>`;
+                else if (e.podeVerResultado) acao = `<button onclick="abrirEnquete('${e.id}')" class="text-sm font-bold px-5 py-2.5 rounded-lg border" style="border-color: var(--pibiex-tinta); color: var(--pibiex-tinta);">${aberta ? 'Acompanhar apuração' : 'Ver resultado'}</button>`;
+                else if (aberta) acao = `<span class="text-xs font-semibold" style="color: var(--pibiex-texto-suave);">O resultado será liberado depois do encerramento.</span>`;
+
+                return `
+                    <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
+                        <div class="flex items-start justify-between gap-3 mb-1">
+                            <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${esc(e.titulo)}</p>
+                            ${EnquetesUI.rotuloStatus(e.status)}
+                        </div>
+                        ${e.descricao ? `<p class="text-sm mb-2" style="color: var(--pibiex-texto-suave);">${esc(e.descricao)}</p>` : ''}
+                        <p class="text-xs mb-3" style="color: var(--pibiex-texto-suave);">
+                            ${e.anonima ? 'Anônima' : 'Identificada'}${e.jaVotou ? ' · Você já votou' : ''}${aberta && e.encerraEm ? ' · Encerra em ' + formatarPrazo(e.encerraEm) : ''}
+                        </p>
+                        ${acao}
+                    </div>`;
+            }).join('') + '</div>';
+        }
+
+        // ------------------------------------------------------------------
+        // Abrir uma enquete: formulário de voto, ou o resultado
+        // ------------------------------------------------------------------
+        window.abrirEnquete = async (id) => {
+            clearInterval(temporizadorResultado);
+            history.replaceState(null, '', 'enquetes.html?id=' + encodeURIComponent(id));
+            $conteudo().innerHTML = `<p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>`;
+            try {
+                const d = await chamarEnquetesAluno('detalhe', { enqueteId: id });
+                ENQUETE = d.enquete;
+                PERGUNTAS = d.perguntas;
+                if (ENQUETE.status === 'aberta' && !ENQUETE.jaVotou) desenharFormulario();
+                else await desenharResultado();
+            } catch (e) {
+                $conteudo().innerHTML = `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">${esc(e.message)}</p>
+                    <button onclick="mostrarLista()" class="mt-3 text-sm font-semibold underline" style="color: var(--pibiex-tinta);">Voltar às enquetes</button>`;
+            }
+        };
+
+        function desenharFormulario() {
+            const aviso = ENQUETE.anonima
+                ? 'Esta enquete é <b>anônima</b>: o professor vê o resultado geral, mas não sabe o que você respondeu.'
+                : 'Esta enquete é <b>identificada</b>: o professor consegue ver o que cada aluno respondeu, com o nome.';
+
+            const blocos = PERGUNTAS.map((p) => {
+                let campo = '';
+                const nome = 'p_' + p.id;
+                if (p.tipo === 'unica' || p.tipo === 'sim_nao') {
+                    campo = `<div class="space-y-2">${p.opcoes.map((o) => `
+                        <label class="opcao"><input type="radio" name="${nome}" value="${esc(o.id)}"><span class="text-[14.5px]">${esc(o.texto)}</span></label>`).join('')}</div>`;
+                } else if (p.tipo === 'multipla') {
+                    campo = `<div class="space-y-2">${p.opcoes.map((o) => `
+                        <label class="opcao"><input type="checkbox" name="${nome}" value="${esc(o.id)}"><span class="text-[14.5px]">${esc(o.texto)}</span></label>`).join('')}</div>
+                        <p class="text-xs mt-2" style="color: var(--pibiex-texto-suave);">${p.maxEscolhas ? `Escolha até ${p.maxEscolhas}.` : 'Você pode marcar mais de uma.'}</p>`;
+                } else if (p.tipo === 'escala') {
+                    campo = `<div class="flex gap-2 relative">${Array.from({ length: p.escalaMax || 5 }, (_, i) => `
+                        <label class="nota"><input type="radio" name="${nome}" value="${i + 1}">${i + 1}</label>`).join('')}</div>
+                        <div class="flex justify-between text-[11px] mt-1" style="color: var(--pibiex-texto-suave);"><span>1 = pouco</span><span>${p.escalaMax || 5} = muito</span></div>`;
+                } else if (p.tipo === 'texto_curto') {
+                    campo = `<input type="text" name="${nome}" maxlength="300" class="w-full border rounded-lg px-3 py-2.5 text-sm" style="border-color: var(--pibiex-borda);" placeholder="Sua resposta">`;
+                } else {
+                    campo = `<textarea name="${nome}" rows="4" maxlength="3000" class="w-full border rounded-lg px-3 py-2.5 text-sm resize-y" style="border-color: var(--pibiex-borda);" placeholder="Escreva aqui"></textarea>`;
+                }
+                return `
+                    <fieldset id="bloco_${p.id}" class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
+                        <legend class="sr-only">Pergunta ${p.ordem}</legend>
+                        <p class="font-semibold text-[15px] mb-3" style="color: var(--pibiex-texto);">${p.ordem}. ${esc(p.texto)}${p.obrigatoria ? ' <span class="text-red-600" title="Obrigatória">*</span>' : ''}</p>
+                        ${campo}
+                        <p id="erro_${p.id}" class="hidden text-xs text-red-600 font-semibold mt-2"></p>
+                    </fieldset>`;
+            }).join('');
+
+            $conteudo().innerHTML = `
+                <button onclick="mostrarLista()" class="text-sm font-semibold mb-3" style="color: var(--pibiex-texto-suave);">← Voltar</button>
+                <div class="rounded-lg p-5 mb-4 text-white" style="background: var(--pibiex-gradiente);">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] mb-1" style="color: var(--pibiex-dourado);">Votação aberta</p>
+                    <h2 class="text-xl font-black leading-tight">${esc(ENQUETE.titulo)}</h2>
+                    ${ENQUETE.descricao ? `<p class="text-sm mt-2 opacity-90">${esc(ENQUETE.descricao)}</p>` : ''}
+                    ${ENQUETE.encerraEm ? `<p class="text-xs mt-2 opacity-80">Encerra em ${formatarPrazo(ENQUETE.encerraEm)}</p>` : ''}
+                </div>
+                <p class="text-xs rounded-lg px-4 py-3 mb-4 border" style="background: #F8FAFC; border-color: var(--pibiex-borda); color: var(--pibiex-texto);">${aviso}</p>
+                <form id="form-voto" class="space-y-4" novalidate>${blocos}
+                    <div id="erro-geral" class="hidden text-sm text-red-600 font-semibold bg-red-50 rounded-lg p-3"></div>
+                    <button type="submit" id="btn-votar" class="w-full text-white font-bold py-3.5 rounded-lg text-[15px]" style="background: var(--pibiex-tinta);">Enviar meu voto</button>
+                    <p class="text-xs text-center" style="color: var(--pibiex-texto-suave);">Depois de enviar, não é possível alterar.</p>
+                </form>`;
+
+            document.getElementById('form-voto').addEventListener('submit', enviarVoto);
+        }
+
+        function coletarRespostas() {
+            const respostas = [];
+            const erros = {};
+            for (const p of PERGUNTAS) {
+                const nome = 'p_' + p.id;
+                const campos = [...document.getElementsByName(nome)];
+                const r = { perguntaId: p.id };
+                if (p.tipo === 'unica' || p.tipo === 'sim_nao') {
+                    const marcado = campos.find((c) => c.checked);
+                    if (marcado) r.opcoes = [marcado.value];
+                } else if (p.tipo === 'multipla') {
+                    const marcados = campos.filter((c) => c.checked).map((c) => c.value);
+                    if (marcados.length) r.opcoes = marcados;
+                    if (p.maxEscolhas && marcados.length > p.maxEscolhas) erros[p.id] = `Escolha no máximo ${p.maxEscolhas}.`;
+                } else if (p.tipo === 'escala') {
+                    const marcado = campos.find((c) => c.checked);
+                    if (marcado) r.nota = Number(marcado.value);
+                } else {
+                    const valor = (campos[0].value || '').trim();
+                    if (valor) r.texto = valor;
+                }
+                const vazio = !(r.opcoes || r.nota !== undefined || r.texto);
+                if (vazio && p.obrigatoria) erros[p.id] = 'Esta pergunta é obrigatória.';
+                if (!vazio) respostas.push(r);
+            }
+            return { respostas, erros };
+        }
+
+        async function enviarVoto(e) {
+            e.preventDefault();
+            const geral = document.getElementById('erro-geral');
+            geral.classList.add('hidden');
+            PERGUNTAS.forEach((p) => { const el = document.getElementById('erro_' + p.id); el.classList.add('hidden'); document.getElementById('bloco_' + p.id).classList.remove('campo-erro'); });
+
+            const { respostas, erros } = coletarRespostas();
+            const ids = Object.keys(erros);
+            if (ids.length) {
+                ids.forEach((id) => { const el = document.getElementById('erro_' + id); el.textContent = erros[id]; el.classList.remove('hidden'); document.getElementById('bloco_' + id).classList.add('campo-erro'); });
+                document.getElementById('bloco_' + ids[0]).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            if (!confirm('Enviar o seu voto? Depois de enviar, não é possível alterar.')) return;
+
+            const botao = document.getElementById('btn-votar');
+            botao.disabled = true; botao.textContent = 'Enviando...';
+            try {
+                await chamarEnquetesAluno('votar', { enqueteId: ENQUETE.id, respostas });
+                if (window.__indicadorEnquetes) window.__indicadorEnquetes.atualizar();
+                await abrirEnquete(ENQUETE.id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (erro) {
+                geral.textContent = erro.message;
+                geral.classList.remove('hidden');
+                botao.disabled = false; botao.textContent = 'Enviar meu voto';
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // Depois de votar (ou enquete encerrada): resultado, se liberado
+        // ------------------------------------------------------------------
+        async function desenharResultado() {
+            await aguardarUI();
+            const aberta = ENQUETE.status === 'aberta';
+            const topo = `
+                <button onclick="mostrarLista()" class="text-sm font-semibold mb-3" style="color: var(--pibiex-texto-suave);">← Voltar às enquetes</button>
+                <div class="rounded-lg p-5 mb-4 border bg-white" style="border-color: var(--pibiex-borda);">
+                    ${ENQUETE.jaVotou ? `<p class="text-sm font-bold mb-1" style="color: #15803D;">${icone('sucesso', 16)} Seu voto foi registrado. Obrigado!</p>` : ''}
+                    ${!aberta ? '<p class="text-sm font-bold mb-1" style="color: var(--pibiex-texto);">Votação encerrada</p>' : ''}
+                    <h2 class="text-lg font-black" style="color: var(--pibiex-texto);">${esc(ENQUETE.titulo)}</h2>
+                </div>`;
+
+            if (!ENQUETE.podeVerResultado) {
+                $conteudo().innerHTML = topo + `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">${aberta ? 'O resultado será liberado pelo professor depois que a votação for encerrada.' : 'O professor não liberou o resultado desta enquete.'}</p>`;
+                return;
+            }
+
+            const atualizar = async () => {
+                try {
+                    const { enquetes } = await chamarEnquetesAluno('acompanhar');
+                    const e = enquetes.find((x) => x.id === ENQUETE.id);
+                    const caixa = document.getElementById('caixa-apuracao');
+                    if (!e || !caixa) return;
+                    caixa.innerHTML = EnquetesUI.renderApuracao(e);
+                    EnquetesUI.animarBarras(caixa);
+                    if (e.status !== 'aberta') clearInterval(temporizadorResultado);
+                } catch (erro) { /* mantém o que já está na tela */ }
+            };
+            $conteudo().innerHTML = topo + `<div id="caixa-apuracao" class="bg-white rounded-lg border overflow-hidden" style="border-color: var(--pibiex-borda);"></div>`;
+            await atualizar();
+            clearInterval(temporizadorResultado);
+            if (aberta) temporizadorResultado = setInterval(atualizar, 6000);
+        }
+
+        iniciarShellAluno('enquetes').then(async (dados) => {
+            if (!dados) return;
+            await aguardarUI();
+            const id = new URLSearchParams(location.search).get('id');
+            try {
+                if (id) await abrirEnquete(id); else await mostrarLista();
+            } catch (e) {
+                $conteudo().innerHTML = `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">Não foi possível carregar as enquetes. Tente recarregar a página.</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

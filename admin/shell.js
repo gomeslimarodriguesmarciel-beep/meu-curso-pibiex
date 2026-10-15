@@ -69,6 +69,7 @@ const ITENS_MENU_EQUIPE = [
     { id: 'trabalhos',    label: 'Corrigir Trabalhos', href: 'trabalhos.html' },
     { id: 'frequencia',   label: 'Frequência',        href: 'frequencia.html' },
     { id: 'avisos',       label: 'Avisos',            href: 'avisos.html' },
+    { id: 'enquetes',     label: 'Enquetes',          href: 'enquetes.html' },
     { id: 'chat',         label: 'Chat da Turma',     href: 'chat.html' },
     { id: 'galeria',      label: 'Galeria',           href: 'galeria.html' },
     { id: 'prompts',      label: 'Banco de Prompts',  href: 'prompts.html' },
@@ -92,6 +93,7 @@ const ICONES = {
     trabalhos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4 10-10"/></svg>',
     frequencia: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>',
     avisos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l5 4V6L7 10z"/><path d="M15 9a3.5 3.5 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11"/></svg>',
+    enquetes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 20v-7M12 20V5M17 20v-10"/></svg>',
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
     galeria: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="14" rx="1.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M20 15.5 15 10 5 18.5"/></svg>',
     prompts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.9.9.9 1.6v.5h5.2v-.5c0-.7.4-1.2.9-1.6A6 6 0 0 0 12 3z"/></svg>',
@@ -275,6 +277,8 @@ function montarTopoEquipe(dados) {
                     <span class="ml-2 text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-full">${escaparHtml(dados.cargo)}</span>
                 </p>
             </div>
+            <div class="flex items-center gap-3 shrink-0">
+            <div id="indicador-enquete" class="min-w-0"></div>
             <div class="relative shrink-0">
                 <button onclick="window.alternarMenuContaEquipe()" id="botao-conta-equipe" class="flex items-center rounded-full transition hover:opacity-80" aria-label="Minha conta">
                     ${avatarHtml(dados.nomeCompleto, dados.fotoUrl, 36)}
@@ -283,6 +287,7 @@ function montarTopoEquipe(dados) {
                     <a href="perfil.html" class="block px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Meu Perfil</a>
                     <button onclick="sairEquipe()" class="w-full text-left px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">Sair</button>
                 </div>
+            </div>
             </div>
         </header>
     `;
@@ -445,6 +450,46 @@ async function montarSeletorTurma(idContainer, aoTrocar) {
 }
 
 // ============================================================
+// Enquetes: indicador ao lado do perfil (apuração ao vivo)
+// ============================================================
+function carregarEnquetesUI() {
+    return new Promise((resolve) => {
+        if (window.EnquetesUI) return resolve();
+        const s = document.createElement('script');
+        s.src = '/enquetes-ui.js';
+        s.onload = () => resolve();
+        s.onerror = () => resolve();
+        document.head.appendChild(s);
+    });
+}
+
+async function chamarEnquetesEquipe(acao, extra) {
+    const tokenEquipe = localStorage.getItem('pibiex_equipe_token');
+    const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-enquetes', {
+        body: { tokenEquipe, acao, ...(extra || {}) },
+    });
+    if (error || !data || data.erro) {
+        let msg = data && data.erro;
+        if (!msg && error && error.context) { try { msg = (await error.context.json()).erro; } catch (e) { /* sem corpo */ } }
+        throw new Error(msg || 'Erro ao consultar as enquetes.');
+    }
+    return data;
+}
+
+async function iniciarIndicadorEnquetes() {
+    await carregarEnquetesUI();
+    if (!window.EnquetesUI) return;
+    EnquetesUI.montarIndicador({
+        papel: 'professor',
+        buscar: async () => {
+            const turmaId = localStorage.getItem(CHAVE_TURMA_SELECIONADA) || undefined;
+            return (await chamarEnquetesEquipe('acompanhar', { turmaId })).enquetes;
+        },
+        encerrar: (enqueteId) => chamarEnquetesEquipe('encerrar', { enqueteId }),
+    });
+}
+
+// ============================================================
 // Ponto de entrada — cada página chama isso passando seu próprio id
 // ============================================================
 // Injeta favicon, manifest.json (PWA) e cor do tema no <head> das telas do
@@ -482,6 +527,7 @@ async function iniciarShellEquipe(paginaAtivaId) {
 
     montarMenuLateralEquipe(paginaAtivaId);
     montarTopoEquipe(sessao.dados);
+    iniciarIndicadorEnquetes();
 
     return { token: sessao.token, dados: sessao.dados };
 }

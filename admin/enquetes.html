@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX Digital · Enquetes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .cartao { background: #fff; border: 1px solid #F3F4F6; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+        .campo { width: 100%; border: 1px solid #E5E7EB; border-radius: 10px; padding: 8px 12px; font-size: 14px; background: #fff; }
+        .campo:focus { outline: 2px solid #1E3A8A; outline-offset: 0; border-color: #1E3A8A; }
+        .rotulo { display: block; font-size: 11px; font-weight: 700; color: #6B7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 10px; cursor: pointer; border: 0; }
+        .btn-escuro { background: #111827; color: #fff; } .btn-escuro:hover { background: #1F2937; }
+        .btn-azul { background: #1E3A8A; color: #fff; } .btn-azul:hover { background: #1E40AF; }
+        .btn-verde { background: #16A34A; color: #fff; } .btn-verde:hover { background: #15803D; }
+        .btn-vermelho { background: #DC2626; color: #fff; } .btn-vermelho:hover { background: #B91C1C; }
+        .btn-claro { background: #F3F4F6; color: #374151; } .btn-claro:hover { background: #E5E7EB; }
+        .btn[disabled] { opacity: .5; cursor: not-allowed; }
+        .btn-icone { background: none; border: 0; color: #9CA3AF; cursor: pointer; padding: 6px; border-radius: 8px; display: inline-flex; }
+        .btn-icone:hover { background: #F3F4F6; color: #111827; } .btn-icone.perigo:hover { color: #DC2626; }
+        .btn-icone[disabled] { opacity: .3; cursor: default; }
+        .aba { padding: 8px 14px; font-size: 13px; font-weight: 700; color: #6B7280; border-bottom: 2px solid transparent; cursor: pointer; background: none; border-top: 0; border-left: 0; border-right: 0; }
+        .aba.ativa { color: #1E3A8A; border-bottom-color: #1E3A8A; }
+        .modo { display: block; border: 2px solid #E5E7EB; border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+        .modo:has(input:checked) { border-color: #1E3A8A; background: #EEF2FF; }
+        .modo input { accent-color: #1E3A8A; margin-right: 8px; }
+    </style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-4 md:p-8 max-w-4xl mx-auto">
+            <div class="flex items-start justify-between gap-3 flex-wrap mb-1">
+                <h1 class="text-2xl font-black text-gray-800">Enquetes</h1>
+                <button id="btn-nova" class="btn btn-azul" onclick="novaEnquete()">+ Nova enquete</button>
+            </div>
+            <p class="text-gray-500 mb-6">Crie votações e pesquisas para a turma, abra e encerre quando quiser e acompanhe o resultado ao vivo.</p>
+
+            <div id="seletor-turma" class="mb-6"></div>
+            <div id="area"><p class="text-gray-400 text-sm">Carregando...</p></div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TURMA_ATUAL = null;
+        let TOTAL_ALUNOS = 0;
+        let ED = null;               // enquete em edição
+        let RESULT = null;           // enquete aberta na tela de resultados
+        let temporizador = null;
+        let abaResultado = 'apuracao';
+        let contadorUid = 0;
+
+        const ROTULO_TIPO = {
+            unica: 'Escolha única', multipla: 'Várias escolhas', sim_nao: 'Sim ou não',
+            escala: 'Escala (nota)', texto_curto: 'Resposta curta', texto_longo: 'Parágrafo',
+        };
+        const ROTULO_RESULTADO = {
+            ao_vivo: 'Ao vivo (depois que o aluno votar)',
+            apos_encerrar: 'Somente depois de encerrar',
+            nunca: 'Nunca (só o professor vê)',
+        };
+
+        const $area = () => document.getElementById('area');
+        const novoUid = () => 'q' + (++contadorUid);
+
+        async function chamar(acao, dados, silencioso) {
+            try {
+                return await chamarEnquetesEquipe(acao, dados);
+            } catch (e) {
+                if (silencioso) throw e;
+                alert(e.message || 'Erro. Tente novamente.');
+                return null;
+            }
+        }
+
+        function dataLocal(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            const p = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+        function formatarData(iso) {
+            return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ==================================================================
+        // LISTA
+        // ==================================================================
+        async function mostrarLista() {
+            clearInterval(temporizador);
+            RESULT = null; ED = null;
+            history.replaceState(null, '', 'enquetes.html');
+            document.getElementById('btn-nova').hidden = false;
+            const d = await chamar('listar', { turmaId: TURMA_ATUAL });
+            if (!d) return;
+            TOTAL_ALUNOS = d.totalAlunos;
+
+            if (!d.enquetes.length) {
+                $area().innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma enquete criada ainda. Clique em "+ Nova enquete".</p>';
+                return;
+            }
+
+            $area().innerHTML = '<div class="space-y-3">' + d.enquetes.map((e) => {
+                const pct = TOTAL_ALUNOS ? Math.round((e.votos / TOTAL_ALUNOS) * 100) : 0;
+                const botoes = [];
+                botoes.push(`<button class="btn btn-claro" onclick="verResultados('${e.id}')">Resultados</button>`);
+                if (e.status === 'rascunho') botoes.push(`<button class="btn btn-verde" onclick="abrirVotacao('${e.id}')">Abrir votação</button>`);
+                if (e.status === 'aberta') botoes.push(`<button class="btn btn-vermelho" onclick="encerrarVotacao('${e.id}')">Encerrar votação</button>`);
+                if (e.status === 'encerrada') botoes.push(`<button class="btn btn-claro" onclick="reabrirVotacao('${e.id}')">Reabrir</button>`);
+                botoes.push(`<button class="btn btn-claro" onclick="editarEnquete('${e.id}')">${e.votos > 0 ? 'Ajustes' : 'Editar'}</button>`);
+                botoes.push(`<button class="btn-icone perigo" onclick="excluirEnquete('${e.id}')" aria-label="Excluir" title="Excluir">${icone('excluir')}</button>`);
+                return `
+                    <div class="cartao p-5">
+                        <div class="flex items-start justify-between gap-3 flex-wrap">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800">${escaparHtml(e.titulo)}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">${e.anonima ? 'Anônima' : 'Identificada'} · ${e.totalPerguntas} ${e.totalPerguntas === 1 ? 'pergunta' : 'perguntas'}${e.status === 'aberta' && e.encerra_em ? ' · encerra em ' + formatarData(e.encerra_em) : ''}${e.status === 'encerrada' && e.encerrada_em ? ' · encerrada em ' + formatarData(e.encerrada_em) : ''}</p>
+                            </div>
+                            ${EnquetesUI.rotuloStatus(e.status)}
+                        </div>
+                        <div class="mt-3">
+                            <div class="enq-presenca"><div style="width:${pct}%"></div></div>
+                            <p class="text-xs text-gray-500">${e.votos} de ${TOTAL_ALUNOS} votaram (${pct}%)</p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap items-center mt-3">${botoes.join('')}</div>
+                    </div>`;
+            }).join('') + '</div>';
+        }
+
+        window.abrirVotacao = async (id) => {
+            if (!confirm('Abrir a votação agora? Os alunos serão avisados na tela e precisarão responder.')) return;
+            if (await chamar('abrir', { enqueteId: id })) mostrarLista();
+        };
+        window.encerrarVotacao = async (id) => {
+            if (!confirm('Encerrar esta votação agora? Ninguém mais poderá votar.')) return;
+            if (await chamar('encerrar', { enqueteId: id })) { RESULT ? verResultados(id) : mostrarLista(); }
+        };
+        window.reabrirVotacao = async (id) => {
+            if (!confirm('Reabrir a votação? Quem ainda não votou poderá votar de novo.')) return;
+            if (await chamar('reabrir', { enqueteId: id })) { RESULT ? verResultados(id) : mostrarLista(); }
+        };
+        window.excluirEnquete = async (id) => {
+            if (!confirm('Excluir esta enquete e todas as respostas? Isso não pode ser desfeito.')) return;
+            if (await chamar('excluir', { enqueteId: id })) mostrarLista();
+        };
+
+        // ==================================================================
+        // EDITOR
+        // ==================================================================
+        function perguntaVazia(tipo) {
+            return { uid: novoUid(), texto: '', tipo: tipo || 'unica', obrigatoria: true, opcoes: [{ texto: '' }, { texto: '' }], escalaMax: 5, maxEscolhas: '' };
+        }
+
+        window.novaEnquete = () => {
+            ED = { id: null, titulo: '', descricao: '', anonima: true, resultadoAlunos: 'ao_vivo', exigirResposta: true, encerraEm: '', status: 'rascunho', votos: 0, perguntas: [perguntaVazia()] };
+            desenharEditor();
+        };
+
+        window.editarEnquete = async (id) => {
+            const d = await chamar('obter', { enqueteId: id });
+            if (!d) return;
+            ED = {
+                id, titulo: d.enquete.titulo, descricao: d.enquete.descricao || '', anonima: d.enquete.anonima,
+                resultadoAlunos: d.enquete.resultado_alunos, exigirResposta: d.enquete.exigir_resposta,
+                encerraEm: dataLocal(d.enquete.encerra_em), status: d.enquete.status, votos: d.votos,
+                perguntas: d.perguntas.map((p) => ({
+                    uid: novoUid(), texto: p.texto, tipo: p.tipo, obrigatoria: p.obrigatoria,
+                    opcoes: (p.opcoes || []).map((o) => ({ id: o.id, texto: o.texto })),
+                    escalaMax: p.escala_max || 5, maxEscolhas: p.max_escolhas || '',
+                })),
+            };
+            desenharEditor();
+        };
+
+        function desenharEditor() {
+            clearInterval(temporizador);
+            document.getElementById('btn-nova').hidden = true;
+            const travado = ED.votos > 0;
+            const e = EnquetesUI.esc;
+
+            const perguntasHtml = ED.perguntas.map((p, i) => {
+                let corpo = '';
+                if (p.tipo === 'unica' || p.tipo === 'multipla') {
+                    corpo = `
+                        <div class="space-y-2 mt-3">${p.opcoes.map((o, k) => `
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-300 text-xs w-5 text-right">${k + 1}</span>
+                                <input class="campo" value="${e(o.texto)}" maxlength="200" placeholder="Opção ${k + 1}" ${travado ? 'disabled' : ''}
+                                       oninput="edOpcao('${p.uid}', ${k}, this.value)">
+                                ${travado ? '' : `<button class="btn-icone perigo" ${p.opcoes.length <= 2 ? 'disabled' : ''} onclick="edDelOpcao('${p.uid}', ${k})" aria-label="Remover opção">${icone('fechar', 14)}</button>`}
+                            </div>`).join('')}
+                        </div>
+                        ${travado ? '' : `<button class="btn btn-claro mt-2" onclick="edAddOpcao('${p.uid}')">+ Adicionar opção</button>`}
+                        ${p.tipo === 'multipla' ? `
+                            <div class="mt-3 w-48"><label class="rotulo">Máximo de escolhas (opcional)</label>
+                            <input class="campo" type="number" min="1" max="${p.opcoes.length}" value="${e(p.maxEscolhas)}" ${travado ? 'disabled' : ''} oninput="edPergunta('${p.uid}', 'maxEscolhas', this.value)"></div>` : ''}`;
+                } else if (p.tipo === 'escala') {
+                    corpo = `<div class="mt-3 w-48"><label class="rotulo">A nota vai de 1 até</label>
+                        <select class="campo" ${travado ? 'disabled' : ''} onchange="edPergunta('${p.uid}', 'escalaMax', this.value)">
+                        ${[3, 4, 5, 6, 7, 8, 9, 10].map((n) => `<option value="${n}" ${Number(p.escalaMax) === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`;
+                } else if (p.tipo === 'sim_nao') {
+                    corpo = '<p class="text-xs text-gray-400 mt-3">O aluno escolhe entre "Sim" e "Não".</p>';
+                } else {
+                    corpo = `<p class="text-xs text-gray-400 mt-3">O aluno escreve a resposta (${p.tipo === 'texto_curto' ? 'até 300 caracteres' : 'até 3000 caracteres'}). Só o professor lê as respostas escritas.</p>`;
+                }
+
+                return `
+                    <div class="cartao p-5" id="card-${p.uid}">
+                        <div class="flex items-start gap-3">
+                            <span class="text-sm font-black text-gray-300 pt-2 w-6">${i + 1}</span>
+                            <div class="flex-1 min-w-0">
+                                <input class="campo font-semibold" value="${e(p.texto)}" maxlength="500" placeholder="Escreva a pergunta" ${travado ? 'disabled' : ''}
+                                       oninput="edPergunta('${p.uid}', 'texto', this.value)" aria-label="Pergunta ${i + 1}">
+                                <div class="flex gap-3 flex-wrap items-end mt-3">
+                                    <div class="w-52"><label class="rotulo">Tipo de resposta</label>
+                                        <select class="campo" ${travado ? 'disabled' : ''} onchange="edTipo('${p.uid}', this.value)">
+                                            ${Object.entries(ROTULO_TIPO).map(([v, r]) => `<option value="${v}" ${p.tipo === v ? 'selected' : ''}>${r}</option>`).join('')}
+                                        </select></div>
+                                    <label class="flex items-center gap-2 text-sm text-gray-600 pb-2"><input type="checkbox" ${p.obrigatoria ? 'checked' : ''} ${travado ? 'disabled' : ''} onchange="edPergunta('${p.uid}', 'obrigatoria', this.checked)"> Obrigatória</label>
+                                </div>
+                                ${corpo}
+                            </div>
+                            ${travado ? '' : `
+                            <div class="flex flex-col gap-1 shrink-0">
+                                <button class="btn-icone" ${i === 0 ? 'disabled' : ''} onclick="edMover('${p.uid}', -1)" aria-label="Subir" title="Subir">↑</button>
+                                <button class="btn-icone" ${i === ED.perguntas.length - 1 ? 'disabled' : ''} onclick="edMover('${p.uid}', 1)" aria-label="Descer" title="Descer">↓</button>
+                                <button class="btn-icone" onclick="edDuplicar('${p.uid}')" aria-label="Duplicar pergunta" title="Duplicar">${icone('documento')}</button>
+                                <button class="btn-icone perigo" ${ED.perguntas.length <= 1 ? 'disabled' : ''} onclick="edExcluirPergunta('${p.uid}')" aria-label="Excluir pergunta" title="Excluir">${icone('excluir')}</button>
+                            </div>`}
+                        </div>
+                    </div>`;
+            }).join('');
+
+            $area().innerHTML = `
+                <button class="text-sm font-semibold text-gray-500 mb-3" onclick="mostrarLista()">← Voltar às enquetes</button>
+                ${travado ? `<div class="rounded-xl bg-amber-50 border border-amber-100 text-amber-800 text-sm p-4 mb-4">Esta enquete já recebeu <b>${ED.votos}</b> ${ED.votos === 1 ? 'voto' : 'votos'}. As perguntas e o modo anônimo/identificado não podem mais ser alterados; o restante sim. Para mudar as perguntas, crie uma nova enquete.</div>` : ''}
+
+                <div class="cartao p-5 mb-4 space-y-4">
+                    <div><label class="rotulo" for="ed-titulo">Título</label>
+                        <input id="ed-titulo" class="campo font-semibold" maxlength="200" value="${e(ED.titulo)}" placeholder="Ex.: Qual tema vamos ver na próxima aula?" oninput="edCampo('titulo', this.value)"></div>
+                    <div><label class="rotulo" for="ed-descricao">Descrição (opcional)</label>
+                        <textarea id="ed-descricao" class="campo" rows="2" maxlength="2000" oninput="edCampo('descricao', this.value)">${e(ED.descricao)}</textarea></div>
+
+                    <div>
+                        <span class="rotulo">Quem vê o que cada um respondeu</span>
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <label class="modo"><input type="radio" name="modo" ${ED.anonima ? 'checked' : ''} ${travado ? 'disabled' : ''} onchange="edCampo('anonima', true)"><b class="text-sm">Anônima</b>
+                                <span class="block text-xs text-gray-500 mt-1">Você vê os gráficos e quem já votou, mas não consegue ligar uma resposta a um aluno.</span></label>
+                            <label class="modo"><input type="radio" name="modo" ${!ED.anonima ? 'checked' : ''} ${travado ? 'disabled' : ''} onchange="edCampo('anonima', false)"><b class="text-sm">Identificada</b>
+                                <span class="block text-xs text-gray-500 mt-1">Os gráficos continuam sem nomes, mas você pode abrir o perfil de cada aluno e ver o que ele respondeu.</span></label>
+                        </div>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div><label class="rotulo" for="ed-resultado">Resultado para os alunos</label>
+                            <select id="ed-resultado" class="campo" onchange="edCampo('resultadoAlunos', this.value)">
+                                ${Object.entries(ROTULO_RESULTADO).map(([v, r]) => `<option value="${v}" ${ED.resultadoAlunos === v ? 'selected' : ''}>${r}</option>`).join('')}
+                            </select></div>
+                        <div><label class="rotulo" for="ed-encerra">Encerrar automaticamente em (opcional)</label>
+                            <input id="ed-encerra" type="datetime-local" class="campo" value="${e(ED.encerraEm)}" onchange="edCampo('encerraEm', this.value)">
+                            <p class="text-[11px] text-gray-400 mt-1">Você pode encerrar antes, a qualquer momento.</p></div>
+                    </div>
+                    <label class="flex items-start gap-2 text-sm text-gray-700"><input type="checkbox" class="mt-1" ${ED.exigirResposta ? 'checked' : ''} onchange="edCampo('exigirResposta', this.checked)">
+                        <span><b>Exigir resposta:</b> mostra uma tela grande para o aluno e só libera a plataforma depois que ele votar.</span></label>
+                </div>
+
+                <div class="space-y-3 mb-4">${perguntasHtml}</div>
+                ${travado ? '' : '<button class="btn btn-claro mb-6" onclick="edAddPergunta()">+ Adicionar pergunta</button>'}
+
+                <div id="erro-editor" class="hidden text-sm text-red-600 font-semibold bg-red-50 rounded-xl p-3 mb-3"></div>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn btn-escuro" id="btn-salvar" onclick="salvarEnquete(false)">Salvar</button>
+                    ${ED.status === 'rascunho' ? '<button class="btn btn-verde" id="btn-salvar-abrir" onclick="salvarEnquete(true)">Salvar e abrir votação</button>' : ''}
+                    <button class="btn btn-claro" onclick="mostrarLista()">Cancelar</button>
+                </div>`;
+        }
+
+        window.edCampo = (campo, valor) => { ED[campo] = valor; };
+        const achar = (uid) => ED.perguntas.find((p) => p.uid === uid);
+        window.edPergunta = (uid, campo, valor) => { achar(uid)[campo] = valor; };
+        window.edOpcao = (uid, k, valor) => { achar(uid).opcoes[k].texto = valor; };
+        window.edAddOpcao = (uid) => { achar(uid).opcoes.push({ texto: '' }); desenharEditor(); const c = document.querySelectorAll(`#card-${uid} input[placeholder^="Opção"]`); if (c.length) c[c.length - 1].focus(); };
+        window.edDelOpcao = (uid, k) => { achar(uid).opcoes.splice(k, 1); desenharEditor(); };
+        window.edTipo = (uid, tipo) => {
+            const p = achar(uid); p.tipo = tipo;
+            if ((tipo === 'unica' || tipo === 'multipla') && p.opcoes.length < 2) p.opcoes = [{ texto: '' }, { texto: '' }];
+            desenharEditor();
+        };
+        window.edAddPergunta = () => { ED.perguntas.push(perguntaVazia()); desenharEditor(); const c = document.querySelectorAll('[aria-label^="Pergunta "]'); if (c.length) c[c.length - 1].focus(); };
+        window.edExcluirPergunta = (uid) => { ED.perguntas = ED.perguntas.filter((p) => p.uid !== uid); desenharEditor(); };
+        window.edDuplicar = (uid) => {
+            const i = ED.perguntas.findIndex((p) => p.uid === uid);
+            const o = ED.perguntas[i];
+            ED.perguntas.splice(i + 1, 0, { ...o, uid: novoUid(), opcoes: o.opcoes.map((x) => ({ texto: x.texto })) });
+            desenharEditor();
+        };
+        window.edMover = (uid, dir) => {
+            const i = ED.perguntas.findIndex((p) => p.uid === uid);
+            const j = i + dir;
+            if (j < 0 || j >= ED.perguntas.length) return;
+            [ED.perguntas[i], ED.perguntas[j]] = [ED.perguntas[j], ED.perguntas[i]];
+            desenharEditor();
+        };
+
+        window.salvarEnquete = async (abrir) => {
+            const erro = document.getElementById('erro-editor');
+            erro.classList.add('hidden');
+            const dados = {
+                titulo: ED.titulo, descricao: ED.descricao, anonima: ED.anonima, resultadoAlunos: ED.resultadoAlunos,
+                exigirResposta: ED.exigirResposta,
+                encerraEm: ED.encerraEm ? new Date(ED.encerraEm).toISOString() : null,
+            };
+            if (ED.votos === 0) {
+                dados.perguntas = ED.perguntas.map((p) => ({
+                    texto: p.texto, tipo: p.tipo, obrigatoria: p.obrigatoria,
+                    opcoes: (p.tipo === 'unica' || p.tipo === 'multipla') ? p.opcoes.map((o) => ({ id: o.id, texto: o.texto })) : undefined,
+                    escalaMax: p.tipo === 'escala' ? Number(p.escalaMax) : undefined,
+                    maxEscolhas: p.tipo === 'multipla' && p.maxEscolhas !== '' ? Number(p.maxEscolhas) : undefined,
+                }));
+            }
+            for (const b of ['btn-salvar', 'btn-salvar-abrir']) { const el = document.getElementById(b); if (el) el.disabled = true; }
+            try {
+                if (ED.id) {
+                    await chamarEnquetesEquipe('atualizar', { enqueteId: ED.id, ...dados });
+                    if (abrir) await chamarEnquetesEquipe('abrir', { enqueteId: ED.id, encerraEm: dados.encerraEm });
+                } else {
+                    await chamarEnquetesEquipe('criar', { turmaId: TURMA_ATUAL, ...dados, abrirAgora: !!abrir });
+                }
+                mostrarLista();
+            } catch (e) {
+                erro.textContent = e.message || 'Não foi possível salvar.';
+                erro.classList.remove('hidden');
+                erro.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                for (const b of ['btn-salvar', 'btn-salvar-abrir']) { const el = document.getElementById(b); if (el) el.disabled = false; }
+            }
+        };
+
+        // ==================================================================
+        // RESULTADOS
+        // ==================================================================
+        window.verResultados = async (id) => {
+            clearInterval(temporizador);
+            history.replaceState(null, '', 'enquetes.html?id=' + encodeURIComponent(id));
+            document.getElementById('btn-nova').hidden = true;
+            await carregarResultados(id, true);
+            temporizador = setInterval(() => { if (RESULT && RESULT.enquete.status === 'aberta') carregarResultados(id, false); }, 6000);
+        };
+
+        async function carregarResultados(id, primeira) {
+            const d = await chamar('resultados', { enqueteId: id }, !primeira);
+            if (!d) return;
+            RESULT = d;
+            desenharResultados();
+        }
+
+        function textoDaResposta(p, valor) {
+            if (!valor) return '–';
+            if (valor.opcoes) return valor.opcoes.map((id) => (p.opcoes.find((o) => o.id === id) || { texto: '?' }).texto).join(', ');
+            if (valor.nota !== undefined) return `${valor.nota} de ${p.escala_max}`;
+            return valor.texto || '–';
+        }
+
+        function desenharResultados() {
+            const r = RESULT;
+            const e = r.enquete;
+            const e2 = EnquetesUI.esc;
+            const aba = (id) => (abaResultado === id ? 'aba ativa' : 'aba');
+            const abas = [['apuracao', 'Apuração'], ['quem', `Quem votou (${r.votos}/${r.totalAlunos})`]];
+            if (!e.anonima) abas.push(['individual', 'Perfil a perfil']);
+            if (!abas.some(([id]) => id === abaResultado)) abaResultado = 'apuracao';
+
+            const controle = e.status === 'aberta'
+                ? `<button class="btn btn-vermelho" onclick="encerrarVotacao('${e.id}')">Encerrar votação</button>`
+                : e.status === 'encerrada' ? `<button class="btn btn-claro" onclick="reabrirVotacao('${e.id}')">Reabrir</button>`
+                : `<button class="btn btn-verde" onclick="abrirVotacao('${e.id}')">Abrir votação</button>`;
+
+            let corpo = '';
+            if (abaResultado === 'apuracao') {
+                const completa = { titulo: e.titulo, status: e.status, votos: r.votos, totalAlunos: r.totalAlunos, perguntas: r.apuracao };
+                corpo = `<div class="cartao overflow-hidden" id="caixa-apuracao">${EnquetesUI.renderApuracao(completa)}</div>`;
+            } else if (abaResultado === 'quem') {
+                corpo = `
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="cartao p-5"><p class="font-bold text-gray-800 mb-2">Já votaram (${r.participantes.length})</p>
+                            ${r.participantes.length ? '<ul class="text-sm text-gray-700 space-y-1">' + r.participantes.map((p) => `<li>${e2(p.nome)} <span class="text-xs text-gray-400">· ${new Date(p.quando).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></li>`).join('') + '</ul>' : '<p class="text-sm text-gray-400">Ninguém ainda.</p>'}</div>
+                        <div class="cartao p-5"><p class="font-bold text-gray-800 mb-2">Ainda não votaram (${r.faltam.length})</p>
+                            ${r.faltam.length ? '<ul class="text-sm text-gray-700 space-y-1">' + r.faltam.map((n) => `<li>${e2(n)}</li>`).join('') + '</ul>' : '<p class="text-sm text-green-700">Todos já votaram.</p>'}</div>
+                    </div>
+                    ${e.anonima ? '<p class="text-xs text-gray-500 mt-3">Enquete anônima: esta lista mostra apenas quem participou, sem ligação com as respostas.</p>' : ''}`;
+            } else {
+                const ind = r.individuais || [];
+                corpo = ind.length ? '<div class="space-y-3">' + ind.map((a) => `
+                    <details class="cartao p-4">
+                        <summary class="cursor-pointer font-bold text-gray-800">${e2(a.nome)}</summary>
+                        <div class="mt-3 space-y-2">${r.perguntas.map((p) => {
+                            const resp = a.respostas.find((x) => x.perguntaId === p.id);
+                            return `<div class="text-sm"><p class="text-gray-500">${p.ordem}. ${e2(p.texto)}</p><p class="font-semibold text-gray-800">${e2(textoDaResposta(p, resp && resp.valor))}</p></div>`;
+                        }).join('')}</div>
+                    </details>`).join('') + '</div>' : '<p class="text-sm text-gray-400 bg-white rounded-xl p-6 border border-gray-100">Ninguém respondeu ainda.</p>';
+            }
+
+            $area().innerHTML = `
+                <button class="text-sm font-semibold text-gray-500 mb-3" onclick="mostrarLista()">← Voltar às enquetes</button>
+                <div class="cartao p-5 mb-4">
+                    <div class="flex items-start justify-between gap-3 flex-wrap">
+                        <div class="min-w-0"><h2 class="text-lg font-black text-gray-800">${e2(e.titulo)}</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">${e.anonima ? 'Anônima' : 'Identificada'} · resultado para alunos: ${ROTULO_RESULTADO[e.resultado_alunos].toLowerCase()}</p></div>
+                        ${EnquetesUI.rotuloStatus(e.status)}
+                    </div>
+                    <div class="flex gap-2 flex-wrap mt-3">${controle}
+                        <button class="btn btn-claro" onclick="exportarCsv()">Exportar CSV</button></div>
+                </div>
+                <div class="flex gap-1 border-b border-gray-200 mb-4">${abas.map(([id, rotulo]) => `<button class="${aba(id)}" onclick="trocarAba('${id}')">${e2(rotulo)}</button>`).join('')}</div>
+                ${corpo}`;
+            if (abaResultado === 'apuracao') EnquetesUI.animarBarras($area());
+        }
+
+        window.trocarAba = (id) => { abaResultado = id; desenharResultados(); };
+
+        // ---------------- exportação ----------------
+        function celula(v) {
+            let s = String(v == null ? '' : v);
+            // Evita que o Excel trate texto de aluno como fórmula (=, +, -, @).
+            if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+            return '"' + s.replace(/"/g, '""') + '"';
+        }
+        window.exportarCsv = () => {
+            const r = RESULT;
+            const linhas = [];
+            if (!r.enquete.anonima && r.individuais) {
+                linhas.push(['Aluno', ...r.perguntas.map((p) => `${p.ordem}. ${p.texto}`)]);
+                r.individuais.forEach((a) => linhas.push([a.nome, ...r.perguntas.map((p) => textoDaResposta(p, (a.respostas.find((x) => x.perguntaId === p.id) || {}).valor))]));
+            } else {
+                linhas.push(['Pergunta', 'Opção / resposta', 'Votos', 'Percentual']);
+                r.apuracao.forEach((p) => {
+                    if (p.opcoes) p.opcoes.forEach((o) => linhas.push([`${p.ordem}. ${p.texto}`, o.texto, o.votos, o.percentual + '%']));
+                    else if (p.escala) p.escala.distribuicao.forEach((d) => linhas.push([`${p.ordem}. ${p.texto}`, `Nota ${d.nota}`, d.votos, '']));
+                    else (p.textos || []).forEach((t) => linhas.push([`${p.ordem}. ${p.texto}`, t, '', '']));
+                });
+            }
+            const csv = '﻿' + linhas.map((l) => l.map(celula).join(';')).join('\r\n');
+            const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'enquete-' + r.enquete.titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) + '.csv';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+
+        // ==================================================================
+        iniciarShellEquipe('enquetes').then(async (sessao) => {
+            if (!sessao) return;
+            await (async () => { for (let i = 0; i < 40 && !window.EnquetesUI; i++) await new Promise((r) => setTimeout(r, 100)); })();
+            if (window.EnquetesUI) EnquetesUI.injetarEstilo();
+            TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
+                TURMA_ATUAL = turmaId;
+                mostrarLista();
+            });
+            if (!TURMA_ATUAL) { $area().innerHTML = ''; document.getElementById('btn-nova').hidden = true; return; }
+            const id = new URLSearchParams(location.search).get('id');
+            if (id) verResultados(id); else mostrarLista();
+        });
+    </script>
+</body>
+</html>
