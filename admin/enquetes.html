@@ -352,7 +352,7 @@
             history.replaceState(null, '', 'enquetes.html?id=' + encodeURIComponent(id));
             document.getElementById('btn-nova').hidden = true;
             await carregarResultados(id, true);
-            temporizador = setInterval(() => { if (RESULT && RESULT.enquete.status === 'aberta') carregarResultados(id, false); }, 6000);
+            temporizador = setInterval(() => { if (!document.hidden && RESULT && RESULT.enquete.status === 'aberta') carregarResultados(id, false); }, 10000);
         };
 
         async function carregarResultados(id, primeira) {

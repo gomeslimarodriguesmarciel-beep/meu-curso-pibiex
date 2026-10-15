@@ -238,6 +238,7 @@
             }
 
             const atualizar = async () => {
+                if (document.hidden) return;
                 try {
                     const { enquetes } = await chamarEnquetesAluno('acompanhar');
                     const e = enquetes.find((x) => x.id === ENQUETE.id);
@@ -251,7 +252,7 @@
             $conteudo().innerHTML = topo + `<div id="caixa-apuracao" class="bg-white rounded-lg border overflow-hidden" style="border-color: var(--pibiex-borda);"></div>`;
             await atualizar();
             clearInterval(temporizadorResultado);
-            if (aberta) temporizadorResultado = setInterval(atualizar, 6000);
+            if (aberta) temporizadorResultado = setInterval(atualizar, 10000);
         }
 
         iniciarShellAluno('enquetes').then(async (dados) => {

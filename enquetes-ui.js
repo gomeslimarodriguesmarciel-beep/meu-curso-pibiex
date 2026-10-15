@@ -257,10 +257,21 @@
             desenharPainel();
         }
 
+        // Ritmo adaptativo (cada consulta é uma ida ao servidor): rápido só quando alguém está
+        // olhando a apuração; devagar quando há votação aberta; quase parado quando não há nada.
+        function intervalo() {
+            if (aberto) return 10000;
+            return dados.some((e) => e.status === 'aberta') ? 20000 : 60000;
+        }
         function agendar() {
             clearTimeout(temporizador);
-            temporizador = setTimeout(async () => { await atualizar(); agendar(); }, aberto ? 6000 : 20000);
+            if (document.hidden) return; // aba em segundo plano: não consulta
+            temporizador = setTimeout(async () => { await atualizar(); agendar(); }, intervalo());
         }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) { clearTimeout(temporizador); return; }
+            atualizar().then(agendar); // voltou para a aba: atualiza na hora
+        });
 
         function alternar(forcar) {
             aberto = typeof forcar === 'boolean' ? forcar : !aberto;

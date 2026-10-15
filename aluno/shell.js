@@ -710,8 +710,19 @@ async function iniciarEnquetesAluno(paginaAtivaId) {
             EnquetesUI.bloquearTela(pendentes, (id) => `enquetes.html?id=${encodeURIComponent(id)}`);
         } catch (e) { /* sem rede: não trava o aluno à toa */ }
     }
-    conferirPendentes();
-    setInterval(conferirPendentes, 20000);
+    // Poucas consultas: a cada 30 s e nenhuma com a aba em segundo plano (ao voltar para a
+    // aba, confere na hora).
+    let temporizadorPendentes = null;
+    function agendarPendentes() {
+        clearTimeout(temporizadorPendentes);
+        if (document.hidden) return;
+        temporizadorPendentes = setTimeout(async () => { await conferirPendentes(); agendarPendentes(); }, 30000);
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { clearTimeout(temporizadorPendentes); return; }
+        conferirPendentes().then(agendarPendentes);
+    });
+    conferirPendentes().then(agendarPendentes);
 }
 
 // ============================================================
