@@ -391,11 +391,11 @@
                 corpo = `
                     <div class="grid md:grid-cols-2 gap-4">
                         <div class="cartao p-5"><p class="font-bold text-gray-800 mb-2">Já votaram (${r.participantes.length})</p>
-                            ${r.participantes.length ? '<ul class="text-sm text-gray-700 space-y-1">' + r.participantes.map((p) => `<li>${e2(p.nome)} <span class="text-xs text-gray-400">· ${new Date(p.quando).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></li>`).join('') + '</ul>' : '<p class="text-sm text-gray-400">Ninguém ainda.</p>'}</div>
+                            ${r.participantes.length ? '<ul class="text-sm text-gray-700 space-y-1">' + r.participantes.map((p) => `<li>${e2(p.nome)} ${p.quando ? `<span class="text-xs text-gray-400">· ${new Date(p.quando).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>` : ''}</li>`).join('') + '</ul>' : '<p class="text-sm text-gray-400">Ninguém ainda.</p>'}</div>
                         <div class="cartao p-5"><p class="font-bold text-gray-800 mb-2">Ainda não votaram (${r.faltam.length})</p>
                             ${r.faltam.length ? '<ul class="text-sm text-gray-700 space-y-1">' + r.faltam.map((n) => `<li>${e2(n)}</li>`).join('') + '</ul>' : '<p class="text-sm text-green-700">Todos já votaram.</p>'}</div>
                     </div>
-                    ${e.anonima ? '<p class="text-xs text-gray-500 mt-3">Enquete anônima: esta lista mostra apenas quem participou, sem ligação com as respostas.</p>' : ''}`;
+                    ${e.anonima ? '<p class="text-xs text-gray-500 mt-3">Enquete anônima: esta lista mostra apenas quem participou, sem horário e sem ligação com as respostas. As respostas escritas aparecem em ordem aleatória.</p>' : ''}`;
             } else {
                 const ind = r.individuais || [];
                 corpo = ind.length ? '<div class="space-y-3">' + ind.map((a) => `
