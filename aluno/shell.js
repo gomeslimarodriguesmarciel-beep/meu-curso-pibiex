@@ -2,7 +2,7 @@
 //
 // Script compartilhado por TODAS as páginas da área do aluno.
 // Cada página só precisa:
-//   1) Ter <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+//   1) Ter <script src="/vendor/supabase/supabase.js"></script>
 //      e <script src="shell.js"></script>
 //   2) Ter estes 3 elementos vazios no HTML: <div id="sidebar-container"></div>,
 //      <div id="topo-pagina"></div>, <div id="assistente-flutuante"></div>
