@@ -39,6 +39,11 @@
         .enq-indicador small { font-weight: 600; color: #6B7280; }
         .enq-painel { position: absolute; right: 0; top: calc(100% + 10px); width: min(440px, calc(100vw - 24px)); max-height: min(78vh, 680px); overflow-y: auto;
                       background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; box-shadow: 0 20px 50px rgba(15,23,42,.22); z-index: 60; text-align: left; }
+        .enq-fundo { position: fixed; inset: 0; background: rgba(2,6,23,.6); z-index: 59; animation: enq-aparece .18s ease; }
+        @keyframes enq-aparece { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes enq-sobe { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+        .enq-rotulo-curto { display: none; }
+        .enq-painel { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
         .enq-painel-topo { position: sticky; top: 0; background: #0B1B4A; color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 16px 16px 0 0; z-index: 1; }
         .enq-painel-topo b { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
         .enq-painel-topo span { font-size: 11px; color: #A5B4FC; }
@@ -71,6 +76,21 @@
         .enq-nada { font-size: 12.5px; color: #6B7280; padding: 18px 16px; text-align: center; }
         .enq-textos { margin: 0; padding: 0; list-style: none; max-height: 160px; overflow-y: auto; }
         .enq-textos li { font-size: 12.5px; color: #374151; padding: 6px 10px; background: #F8FAFC; border-radius: 8px; margin-bottom: 4px; overflow-wrap: anywhere; }
+
+        /* Celular: o painel vira uma folha que sobe de baixo, com a largura toda da tela,
+           altura limitada ao que cabe (descontando as barras do navegador) e rolagem por dentro. */
+        @media (max-width: 640px) {
+            .enq-painel { position: fixed; left: 0; right: 0; top: auto; bottom: 0; width: 100%; max-height: 88vh; max-height: 88dvh;
+                          border-radius: 20px 20px 0 0; border: 0; z-index: 60; padding-bottom: env(safe-area-inset-bottom);
+                          box-shadow: 0 -18px 48px rgba(2,6,23,.45); animation: enq-sobe .22s ease; }
+            .enq-painel-topo { border-radius: 20px 20px 0 0; padding: 18px 16px 14px; }
+            .enq-painel-topo::before { content: ""; position: absolute; top: 7px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: rgba(255,255,255,.35); }
+            .enq-painel-topo button { width: 44px; height: 44px; align-items: center; justify-content: center; margin: -8px -8px -8px 0; }
+            .enq-bloco { padding: 14px 16px 18px; }
+            .enq-indicador { padding: 6px 10px; gap: 6px; }
+            .enq-rotulo-longo { display: none; }
+            .enq-rotulo-curto { display: inline; }
+        }
 
         /* tela de bloqueio */
         #enq-bloqueio { position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -208,8 +228,8 @@
             botao.classList.toggle('encerrada', encerrada);
             const extra = dados.length > 1 ? ` +${dados.length - 1}` : '';
             botao.innerHTML = encerrada
-                ? `<span class="enq-ponto encerrada"></span><span>Votação encerrada${extra}</span>`
-                : `<span class="enq-ponto"></span><span>Votação ao vivo${extra}</span><small>${e.votos}/${e.totalAlunos}</small>`;
+                ? `<span class="enq-ponto encerrada"></span><span class="enq-rotulo-longo">Votação encerrada${extra}</span><span class="enq-rotulo-curto">Encerrada${extra}</span>`
+                : `<span class="enq-ponto"></span><span class="enq-rotulo-longo">Votação ao vivo${extra}</span><span class="enq-rotulo-curto">Ao vivo${extra}</span><small>${e.votos}/${e.totalAlunos}</small>`;
         }
 
         function desenharPainel() {
@@ -273,10 +293,20 @@
             atualizar().then(agendar); // voltou para a aba: atualiza na hora
         });
 
+        let fundo = null;
+        const ehCelular = () => window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
         function alternar(forcar) {
             aberto = typeof forcar === 'boolean' ? forcar : !aberto;
             painel.hidden = !aberto;
             botao.setAttribute('aria-expanded', String(aberto));
+            if (aberto && ehCelular() && !fundo) {
+                fundo = document.createElement('div');
+                fundo.className = 'enq-fundo';
+                fundo.onclick = () => alternar(false);
+                document.body.appendChild(fundo);
+                document.body.style.overflow = 'hidden';
+            }
+            if (!aberto && fundo) { fundo.remove(); fundo = null; document.body.style.overflow = ''; }
             if (aberto) {
                 desenharPainel();
                 atualizar();

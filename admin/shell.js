@@ -56,28 +56,58 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
     document.head.appendChild(estilo);
 })();
 
-// Itens do menu lateral do painel. Itens sem página construída ainda ficam
-// visíveis (mostrando o que vem por aí) mas podem não ter destino ainda.
-const ITENS_MENU_EQUIPE = [
-    { id: 'inicio',       label: 'Início',            href: 'inicio.html' },
-    { id: 'painel',       label: 'Painel de Controle', href: 'painel.html' },
-    { id: 'turmas',       label: 'Turmas',            href: 'turmas.html' },
-    { id: 'alunos',       label: 'Alunos',            href: 'alunos.html' },
-    { id: 'cronograma',   label: 'Cronograma',        href: 'cronograma.html' },
-    { id: 'conteudo',     label: 'Conteúdo',          href: 'conteudo.html' },
-    { id: 'atividades',   label: 'Atividades',        href: 'atividades.html' },
-    { id: 'trabalhos',    label: 'Corrigir Trabalhos', href: 'trabalhos.html' },
-    { id: 'frequencia',   label: 'Frequência',        href: 'frequencia.html' },
-    { id: 'avisos',       label: 'Avisos',            href: 'avisos.html' },
-    { id: 'enquetes',     label: 'Enquetes',          href: 'enquetes.html' },
-    { id: 'chat',         label: 'Chat da Turma',     href: 'chat.html' },
-    { id: 'galeria',      label: 'Galeria',           href: 'galeria.html' },
-    { id: 'prompts',      label: 'Banco de Prompts',  href: 'prompts.html' },
-    { id: 'desafios',     label: 'Desafios Semanais', href: 'desafios.html' },
-    { id: 'laboratorio',  label: 'Laboratório de IA', href: 'laboratorio.html' },
-    { id: 'faq',          label: 'FAQ',               href: 'faq.html' },
-    { id: 'recursos',     label: 'Recursos Extras',   href: 'recursos.html' },
-    { id: 'equipe',       label: 'Equipe',            href: 'equipe.html',       requerTotal: true },
+// Menu lateral do painel, agrupado por finalidade (cada grupo é uma etapa do trabalho
+// do professor). Itens com "requerTotal" só aparecem para quem tem acesso total.
+const GRUPOS_MENU_EQUIPE = [
+    {
+        rotulo: 'Visão geral',
+        itens: [
+            { id: 'inicio',      label: 'Início',             href: 'inicio.html' },
+            { id: 'painel',      label: 'Painel de Controle', href: 'painel.html' },
+        ],
+    },
+    {
+        rotulo: 'Turma',
+        itens: [
+            { id: 'turmas',      label: 'Turmas',             href: 'turmas.html' },
+            { id: 'alunos',      label: 'Alunos',             href: 'alunos.html' },
+            { id: 'equipe',      label: 'Equipe',             href: 'equipe.html', requerTotal: true },
+        ],
+    },
+    {
+        rotulo: 'Ensino',
+        itens: [
+            { id: 'cronograma',  label: 'Cronograma',         href: 'cronograma.html' },
+            { id: 'conteudo',    label: 'Conteúdo',           href: 'conteudo.html' },
+            { id: 'atividades',  label: 'Atividades',         href: 'atividades.html' },
+            { id: 'trabalhos',   label: 'Corrigir Trabalhos', href: 'trabalhos.html' },
+            { id: 'frequencia',  label: 'Frequência',         href: 'frequencia.html' },
+        ],
+    },
+    {
+        rotulo: 'Comunicação',
+        itens: [
+            { id: 'avisos',      label: 'Avisos',             href: 'avisos.html' },
+            { id: 'enquetes',    label: 'Enquetes',           href: 'enquetes.html' },
+            { id: 'chat',        label: 'Chat da Turma',      href: 'chat.html' },
+        ],
+    },
+    {
+        rotulo: 'Engajamento',
+        itens: [
+            { id: 'galeria',     label: 'Galeria',            href: 'galeria.html' },
+            { id: 'desafios',    label: 'Desafios Semanais',  href: 'desafios.html' },
+            { id: 'prompts',     label: 'Banco de Prompts',   href: 'prompts.html' },
+            { id: 'laboratorio', label: 'Laboratório de IA',  href: 'laboratorio.html' },
+        ],
+    },
+    {
+        rotulo: 'Ajuda',
+        itens: [
+            { id: 'faq',         label: 'FAQ',                href: 'faq.html' },
+            { id: 'recursos',    label: 'Recursos Extras',    href: 'recursos.html' },
+        ],
+    },
 ];
 
 // Ícones de linha (SVG inline, sem dependência externa) — mesmo padrão da
@@ -211,17 +241,27 @@ function montarMenuLateralEquipe(paginaAtivaId) {
         nivelAcesso = (JSON.parse(localStorage.getItem('pibiex_equipe_dados') || '{}').nivelAcesso) || 'restrito';
     } catch (e) { /* mantém 'restrito' se não der pra ler */ }
 
-    const itensHtml = ITENS_MENU_EQUIPE.filter((item) => !item.requerTotal || nivelAcesso === 'total').map((item) => {
-        const ativo = item.id === paginaAtivaId;
-        const classesBase = 'flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-md text-sm font-semibold transition border-l-2 relative';
-        const classesAtivo = ativo
-            ? 'border-[var(--pibiex-acento)] bg-white/[0.06] text-white'
-            : 'border-transparent text-slate-400 hover:text-white hover:bg-white/[0.04]';
+    const gruposHtml = GRUPOS_MENU_EQUIPE.map((grupo) => {
+        const itens = grupo.itens.filter((item) => !item.requerTotal || nivelAcesso === 'total');
+        if (itens.length === 0) return '';
+        const itensHtml = itens.map((item) => {
+            const ativo = item.id === paginaAtivaId;
+            const classesBase = 'flex items-center gap-3 pl-4 pr-3 py-2 rounded-md text-[13.5px] font-semibold transition border-l-2 relative';
+            const classesAtivo = ativo
+                ? 'border-[var(--pibiex-acento)] bg-white/[0.06] text-white'
+                : 'border-transparent text-slate-400 hover:text-white hover:bg-white/[0.04]';
+            return `
+                <a href="${item.href}" class="${classesBase} ${classesAtivo}">
+                    ${iconeSvg(item.id)}
+                    <span>${item.label}</span>
+                </a>
+            `;
+        }).join('');
         return `
-            <a href="${item.href}" class="${classesBase} ${classesAtivo}">
-                ${iconeSvg(item.id)}
-                <span>${item.label}</span>
-            </a>
+            <div class="mb-4">
+                <p class="px-4 mb-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400">${grupo.rotulo}</p>
+                <div class="space-y-0.5">${itensHtml}</div>
+            </div>
         `;
     }).join('');
 
@@ -247,7 +287,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
                 </div>
                 <button onclick="window.fecharMenuEquipe()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">${icone('fechar', 18)}</button>
             </div>
-            <div class="relative flex flex-col gap-1">${itensHtml}</div>
+            <nav class="relative" aria-label="Menu do painel">${gruposHtml}</nav>
         </aside>
     `;
 }

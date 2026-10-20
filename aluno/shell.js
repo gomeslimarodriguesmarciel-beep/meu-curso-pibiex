@@ -252,7 +252,7 @@ function montarMenuLateral(paginaAtivaId) {
 
         return `
             <div class="mb-5">
-                <p class="px-4 mb-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-500">${grupo.rotulo}</p>
+                <p class="px-4 mb-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400">${grupo.rotulo}</p>
                 <div class="space-y-0.5">${itensHtml}</div>
             </div>
         `;
