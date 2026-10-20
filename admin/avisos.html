@@ -41,7 +41,7 @@
             </form>
 
             <div id="lista-avisos" class="space-y-3">
-                <p class="text-gray-400 text-sm">Carregando...</p>
+                <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
     </div>
@@ -166,7 +166,7 @@
             TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
                 TURMA_ATUAL = turmaId;
                 idEmEdicao = null;
-                document.getElementById('lista-avisos').innerHTML = '<p class="text-gray-400 text-sm">Carregando...</p>';
+                document.getElementById('lista-avisos').innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
                 carregarAvisos();
             });
 

@@ -150,7 +150,38 @@
         return botao;
     }
 
-    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu };
+    // ------------------------------------------------------------------
+    // Avisos na tela no lugar da janelinha do navegador (alert). Mais discretos, não
+    // travam a página e são lidos por leitores de tela (role="status" / "alert").
+    // ------------------------------------------------------------------
+    function mostrarAviso(mensagem) {
+        const texto = String(mensagem == null ? '' : mensagem);
+        let caixa = document.querySelector('.pibiex-avisos');
+        if (!caixa) {
+            if (!document.body) { return; }
+            caixa = document.createElement('div');
+            caixa.className = 'pibiex-avisos';
+            document.body.appendChild(caixa);
+        }
+        const erro = /erro|n[ãa]o foi poss[ií]vel|inv[áa]lid|falha|incorret|sem permiss|expirad|recusad|n[ãa]o p[oô]de/i.test(texto);
+        const aviso = document.createElement('div');
+        aviso.className = 'pibiex-aviso' + (erro ? ' erro' : '');
+        aviso.setAttribute('role', erro ? 'alert' : 'status');
+        const span = document.createElement('span');
+        span.textContent = texto;
+        const fechar = document.createElement('button');
+        fechar.type = 'button';
+        fechar.setAttribute('aria-label', 'Fechar aviso');
+        fechar.textContent = '×';
+        const sumir = () => { aviso.classList.add('saindo'); setTimeout(() => aviso.remove(), 200); };
+        fechar.onclick = sumir;
+        aviso.append(span, fechar);
+        caixa.appendChild(aviso);
+        setTimeout(sumir, erro ? 9000 : 5500);
+    }
+    window.alert = mostrarAviso;
+
+    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu, aviso: mostrarAviso };
 
     // ------------------------------------------------------------------
     // Ajustes de leitura (depois que a página existe)
@@ -183,15 +214,22 @@
                 const nome = c.getAttribute('placeholder') || c.getAttribute('title') || '';
                 if (nome) c.setAttribute('aria-label', nome);
             });
+            // mensagens de "lista vazia" ganham o visual de estado vazio
+            document.querySelectorAll('p:not(.estado-vazio)').forEach((pp) => {
+                if (pp.children.length) return;
+                const tx = pp.textContent.trim();
+                if (tx.length < 120 && /^(Nenhum[a]?.*(ainda|no momento|por enquanto|nesta|neste|nessa|nesse)|Ainda n[ãa]o h[áa])/i.test(tx)) pp.classList.add('estado-vazio');
+            });
             // botões e links só com ícone ganham o nome do atributo title
             document.querySelectorAll('button:not([aria-label]), a:not([aria-label])').forEach((b) => {
                 if (!b.textContent.trim() && b.getAttribute('title')) b.setAttribute('aria-label', b.getAttribute('title'));
             });
         }
-        ajustar();
+        try { ajustar(); } catch (e) { console.warn('pibiex a11y:', e); }
+        // Sem "clearTimeout": se a página muda o tempo todo, o ajuste ainda roda a cada 250 ms.
         new MutationObserver(() => {
-            clearTimeout(agendado);
-            agendado = setTimeout(ajustar, 200);
+            if (agendado) return;
+            agendado = setTimeout(() => { agendado = null; try { ajustar(); } catch (e) { console.warn('pibiex a11y:', e); } }, 250);
         }).observe(document.body, { childList: true, subtree: true });
 
         // /perfil.html#acessibilidade: leva até o cartão

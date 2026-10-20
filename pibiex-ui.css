@@ -132,6 +132,43 @@ html.a11y-contraste .text-red-600, html.a11y-contraste .text-red-500 { color: #7
 html.a11y-contraste .text-blue-600, html.a11y-contraste .text-blue-700 { color: #1E3A8A !important; }
 html.a11y-contraste .text-amber-600, html.a11y-contraste .text-amber-700 { color: #78350F !important; }
 
+/* ---------------------------------------------------------------- acabamento geral */
+main h1 { letter-spacing: -.02em; }
+/* Campos: foco mais claro, sem depender só do contorno. */
+main input:focus, main select:focus, main textarea:focus { border-color: #1E3A8A; box-shadow: 0 0 0 3px rgba(30,58,138,.14); }
+main input:disabled, main select:disabled, main textarea:disabled, button:disabled { cursor: not-allowed; }
+/* Cartões brancos com uma sombra suave, como nas telas novas. */
+main .bg-white[class*="rounded"][class*="border"] { box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+/* Linhas de tabela e itens clicáveis respondem ao ponteiro. */
+main tbody tr { transition: background .12s; }
+main tbody tr:hover { background: #F8FAFC; }
+
+/* Esqueleto de carregamento (no lugar do texto "Carregando..."). */
+.skel { display: grid; gap: 10px; padding: 6px 0; max-width: 520px; }
+.skel i { display: block; height: 14px; border-radius: 8px; background: linear-gradient(90deg, #EEF2F7 25%, #E2E8F0 37%, #EEF2F7 63%); background-size: 400% 100%; animation: skel-brilho 1.4s ease infinite; }
+.skel i:nth-child(1) { width: 62%; } .skel i:nth-child(2) { width: 100%; } .skel i:nth-child(3) { width: 80%; }
+@keyframes skel-brilho { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* Mensagens de "lista vazia": centralizadas, com ícone e moldura tracejada. */
+.estado-vazio { text-align: center; padding: 30px 18px !important; border: 1.5px dashed #CBD5E1 !important; border-radius: 14px !important; background: #fff !important;
+                color: #4B5563 !important; font-size: 13.5px !important; line-height: 1.5; }
+.estado-vazio::before { content: ""; display: block; width: 38px; height: 38px; margin: 0 auto 10px; opacity: .8;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 13l2.5-7h11L20 13'/%3E%3Cpath d='M4 13v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5h-5a3 3 0 0 1-6 0z'/%3E%3C/svg%3E") center/contain no-repeat; }
+html.a11y-contraste .estado-vazio { border-color: #111827 !important; color: #000 !important; }
+
+/* Avisos na tela (no lugar do alert do navegador). */
+.pibiex-avisos { position: fixed; right: 16px; bottom: 16px; z-index: 2147483100; display: flex; flex-direction: column; gap: 10px; width: min(380px, calc(100vw - 32px)); pointer-events: none; }
+.pibiex-aviso { pointer-events: auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 13px 14px 13px 16px; border-radius: 12px;
+    background: #0F172A; color: #fff; font: 600 13.5px/1.45 'Inter', system-ui, sans-serif; box-shadow: 0 14px 36px rgba(2,6,23,.35); border-left: 5px solid #A3E635; animation: aviso-entra .22s ease; }
+.pibiex-aviso.erro { border-left-color: #F87171; }
+.pibiex-aviso.saindo { opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; }
+.pibiex-aviso span { overflow-wrap: anywhere; }
+.pibiex-aviso button { flex-shrink: 0; background: none; border: 0; color: #CBD5E1; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.pibiex-aviso button:hover { color: #fff; }
+@keyframes aviso-entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .pibiex-avisos { right: 12px; left: 12px; width: auto; bottom: calc(12px + env(safe-area-inset-bottom)); } }
+html.a11y-contraste .pibiex-aviso { background: #000; border: 2px solid #fff; border-left-width: 6px; }
+
 /* ---------------------------------------------------------------- cartão "Aparência e acessibilidade" (Perfil) */
 .a11y-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
 .a11y-card-topo { display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 100%); color: #fff; }

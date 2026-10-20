@@ -51,7 +51,7 @@
             </form>
 
             <div id="lista-atividades" class="space-y-3">
-                <p class="text-gray-400 text-sm">Carregando...</p>
+                <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
     </div>
@@ -218,7 +218,7 @@
         // recarregar tanto o menu de módulos do formulário quanto as atividades.
         async function carregarTurma() {
             const lista = document.getElementById('lista-atividades');
-            lista.innerHTML = '<p class="text-gray-400 text-sm">Carregando...</p>';
+            lista.innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
 
             const { data: modulos } = await window.supabaseClient.from('modulos').select('id, titulo').eq('turma_id', TURMA_ATUAL).order('ordem', { ascending: true });
             MODULOS = modulos || [];

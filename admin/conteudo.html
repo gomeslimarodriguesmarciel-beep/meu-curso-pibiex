@@ -37,7 +37,7 @@
             <div id="seletor-turma" class="mb-6"></div>
 
             <div id="lista-modulos" class="space-y-6">
-                <p class="text-gray-400 text-sm">Carregando...</p>
+                <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
     </div>
@@ -436,7 +436,7 @@
             TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
                 TURMA_ATUAL = turmaId;
                 idEmEdicao = null;
-                document.getElementById('lista-modulos').innerHTML = '<p class="text-gray-400 text-sm">Carregando...</p>';
+                document.getElementById('lista-modulos').innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
                 carregarModulos();
             });
 

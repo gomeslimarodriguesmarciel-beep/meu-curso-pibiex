@@ -34,7 +34,7 @@
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Enquetes</h1>
             <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Participe das votações da turma e acompanhe o resultado.</p>
 
-            <div id="conteudo"><p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p></div>
+            <div id="conteudo"><div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div></div>
         </main>
     </div>
 
@@ -99,7 +99,7 @@
         window.abrirEnquete = async (id) => {
             clearInterval(temporizadorResultado);
             history.replaceState(null, '', 'enquetes.html?id=' + encodeURIComponent(id));
-            $conteudo().innerHTML = `<p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando...</p>`;
+            $conteudo().innerHTML = `<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>`;
             try {
                 const d = await chamarEnquetesAluno('detalhe', { enqueteId: id });
                 ENQUETE = d.enquete;
