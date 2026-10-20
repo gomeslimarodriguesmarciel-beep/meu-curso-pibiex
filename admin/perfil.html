@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PIBIEX Digital · Meu Perfil</title>
     <link rel="stylesheet" href="/tailwind.css">
+    <link rel="stylesheet" href="/pibiex-ui.css">
+    <script src="/acessibilidade.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -54,6 +56,7 @@
                 </div>
                 <p id="msg-email" class="text-[12.5px] font-semibold mt-2 hidden"></p>
             </div>
+            <div id="a11y-painel" class="mt-5"></div>
         </main>
     </div>
 
@@ -188,6 +191,8 @@
             TOKEN_EQUIPE = sessao.token;
             carregarPerfil();
         });
+    
+        if (window.PibiexA11y) PibiexA11y.montarPainel(document.getElementById('a11y-painel'));
     </script>
 </body>
 </html>

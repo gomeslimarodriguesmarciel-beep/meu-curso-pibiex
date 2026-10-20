@@ -285,6 +285,8 @@ function montarTopoEquipe(dados) {
                 </button>
                 <div id="menu-conta-equipe" class="hidden absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50">
                     <a href="perfil.html" class="block px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Meu Perfil</a>
+                    <div id="menu-a11y" class="border-t border-gray-100 mt-1 pt-1"></div>
+                    <a href="perfil.html#acessibilidade" class="block px-4 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50">Mais opções de leitura</a>
                     <button onclick="sairEquipe()" class="w-full text-left px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">Sair</button>
                 </div>
             </div>
@@ -296,6 +298,9 @@ function montarTopoEquipe(dados) {
     // existe no localStorage ainda (diferente de "existe e é null", que
     // significa "sem foto mesmo"). Busca 1x só, guarda pra próxima vez, e
     // nunca mais precisa — depois desse ajuste a chave sempre vem preenchida.
+    const slotA11y = document.getElementById('menu-a11y');
+    if (slotA11y && window.PibiexA11y) slotA11y.appendChild(PibiexA11y.itemDoMenu());
+
     if (dados.fotoUrl === undefined) {
         atualizarFotoDoTopoUmaVez(dados);
     }
