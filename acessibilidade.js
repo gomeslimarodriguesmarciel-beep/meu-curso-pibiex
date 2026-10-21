@@ -9,6 +9,7 @@
 //  - PibiexA11y.montarPainel(elemento): desenha o cartão "Aparência e acessibilidade"
 //    (usado em Perfil). PibiexA11y.itemDoMenu(): interruptor rápido para o menu da conta.
 //    PibiexA11y.botaoFlutuante(): botão fixo com o mesmo cartão, para as páginas públicas.
+//  - Ouvir a página (voz do navegador, gratuita): código em /ouvir.js, baixado só quando alguém usa.
 //
 // Carregado no <head> para a preferência valer antes de a página aparecer (sem "piscar").
 
@@ -23,8 +24,12 @@
                 contraste: typeof p.contraste === 'boolean' ? p.contraste : null, // null = seguir o sistema
                 texto: [0, 1, 2].includes(p.texto) ? p.texto : 0,
                 semMovimento: typeof p.semMovimento === 'boolean' ? p.semMovimento : null,
+                // leitura em voz alta (ver /ouvir.js)
+                apontar: p.apontar === true,
+                velocidade: [0.75, 1, 1.25, 1.5, 1.75].includes(p.velocidade) ? p.velocidade : 1,
+                voz: typeof p.voz === 'string' ? p.voz.slice(0, 200) : '',
             };
-        } catch (e) { return { contraste: null, texto: 0, semMovimento: null }; }
+        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '' }; }
     }
 
     function gravar(p) {
@@ -50,6 +55,9 @@
             contraste: p.contraste === null ? sistemaPedeContraste() : p.contraste,
             texto: p.texto,
             semMovimento: p.semMovimento === true,
+            apontar: p.apontar === true,
+            velocidade: p.velocidade,
+            voz: p.voz,
         };
     }
 
@@ -60,6 +68,24 @@
     }
 
     aplicar(ler());
+
+    // ------------------------------------------------------------------
+    // Leitura em voz alta: o código (/ouvir.js) só é baixado quando alguém usa.
+    // ------------------------------------------------------------------
+    let promessaOuvir = null;
+    function carregarOuvir() {
+        if (window.PibiexOuvir) return Promise.resolve(window.PibiexOuvir);
+        if (promessaOuvir) return promessaOuvir;
+        promessaOuvir = new Promise((resolve, reject) => {
+            const sc = document.createElement('script');
+            sc.src = '/ouvir.js';
+            sc.onload = () => resolve(window.PibiexOuvir);
+            sc.onerror = () => { promessaOuvir = null; reject(new Error('ouvir.js')); };
+            document.head.appendChild(sc);
+        });
+        return promessaOuvir;
+    }
+    const temVoz = () => !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
 
     // ------------------------------------------------------------------
     // Ícones usados no cartão
@@ -102,6 +128,30 @@
                     <button type="button" class="a11y-chave" role="switch" id="a11y-movimento" aria-labelledby="a11y-t3" aria-checked="false"></button>
                 </div>
 
+                <div class="a11y-ouvir" id="a11y-ouvir">
+                    <p class="titulo" id="a11y-t4">Ouvir a página</p>
+                    <p class="desc">Uma voz lê o texto para você. Dá para pausar, pular trechos e mudar a velocidade.</p>
+                    <div class="ouvir-botoes">
+                        <button type="button" class="ouvir-btn principal" data-ouvir="pagina">Ouvir a página</button>
+                        <button type="button" class="ouvir-btn" data-ouvir="daqui">Ouvir daqui para baixo</button>
+                        <button type="button" class="ouvir-btn" data-ouvir="parar">Parar</button>
+                    </div>
+                    <div class="a11y-linha interna">
+                        <div class="texto"><p class="titulo" id="a11y-t5">Ler o que eu apontar</p>
+                            <p class="desc">Passe o mouse, use o Tab ou toque em um texto para ouvir só ele. Selecionar um trecho também lê.</p></div>
+                        <button type="button" class="a11y-chave" role="switch" id="a11y-apontar" aria-labelledby="a11y-t5" aria-checked="false"></button>
+                    </div>
+                    <div class="ouvir-campos">
+                        <label>Voz <select id="a11y-voz" aria-label="Voz"></select></label>
+                        <label>Velocidade <select id="a11y-vel" aria-label="Velocidade da voz">
+                            <option value="0.75">Devagar (0,75x)</option><option value="1">Normal (1x)</option><option value="1.25">Um pouco mais rápida (1,25x)</option>
+                            <option value="1.5">Rápida (1,5x)</option><option value="1.75">Bem rápida (1,75x)</option></select></label>
+                        <button type="button" class="ouvir-btn" data-ouvir="testar">Testar voz</button>
+                    </div>
+                    <p class="ouvir-nota" id="a11y-voz-nota"></p>
+                    <p class="ouvir-nota">Atalhos: <b>Alt + L</b> começa ou pausa a leitura; <b>Esc</b> para.</p>
+                </div>
+
                 <div class="a11y-previa" aria-live="polite">
                     <b>Prévia do texto</b>
                     <span>É assim que os textos secundários, as legendas e as bordas aparecem com as suas escolhas.</span>
@@ -113,8 +163,15 @@
         const chaveMov = el.querySelector('#a11y-movimento');
         const segmentos = [...el.querySelectorAll('[data-texto]')];
 
+        const chaveApontar = el.querySelector('#a11y-apontar');
+        const selVoz = el.querySelector('#a11y-voz');
+        const selVel = el.querySelector('#a11y-vel');
+        const notaVoz = el.querySelector('#a11y-voz-nota');
+
         function desenhar() {
             const e = estado();
+            chaveApontar.setAttribute('aria-checked', String(e.apontar));
+            if (selVel.value !== String(e.velocidade)) selVel.value = String(e.velocidade);
             chaveContraste.setAttribute('aria-checked', String(e.contraste));
             chaveMov.setAttribute('aria-checked', String(e.semMovimento));
             segmentos.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.texto) === e.texto)));
@@ -128,6 +185,53 @@
             aplicar(ler());
             desenhar();
         };
+        // ---- leitura em voz alta
+        const blocoVoz = el.querySelector('#a11y-ouvir');
+        function nomeBonito(n) { return n.replace(/^Microsoft\s+/, '').replace(/\s+-\s+Portuguese.*$/i, '').replace(/^Google\s+/, 'Google '); }
+        function explicar() {
+            const escolhida = selVoz.selectedOptions && selVoz.selectedOptions[0];
+            if (!escolhida) { notaVoz.textContent = ''; return; }
+            const online = escolhida.dataset.local === '0';
+            const fabricante = /google/i.test(escolhida.textContent) ? 'do Google' : 'da Microsoft';
+            notaVoz.textContent = online
+                ? 'Esta é uma voz online: para gerar o áudio, o navegador envia o texto lido ao serviço ' + fabricante + '. Nas vozes "neste aparelho", nada sai do seu aparelho.'
+                : 'Esta voz funciona neste aparelho: o texto lido não sai dele.';
+        }
+        if (!temVoz()) {
+            blocoVoz.innerHTML = '<p class="titulo">Ouvir a página</p><p class="desc">Este navegador não tem leitura em voz. No Edge, Chrome, Safari ou Firefox atualizados costuma ter.</p>';
+        } else {
+            carregarOuvir().then(async (O) => {
+                const lista = await O.aguardarVozes();
+                const salva = estado().voz;
+                if (!lista.length) {
+                    selVoz.innerHTML = '<option value="">Voz padrão do aparelho</option>';
+                    notaVoz.textContent = 'Seu aparelho não tem voz em português instalada. No Windows: Configurações, Hora e idioma, Fala. No Android ou iPhone: Ajustes, Acessibilidade, Fala. O Edge e o Chrome atuais costumam trazer vozes em português.';
+                    return;
+                }
+                selVoz.innerHTML = lista.map((v, i) => '<option value="' + v.nome.replace(/"/g, '&quot;') + '" data-local="' + (v.local ? 1 : 0) + '">' +
+                    nomeBonito(v.nome).replace(/</g, '&lt;') + ' · ' + (v.local ? 'neste aparelho' : 'online') + (i === 0 ? ' · recomendada' : '') + '</option>').join('');
+                if (salva && lista.some((v) => v.nome === salva)) selVoz.value = salva;
+                explicar();
+            }).catch(() => { notaVoz.textContent = 'Não foi possível carregar a leitura em voz agora.'; });
+
+            selVoz.onchange = () => { mudar({ voz: selVoz.value }); explicar(); };
+            selVel.onchange = () => mudar({ velocidade: Number(selVel.value) });
+            chaveApontar.onclick = () => {
+                const ligar = !estado().apontar;
+                mudar({ apontar: ligar });
+                desenhar();
+                carregarOuvir().then((O) => O.ligarApontar(ligar));
+            };
+            blocoVoz.querySelectorAll('[data-ouvir]').forEach((b) => {
+                b.onclick = () => carregarOuvir().then((O) => {
+                    const acao = b.dataset.ouvir;
+                    // o cartão sai da frente para a pessoa acompanhar o trecho lido
+                    if (acao === 'pagina' || acao === 'daqui') document.dispatchEvent(new CustomEvent('pibiex:ouvir-iniciou'));
+                    if (acao === 'testar') O.testarVoz(); else O[acao]();
+                }).catch(() => { /* sem leitura */ });
+            });
+        }
+
         // se o cartão for desenhado de novo no mesmo lugar (botão flutuante), não acumula ouvintes
         if (el.__a11yDesenhar) document.removeEventListener('pibiex:a11y', el.__a11yDesenhar);
         el.__a11yDesenhar = desenhar;
@@ -135,8 +239,9 @@
         desenhar();
     }
 
-    // Interruptor rápido de contraste para o menu da conta (topo da página).
+    // Itens rápidos para o menu da conta (topo da página): contraste e "Ouvir a página".
     function itemDoMenu() {
+        const caixa = document.createElement('div');
         const botao = document.createElement('button');
         botao.type = 'button';
         botao.className = 'a11y-menu-item';
@@ -151,7 +256,23 @@
         botao.onclick = (e) => { e.stopPropagation(); mudar({ contraste: !estado().contraste }); };
         document.addEventListener('pibiex:a11y', desenhar);
         desenhar();
-        return botao;
+        caixa.appendChild(botao);
+
+        if (temVoz()) {
+            const ouvir = document.createElement('button');
+            ouvir.type = 'button';
+            ouvir.className = 'a11y-menu-item';
+            ouvir.setAttribute('role', 'menuitem');
+            ouvir.innerHTML = '<span>Ouvir a página</span><span class="a11y-menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></span>';
+            ouvir.onclick = (e) => {
+                e.stopPropagation();
+                const menu = ouvir.closest('[id^="menu-conta"]');
+                if (menu) menu.classList.add('hidden');
+                carregarOuvir().then((O) => O.pagina()).catch(() => { /* sem leitura */ });
+            };
+            caixa.appendChild(ouvir);
+        }
+        return caixa;
     }
 
     // ------------------------------------------------------------------
@@ -209,6 +330,7 @@
         fab.onclick = () => (pop.hidden ? abrir() : fecharPainel(true));
         fechar.onclick = () => fecharPainel(true);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) fecharPainel(true); });
+        document.addEventListener('pibiex:ouvir-iniciou', () => fecharPainel(false));
         document.addEventListener('mousedown', (e) => { if (!pop.hidden && !pop.contains(e.target) && !fab.contains(e.target)) fecharPainel(false); });
 
         document.body.append(pop, fab);
@@ -222,7 +344,7 @@
                 dica = document.createElement('div');
                 dica.className = 'a11y-dica';
                 dica.setAttribute('role', 'status');
-                dica.innerHTML = 'Precisa de letras maiores ou mais contraste? <u>Toque aqui</u>.<button type="button" aria-label="Dispensar dica">×</button>';
+                dica.innerHTML = 'Precisa de letras maiores, mais contraste ou quer ouvir a página? <u>Toque aqui</u>.<button type="button" aria-label="Dispensar dica">×</button>';
                 dica.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') esconderDica(true); else abrir(); });
                 document.body.appendChild(dica);
                 setTimeout(() => { if (dica) esconderDica(true); }, 12000);
@@ -261,12 +383,20 @@
     }
     window.alert = mostrarAviso;
 
-    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu, botaoFlutuante, aviso: mostrarAviso };
+    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu, botaoFlutuante, aviso: mostrarAviso, ouvir: { carregar: carregarOuvir, suportado: temVoz } };
 
     // ------------------------------------------------------------------
     // Ajustes de leitura (depois que a página existe)
     // ------------------------------------------------------------------
     function iniciar() {
+        // "Ler o que eu apontar" ficou ligado de uma visita anterior
+        if (temVoz() && ler().apontar) carregarOuvir().then((O) => O.ligarApontar(true)).catch(() => { /* ok */ });
+        // Alt + L: começa, pausa ou continua a leitura
+        document.addEventListener('keydown', (e) => {
+            if (!(e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'l' || e.key === 'L')) || !temVoz()) return;
+            e.preventDefault();
+            carregarOuvir().then((O) => { if (O.tocando()) O.alternarPausa(); else O.pagina(); }).catch(() => { /* ok */ });
+        });
         const principal = document.querySelector('main');
         if (principal && !document.querySelector('.pular-conteudo')) {
             if (!principal.id) principal.id = 'conteudo-principal';
