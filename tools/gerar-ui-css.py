@@ -170,7 +170,7 @@ html.a11y-contraste .pibiex-aviso { background: #000; border: 2px solid #fff; bo
 
 /* ---------------------------------------------------------------- cartão "Aparência e acessibilidade" (Perfil) */
 .a11y-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
-.a11y-card-topo { display: flex; align-items: center; gap: 12px; padding: 18px 20px; background: linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 100%); color: #fff; }
+.a11y-card-topo { display: flex; align-items: center; gap: 12px; padding: 16px 64px 16px 20px; background: linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 100%); color: #fff; }
 .a11y-card-topo .icone { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .a11y-card-topo h2 { margin: 0; font-size: 16px; font-weight: 800; }
 .a11y-card-topo p { margin: 2px 0 0; font-size: 12.5px; color: #C7D2FE; }
@@ -179,6 +179,14 @@ html.a11y-contraste .pibiex-aviso { background: #000; border: 2px solid #fff; bo
 .a11y-linha .texto { min-width: 0; }
 .a11y-linha .titulo { font-size: 14px; font-weight: 700; color: #111827; margin: 0; }
 .a11y-linha .desc { font-size: 12.5px; color: #4B5563; margin: 3px 0 0; line-height: 1.45; }
+.a11y-sec { margin: 0 0 4px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #475569; }
+.a11y-bloco { padding: 14px 20px 4px; }
+.a11y-bloco .a11y-linha { padding: 11px 0; }
+.a11y-mais { margin-top: 10px; border-top: 1px solid #F1F5F9; padding-top: 8px; }
+.a11y-mais summary { cursor: pointer; font-size: 13px; font-weight: 700; color: #1E3A8A; padding: 6px 0; list-style: none; }
+.a11y-mais summary::before { content: "▸ "; }
+.a11y-mais[open] summary::before { content: "▾ "; }
+.a11y-mais summary:focus-visible { outline: 3px solid #1E3A8A; outline-offset: 2px; border-radius: 6px; }
 .a11y-chave { position: relative; width: 46px; height: 26px; flex-shrink: 0; border-radius: 999px; border: 0; background: #9CA3AF; cursor: pointer; transition: background .2s; padding: 0; }
 .a11y-chave::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
 .a11y-chave[aria-checked="true"] { background: #16A34A; }
@@ -275,11 +283,11 @@ html.a11y-contraste .a11y-fab { background: #000; border-color: #fff; outline: 2
 html.a11y-contraste .a11y-dica, html.a11y-contraste .a11y-pop { border: 2px solid #000; }
 
 /* ---------------------------------------------------------------- ouvir a página (voz) */
-.a11y-ouvir { padding: 16px 20px; border-bottom: 1px solid #F1F5F9; }
+.a11y-ouvir { padding: 16px 20px 12px; border-bottom: 1px solid #F1F5F9; }
 .a11y-ouvir .titulo { font-weight: 800; font-size: 14.5px; color: #111827; margin: 0; }
 .a11y-ouvir .desc { font-size: 12.5px; color: #4B5563; margin: 3px 0 0; line-height: 1.45; }
 .a11y-ouvir .interna { padding: 12px 0 0; border: 0; }
-.ouvir-botoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ouvir-botoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .ouvir-btn { border: 1.5px solid #CBD5E1; background: #fff; color: #111827; font: 700 13px 'Inter', system-ui, sans-serif; padding: 9px 14px; border-radius: 12px; cursor: pointer; }
 .ouvir-btn:hover { background: #F1F5F9; }
 .ouvir-btn.principal { background: #1E3A8A; border-color: #1E3A8A; color: #fff; }

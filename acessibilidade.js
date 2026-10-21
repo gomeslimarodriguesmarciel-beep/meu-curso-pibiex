@@ -103,59 +103,55 @@
             <section class="a11y-card" id="acessibilidade" aria-labelledby="a11y-titulo">
                 <div class="a11y-card-topo">
                     <span class="icone">${ICO.olho}</span>
-                    <div><h2 id="a11y-titulo">Aparência e acessibilidade</h2><p>Ajuste a plataforma para ler com mais conforto. Vale só neste aparelho.</p></div>
-                </div>
-
-                <div class="a11y-linha">
-                    <div class="texto"><p class="titulo" id="a11y-t1">Alto contraste</p>
-                        <p class="desc">Cores mais fortes, bordas marcadas e textos mais escuros, para ler com menos esforço.</p></div>
-                    <button type="button" class="a11y-chave" role="switch" id="a11y-contraste" aria-labelledby="a11y-t1" aria-checked="false"></button>
-                </div>
-
-                <div class="a11y-linha">
-                    <div class="texto"><p class="titulo" id="a11y-t2">Tamanho do texto</p>
-                        <p class="desc">Aumenta todas as letras da plataforma.</p></div>
-                    <div class="a11y-segmentos" role="radiogroup" aria-labelledby="a11y-t2">
-                        <button type="button" role="radio" data-texto="0" aria-checked="false" aria-label="Padrão" style="font-size:14px">A</button>
-                        <button type="button" role="radio" data-texto="1" aria-checked="false" aria-label="Grande" style="font-size:17px">A</button>
-                        <button type="button" role="radio" data-texto="2" aria-checked="false" aria-label="Maior" style="font-size:20px">A</button>
-                    </div>
-                </div>
-
-                <div class="a11y-linha">
-                    <div class="texto"><p class="titulo" id="a11y-t3">Reduzir animações</p>
-                        <p class="desc">Para as transições, os efeitos de movimento e as barras animadas.</p></div>
-                    <button type="button" class="a11y-chave" role="switch" id="a11y-movimento" aria-labelledby="a11y-t3" aria-checked="false"></button>
+                    <div><h2 id="a11y-titulo">Acessibilidade</h2><p>Vale só neste aparelho.</p></div>
                 </div>
 
                 <div class="a11y-ouvir" id="a11y-ouvir">
-                    <p class="titulo" id="a11y-t4">Ouvir a página</p>
-                    <p class="desc">Uma voz lê o texto para você. Dá para pausar, pular trechos e mudar a velocidade.</p>
+                    <h3 class="a11y-sec" id="a11y-t4">Ouvir</h3>
                     <div class="ouvir-botoes">
                         <button type="button" class="ouvir-btn principal" data-ouvir="pagina">Ouvir a página</button>
-                        <button type="button" class="ouvir-btn" data-ouvir="daqui">Ouvir daqui para baixo</button>
+                        <button type="button" class="ouvir-btn" data-ouvir="daqui">Daqui para baixo</button>
                         <button type="button" class="ouvir-btn" data-ouvir="parar">Parar</button>
                     </div>
                     <div class="a11y-linha interna">
                         <div class="texto"><p class="titulo" id="a11y-t5">Ler o que eu apontar</p>
-                            <p class="desc">Passe o mouse, use o Tab ou toque em um texto para ouvir só ele. Selecionar um trecho também lê.</p></div>
+                            <p class="desc">Passe o mouse ou toque em um texto.</p></div>
                         <button type="button" class="a11y-chave" role="switch" id="a11y-apontar" aria-labelledby="a11y-t5" aria-checked="false"></button>
                     </div>
-                    <div class="ouvir-campos">
-                        <label>Voz <select id="a11y-voz" aria-label="Voz"></select></label>
-                        <label>Velocidade <select id="a11y-vel" aria-label="Velocidade da voz">
-                            <option value="0.75">Devagar (0,75x)</option><option value="1">Normal (1x)</option><option value="1.25">Um pouco mais rápida (1,25x)</option>
-                            <option value="1.5">Rápida (1,5x)</option><option value="1.75">Bem rápida (1,75x)</option></select></label>
-                        <button type="button" class="ouvir-btn" data-ouvir="testar">Testar voz</button>
-                    </div>
-                    <p class="ouvir-nota" id="a11y-voz-nota"></p>
-                    <p class="ouvir-nota">Atalhos: <b>Alt + L</b> começa ou pausa a leitura; <b>Esc</b> para.</p>
+                    <details class="a11y-mais">
+                        <summary>Ajustes da voz</summary>
+                        <div class="ouvir-campos">
+                            <label>Voz <select id="a11y-voz" aria-label="Voz"></select></label>
+                            <label>Velocidade <select id="a11y-vel" aria-label="Velocidade da voz">
+                                <option value="0.75">Devagar (0,75x)</option><option value="1">Normal (1x)</option><option value="1.25">Um pouco mais rápida (1,25x)</option>
+                                <option value="1.5">Rápida (1,5x)</option><option value="1.75">Bem rápida (1,75x)</option></select></label>
+                            <button type="button" class="ouvir-btn" data-ouvir="testar">Testar voz</button>
+                        </div>
+                        <p class="ouvir-nota" id="a11y-voz-nota"></p>
+                        <p class="ouvir-nota">Atalhos: <b>Alt + L</b> começa ou pausa a leitura; <b>Esc</b> para.</p>
+                    </details>
                 </div>
 
-                <div class="a11y-previa" aria-live="polite">
-                    <b>Prévia do texto</b>
-                    <span>É assim que os textos secundários, as legendas e as bordas aparecem com as suas escolhas.</span>
+                <div class="a11y-bloco">
+                    <h3 class="a11y-sec">Aparência</h3>
+                    <div class="a11y-linha">
+                        <div class="texto"><p class="titulo" id="a11y-t1">Alto contraste</p></div>
+                        <button type="button" class="a11y-chave" role="switch" id="a11y-contraste" aria-labelledby="a11y-t1" aria-checked="false"></button>
+                    </div>
+                    <div class="a11y-linha">
+                        <div class="texto"><p class="titulo" id="a11y-t2">Tamanho do texto</p></div>
+                        <div class="a11y-segmentos" role="radiogroup" aria-labelledby="a11y-t2">
+                            <button type="button" role="radio" data-texto="0" aria-checked="false" aria-label="Padrão" style="font-size:14px">A</button>
+                            <button type="button" role="radio" data-texto="1" aria-checked="false" aria-label="Grande" style="font-size:17px">A</button>
+                            <button type="button" role="radio" data-texto="2" aria-checked="false" aria-label="Maior" style="font-size:20px">A</button>
+                        </div>
+                    </div>
+                    <div class="a11y-linha">
+                        <div class="texto"><p class="titulo" id="a11y-t3">Reduzir animações</p></div>
+                        <button type="button" class="a11y-chave" role="switch" id="a11y-movimento" aria-labelledby="a11y-t3" aria-checked="false"></button>
+                    </div>
                 </div>
+
                 <div class="a11y-rodape"><button type="button" class="a11y-restaurar" id="a11y-restaurar">Restaurar o padrão</button></div>
             </section>`;
 
