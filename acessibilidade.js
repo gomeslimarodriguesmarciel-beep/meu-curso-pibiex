@@ -288,7 +288,7 @@
         fab.type = 'button';
         fab.id = 'a11y-fab';
         fab.className = 'a11y-fab';
-        fab.setAttribute('aria-label', 'Opções de acessibilidade: contraste, tamanho do texto e movimento');
+        fab.setAttribute('aria-label', 'Opções de acessibilidade: contraste, tamanho do texto, movimento e leitura em voz alta');
         fab.setAttribute('aria-expanded', 'false');
         fab.setAttribute('aria-controls', 'a11y-pop');
         fab.title = 'Acessibilidade';
