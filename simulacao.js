@@ -3,6 +3,9 @@
 // "Ver como aluno": o professor entra na tela de um aluno, com os dados de verdade, e pode
 // clicar e testar à vontade, mas NADA é gravado.
 //
+// Dois modos: DEMONSTRAÇÃO (um aluno de mentira, que não é ninguém cadastrado; pode testar à vontade)
+// e SÓ OBSERVAÇÃO (a tela de um aluno cadastrado; não dá para enviar nem escrever como ele).
+//
 // Carregado nas páginas do aluno logo depois da biblioteca do Supabase. Só faz alguma coisa
 // quando esta aba tem uma simulação ativa (sessionStorage "pibiex_simulacao", criada pelo
 // painel do professor). Para um aluno comum, não faz nada.
@@ -30,6 +33,9 @@
     }
 
     window.PIBIEX_SIMULACAO = true;
+    // 'demo' = aluno de demonstração (pode testar); 'aluno' = só observar a tela de um aluno cadastrado
+    const MODO = sim.modo === 'demo' ? 'demo' : 'aluno';
+    const NOME = sim.dados.nomeCompleto || 'aluno';
 
     // ------------------------------------------------------------------
     // 1) O login do aluno desta aba passa a ser o da simulação
@@ -95,6 +101,12 @@
     function simulada(nome, corpo) {
         const acao = corpo && corpo.acao;
         if (nome === 'logout-aluno') { setTimeout(() => window.PibiexSimulacao.sair(), 0); return { ok: true }; }
+        if (MODO === 'aluno') {
+            // Só observar: nada do que o aluno faria é possível, nem de mentirinha.
+            const msg = 'Só observação: você está vendo a tela de ' + NOME + ' e não pode enviar, escrever nem votar como ele.';
+            avisar(msg);
+            return { erro: msg };
+        }
         if (nome === 'assistente-ia') return { erro: 'Modo simulação: o assistente de IA não responde e nada é gravado.' };
         if (nome === 'enviar-trabalho' && acao === 'enviar') {
             const t = {
@@ -195,6 +207,7 @@
     window.PibiexSimulacao = {
         ativa: true,
         aluno: sim.dados.nomeCompleto,
+        modo: MODO,
         async sair(trocar) {
             try {
                 const tokenEquipe = lerOriginal.call(window.localStorage, 'pibiex_equipe_token');
@@ -238,14 +251,34 @@
         const nome = document.createElement('span');
         nome.className = 'nome';
         nome.textContent = sim.dados.nomeCompleto || 'aluno';
-        el.innerHTML = '<span class="tag">SIMULAÇÃO</span><span class="texto">Você está vendo como <span class="nome"></span>. Nada do que fizer aqui é salvo.</span>' +
-            '<button type="button" class="trocar">Trocar aluno</button><button type="button" class="sair">Sair da simulação</button>';
-        el.querySelector('.nome').replaceWith(nome);
+        el.innerHTML = MODO === 'demo'
+            ? '<span class="tag">DEMONSTRAÇÃO</span><span class="texto">Você está vendo como um <b>aluno de demonstração</b> (não é ninguém cadastrado). Pode testar à vontade: nada é salvo.</span>' +
+              '<button type="button" class="trocar">Mudar modo</button><button type="button" class="sair">Sair</button>'
+            : '<span class="tag">SÓ OBSERVAÇÃO</span><span class="texto">Vendo a tela de <span class="nome"></span>. Você não pode enviar nem escrever como ele, e isso não conta como login dele.</span>' +
+              '<button type="button" class="trocar">Mudar modo</button><button type="button" class="sair">Sair</button>';
+        const marca = el.querySelector('.nome');
+        if (marca) marca.replaceWith(nome);
         el.querySelector('.trocar').onclick = () => window.PibiexSimulacao.sair(true);
         el.querySelector('.sair').onclick = () => window.PibiexSimulacao.sair(false);
         document.body.appendChild(el);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', faixa); else faixa();
+
+    // Modo observação: campos de escrita ficam travados (a busca e os filtros continuam livres).
+    function travarCampos() {
+        document.querySelectorAll('textarea, input[type="file"], input[type="text"], input[type="url"], input[type="email"], input[type="password"], input[type="date"], input[type="number"]').forEach((c) => {
+            if (c.dataset.simTravado || c.closest('#sim-faixa')) return;
+            c.dataset.simTravado = '1';
+            if (c.type === 'file') c.disabled = true; else c.readOnly = true;
+            c.title = 'Só observação: não dá para escrever como o aluno';
+            if (c.tagName === 'TEXTAREA' || c.type === 'text') c.placeholder = 'Só observação: aqui o aluno escreve';
+            c.addEventListener('focus', () => avisar('Só observação: você não pode escrever nem enviar como o aluno.'));
+        });
+    }
+    if (MODO === 'aluno') {
+        const iniciarTravas = () => { travarCampos(); new MutationObserver(() => travarCampos()).observe(document.body, { childList: true, subtree: true }); };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarTravas); else iniciarTravas();
+    }
 
     setTimeout(() => {
         if (window.PibiexA11y && window.PibiexA11y.aviso) window.PibiexA11y.aviso('A simulação terminou (2 horas). Voltando ao painel.');

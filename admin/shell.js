@@ -353,8 +353,13 @@ function montarTopoEquipe(dados) {
 
 
 // ---------------------------------------------------------------------------
-// "Ver como aluno": escolhe um aluno e abre a tela dele em modo simulação (nada é salvo).
-// A parte que impede de gravar fica no servidor (sessão marcada como simulação) e em /simulacao.js.
+// "Ver como aluno": abre a tela do aluno em modo simulação. Dois modos:
+//   - demonstração: um aluno "de mentira", que não é nenhum cadastrado. Vê o que a turma vê
+//     (avisos, atividades, cronograma...), sem dado pessoal de ninguém. Pode testar à vontade.
+//   - aluno específico: só OBSERVAR a tela de um aluno cadastrado. Não dá para enviar, escrever
+//     nem votar como ele, e não conta como login dele.
+// Nos dois, nada é salvo. Quem impede de gravar é o servidor (sessão marcada como simulação);
+// a tela só mostra isso (ver /simulacao.js).
 // ---------------------------------------------------------------------------
 window.verComoAluno = async function (alunoIdInicial) {
     if (document.getElementById('modal-ver-aluno')) return;
@@ -362,46 +367,76 @@ window.verComoAluno = async function (alunoIdInicial) {
     fundo.id = 'modal-ver-aluno';
     fundo.className = 'fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60';
     fundo.innerHTML = `
-        <div role="dialog" aria-modal="true" aria-labelledby="tit-ver-aluno" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="px-6 pt-6 pb-3">
+        <div role="dialog" aria-modal="true" aria-labelledby="tit-ver-aluno" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden">
+            <div class="px-6 pt-6 pb-2">
                 <h2 id="tit-ver-aluno" class="text-lg font-black text-gray-900">Ver como aluno</h2>
-                <p class="text-sm text-gray-600 mt-1">Você vai ver a plataforma exatamente como o aluno vê, com os dados dele em tempo real.
-                    Pode clicar e testar: <b>nada do que você fizer é salvo</b>. A simulação dura 2 horas e fica registrada.</p>
-                <input id="busca-ver-aluno" type="search" class="caixa-busca mt-4" placeholder="Buscar aluno pelo nome" aria-label="Buscar aluno pelo nome" autocomplete="off">
+                <p class="text-sm text-gray-600 mt-1">Veja a plataforma do jeito que os alunos veem. <b>Nada é salvo de verdade</b> e a simulação dura 2 horas.</p>
+                <div class="grid grid-cols-2 gap-2 mt-4" role="radiogroup" aria-label="Como você quer ver">
+                    <button type="button" role="radio" data-modo="demo" class="modo-ver text-left rounded-xl border-2 p-3">
+                        <span class="block text-sm font-black text-gray-900">Aluno de demonstração</span>
+                        <span class="block text-xs text-gray-600 mt-0.5">Não é ninguém cadastrado. Você vê o que a turma vê e pode testar à vontade.</span>
+                    </button>
+                    <button type="button" role="radio" data-modo="aluno" class="modo-ver text-left rounded-xl border-2 p-3">
+                        <span class="block text-sm font-black text-gray-900">Um aluno específico</span>
+                        <span class="block text-xs text-gray-600 mt-0.5">Só observar a tela dele. Não dá para enviar nem escrever como ele.</span>
+                    </button>
+                </div>
             </div>
-            <div id="lista-ver-aluno" class="px-3 overflow-y-auto flex-1 min-h-[120px]" role="listbox" aria-label="Alunos">
-                <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+
+            <div id="painel-demo" class="px-6 py-3">
+                <label for="turma-ver-aluno" class="block text-xs font-bold text-gray-500 mb-1">Turma</label>
+                <select id="turma-ver-aluno" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white"></select>
             </div>
+
+            <div id="painel-aluno" class="hidden flex flex-col min-h-0 flex-1">
+                <div class="px-6 pt-2">
+                    <input id="busca-ver-aluno" type="search" class="caixa-busca" placeholder="Buscar aluno pelo nome" aria-label="Buscar aluno pelo nome" autocomplete="off">
+                </div>
+                <div id="lista-ver-aluno" class="px-3 mt-2 overflow-y-auto flex-1 min-h-[140px]" role="listbox" aria-label="Alunos">
+                    <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+                </div>
+            </div>
+
             <p id="erro-ver-aluno" class="px-6 pb-2 text-sm text-red-600 hidden" role="alert"></p>
             <div class="px-6 py-4 flex gap-2 justify-end border-t border-gray-100">
                 <button type="button" id="cancelar-ver-aluno" class="px-4 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
-                <button type="button" id="entrar-ver-aluno" disabled class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed">Entrar na tela do aluno</button>
+                <button type="button" id="entrar-ver-aluno" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed">Abrir</button>
             </div>
         </div>`;
     document.body.appendChild(fundo);
 
+    let modo = alunoIdInicial ? 'aluno' : 'demo';
+    let turmas = [];
     let alunos = [];
-    let escolhido = null;
-    const lista = fundo.querySelector('#lista-ver-aluno');
-    const entrar = fundo.querySelector('#entrar-ver-aluno');
-    const erro = fundo.querySelector('#erro-ver-aluno');
-    const busca = fundo.querySelector('#busca-ver-aluno');
+    let escolhido = alunoIdInicial || null;
+    const el = (id) => fundo.querySelector('#' + id);
+    const lista = el('lista-ver-aluno'), entrar = el('entrar-ver-aluno'), erro = el('erro-ver-aluno'), busca = el('busca-ver-aluno'), selTurma = el('turma-ver-aluno');
     const fechar = () => { fundo.remove(); document.removeEventListener('keydown', aoTeclar); };
     const aoTeclar = (e) => { if (e.key === 'Escape') fechar(); };
     document.addEventListener('keydown', aoTeclar);
     fundo.addEventListener('mousedown', (e) => { if (e.target === fundo) fechar(); });
-    fundo.querySelector('#cancelar-ver-aluno').onclick = fechar;
-    busca.focus();
+    el('cancelar-ver-aluno').onclick = fechar;
 
-    function desenhar() {
+    function pintarModo() {
+        fundo.querySelectorAll('.modo-ver').forEach((b) => {
+            const ativo = b.dataset.modo === modo;
+            b.setAttribute('aria-checked', String(ativo));
+            b.className = 'modo-ver text-left rounded-xl border-2 p-3 ' + (ativo ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:bg-gray-50');
+        });
+        el('painel-demo').classList.toggle('hidden', modo !== 'demo');
+        el('painel-aluno').classList.toggle('hidden', modo !== 'aluno');
+        entrar.textContent = modo === 'demo' ? 'Abrir como aluno de demonstração' : 'Observar a tela do aluno';
+        entrar.disabled = modo === 'aluno' ? !escolhido : !selTurma.value;
+        erro.classList.add('hidden');
+    }
+    fundo.querySelectorAll('.modo-ver').forEach((b) => { b.onclick = () => { modo = b.dataset.modo; pintarModo(); if (modo === 'aluno') busca.focus(); }; });
+
+    function desenharAlunos() {
         const termo = busca.value.trim().toLowerCase();
         const vistos = alunos.filter((a) => !termo || (a.nome_completo || '').toLowerCase().includes(termo));
-        if (!vistos.length) {
-            lista.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">Nenhum aluno encontrado.</p>';
-            return;
-        }
+        if (!vistos.length) { lista.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">Nenhum aluno encontrado.</p>'; return; }
         lista.innerHTML = vistos.map((a) => {
-            const turma = Array.isArray(a.turmas) ? a.turmas[0] : a.turmas;
+            const turma = turmas.find((t) => t.id === a.turma_id);
             const bloqueado = !a.ativo || !turma || turma.ativa !== true;
             const motivo = !a.ativo ? 'Aluno inativo' : (!turma ? 'Sem turma' : (turma.ativa !== true ? 'Turma pausada' : ''));
             return `<button type="button" role="option" data-id="${escaparHtml(a.id)}" aria-selected="${a.id === escolhido}" ${bloqueado ? 'disabled' : ''}
@@ -411,38 +446,51 @@ window.verComoAluno = async function (alunoIdInicial) {
                         <span class="block text-xs text-gray-500">${turma ? escaparHtml(turma.nome) : 'Sem turma'}${motivo ? ' · ' + motivo : ''}</span></span></button>`;
         }).join('');
         lista.querySelectorAll('[data-id]').forEach((b) => {
-            b.onclick = () => { escolhido = b.dataset.id; entrar.disabled = false; erro.classList.add('hidden'); desenhar(); };
+            b.onclick = () => { escolhido = b.dataset.id; entrar.disabled = false; erro.classList.add('hidden'); desenharAlunos(); };
             b.ondblclick = () => entrar.click();
         });
     }
-    busca.addEventListener('input', desenhar);
+    busca.addEventListener('input', desenharAlunos);
+    selTurma.addEventListener('change', () => { entrar.disabled = !selTurma.value; });
+    pintarModo();
+    entrar.disabled = true;
 
-    const { data, error } = await window.supabaseClient
-        .from('alunos')
-        .select('id, nome_completo, ativo, turma_id, turmas(nome, ativa)')
-        .order('nome_completo', { ascending: true });
-    if (error) { lista.innerHTML = '<p class="text-sm text-red-600 text-center py-8">Não foi possível carregar os alunos.</p>'; return; }
-    alunos = data || [];
-    if (alunoIdInicial && alunos.some((a) => a.id === alunoIdInicial)) { escolhido = alunoIdInicial; entrar.disabled = false; }
-    desenhar();
-    if (escolhido) { const sel = lista.querySelector('[aria-selected="true"]'); if (sel) sel.scrollIntoView({ block: 'center' }); entrar.focus(); }
+    const tokenEquipe = localStorage.getItem('pibiex_equipe_token');
+    const { data, error } = await window.supabaseClient.functions.invoke('simular-aluno', { body: { tokenEquipe, acao: 'alunos' } });
+    if (error || !data || data.erro) {
+        const msg = (data && data.erro) || 'Não foi possível carregar a lista de alunos agora.';
+        lista.innerHTML = `<p class="text-sm text-red-600 text-center py-8">${escaparHtml(msg)}</p>`;
+        erro.textContent = msg; erro.classList.remove('hidden');
+        return;
+    }
+    turmas = data.turmas || [];
+    alunos = data.alunos || [];
+    selTurma.innerHTML = turmas.map((t) => `<option value="${escaparHtml(t.id)}" ${t.ativa ? '' : 'disabled'}>${escaparHtml(t.nome)}${t.ativa ? '' : ' (pausada)'}</option>`).join('');
+    const primeiraAtiva = turmas.find((t) => t.ativa);
+    if (primeiraAtiva) selTurma.value = primeiraAtiva.id;
+    desenharAlunos();
+    pintarModo();
+    if (modo === 'aluno' && escolhido) { const sel = lista.querySelector('[aria-selected="true"]'); if (sel) sel.scrollIntoView({ block: 'center' }); }
+    entrar.focus();
 
     entrar.onclick = async () => {
-        if (!escolhido) return;
         entrar.disabled = true;
+        const rotulo = entrar.textContent;
         entrar.textContent = 'Abrindo...';
         erro.classList.add('hidden');
-        const tokenEquipe = localStorage.getItem('pibiex_equipe_token');
-        const { data: r, error: e } = await window.supabaseClient.functions.invoke('simular-aluno', { body: { tokenEquipe, acao: 'iniciar', alunoId: escolhido } });
+        const corpo = modo === 'demo'
+            ? { tokenEquipe, acao: 'iniciar', modo: 'demo', turmaId: selTurma.value }
+            : { tokenEquipe, acao: 'iniciar', modo: 'aluno', alunoId: escolhido };
+        const { data: r, error: e } = await window.supabaseClient.functions.invoke('simular-aluno', { body: corpo });
         if (e || !r || r.erro || !r.token) {
-            erro.textContent = (r && r.erro) || 'Não foi possível abrir a tela do aluno agora. Tente de novo.';
+            erro.textContent = (r && r.erro) || 'Não foi possível abrir a tela agora. Tente de novo.';
             erro.classList.remove('hidden');
             entrar.disabled = false;
-            entrar.textContent = 'Entrar na tela do aluno';
+            entrar.textContent = rotulo;
             return;
         }
         // a simulação vale só nesta aba (sessionStorage); o login do professor não muda
-        sessionStorage.setItem('pibiex_simulacao', JSON.stringify({ token: r.token, dados: r.aluno, expiraEm: new Date(r.expiraEm).getTime() }));
+        sessionStorage.setItem('pibiex_simulacao', JSON.stringify({ token: r.token, modo: r.modo, dados: r.aluno, expiraEm: new Date(r.expiraEm).getTime() }));
         sessionStorage.removeItem('pibiex_simulacao_sombra');
         location.href = '/aluno/inicio.html';
     };
