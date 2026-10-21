@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -18,17 +19,29 @@
     <div class="flex-1 min-w-0">
         <div id="topo-pagina"></div>
 
-        <main class="p-4 md:p-8 max-w-4xl mx-auto">
+        <main class="p-4 md:p-8 max-w-6xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">Corrigir Trabalhos</h1>
-            <p class="text-gray-500 mb-6">
-                Veja os trabalhos enviados em cada atividade, dê a nota e escreva um comentário.
-                O aluno vê a correção na página <span class="font-semibold">Meus Trabalhos</span>.
+            <p class="text-gray-500 mb-5">
+                Escolha a atividade, abra o envio do aluno, dê a nota e escreva um comentário.
+                O aluno vê a correção em <span class="font-semibold">Meus Trabalhos</span>.
             </p>
 
-            <div id="seletor-turma" class="mb-6"></div>
+            <div id="seletor-turma" class="mb-5"></div>
 
-            <div id="lista-atividades" class="space-y-4">
-                <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+            <div id="resumo" class="flex flex-wrap gap-2 mb-5"></div>
+
+            <div id="area" class="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+                <aside>
+                    <div class="lg:hidden mb-4">
+                        <label for="sel-atividade" class="block text-xs font-bold text-gray-500 mb-1">Atividade</label>
+                        <select id="sel-atividade" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white"></select>
+                    </div>
+                    <nav id="menu-atividades" aria-label="Atividades" class="hidden lg:block lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] overflow-y-auto"></nav>
+                </aside>
+
+                <section id="painel" aria-live="polite">
+                    <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+                </section>
             </div>
         </main>
     </div>
@@ -37,17 +50,15 @@
     <script>
         let TOKEN_EQUIPE = null;
         let TURMA_ATUAL = null;
+        let ATIVIDADES = [];          // mais nova primeiro
+        let SEL = null;               // id da atividade aberta
+        let ABA = 'pendentes';        // 'pendentes' | 'corrigidos' | 'todos'
+        let BUSCA = '';
+        const ABERTOS = new Set();    // envios abertos na tela
+        const L = window.PibiexLista;
+        const esc = L.esc;
 
-        function escaparHtml(texto) {
-            const div = document.createElement('div');
-            div.innerText = texto ?? '';
-            return div.innerHTML;
-        }
-
-        function formatarData(dataIso) {
-            if (!dataIso) return '';
-            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
+        function aviso(msg) { if (window.PibiexA11y) window.PibiexA11y.aviso(msg); else alert(msg); }
 
         async function chamarCorrigirTrabalho(acao, dados) {
             const { data, error } = await window.supabaseClient.functions.invoke('corrigir-trabalho', {
@@ -60,111 +71,307 @@
             return data;
         }
 
-        async function carregarTrabalhos() {
+        const avaliado = (e) => e.status === 'avaliado';
+        const pendentesDe = (a) => (a.envios || []).filter((e) => !avaliado(e));
+        const ultimoEnvio = (a) => (a.envios || []).reduce((m, e) => (e.enviado_em > m ? e.enviado_em : m), '');
+        const chaveCriacao = (a) => a.criado_em || a.data_entrega || '';
+
+        function ordenar(lista) {
+            return [...lista].sort((x, y) => chaveCriacao(y).localeCompare(chaveCriacao(x)));
+        }
+
+        // Atividade que abre primeiro: a ?atividade= do link, senão a que recebeu envio
+        // mais recente ainda por corrigir, senão a mais nova.
+        function atividadeInicial() {
+            const pedida = new URLSearchParams(location.search).get('atividade');
+            if (pedida && ATIVIDADES.some((a) => a.id === pedida)) return pedida;
+            const comPendentes = ATIVIDADES.filter((a) => pendentesDe(a).length);
+            if (comPendentes.length) {
+                return comPendentes.sort((x, y) => {
+                    const mx = pendentesDe(x).reduce((m, e) => (e.enviado_em > m ? e.enviado_em : m), '');
+                    const my = pendentesDe(y).reduce((m, e) => (e.enviado_em > m ? e.enviado_em : m), '');
+                    return my.localeCompare(mx);
+                })[0].id;
+            }
+            return ATIVIDADES[0] ? ATIVIDADES[0].id : null;
+        }
+
+        async function carregarTrabalhos(manterSelecao) {
             const resultado = await chamarCorrigirTrabalho('listar', { turmaId: TURMA_ATUAL });
             if (!resultado) {
-                document.getElementById('lista-atividades').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar os trabalhos.</p>';
+                document.getElementById('painel').innerHTML = '<p class="text-red-600 text-sm">Erro ao carregar os trabalhos.</p>';
                 return;
             }
-            renderizarAtividades(resultado.atividades || []);
+            ATIVIDADES = ordenar(resultado.atividades || []);
+            if (!manterSelecao || !ATIVIDADES.some((a) => a.id === SEL)) SEL = atividadeInicial();
+            desenhar();
         }
 
-        function renderizarAtividades(atividades) {
-            const container = document.getElementById('lista-atividades');
+        function desenhar() {
+            desenharResumo();
+            desenharMenu();
+            desenharPainel();
+        }
 
-            if (atividades.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma atividade criada ainda. Crie uma na página Atividades.</p>';
-                return;
-            }
+        // ------------------------------------------------------------ resumo e menu
+        function desenharResumo() {
+            const pend = ATIVIDADES.reduce((n, a) => n + pendentesDe(a).length, 0);
+            const feitos = ATIVIDADES.reduce((n, a) => n + (a.envios || []).filter(avaliado).length, 0);
+            document.getElementById('resumo').innerHTML = ATIVIDADES.length
+                ? `<span class="chip ${pend ? 'ambar' : 'verde'}" style="font-size:12.5px;padding:6px 12px">${pend ? pend + (pend === 1 ? ' trabalho para corrigir' : ' trabalhos para corrigir') : 'Nada para corrigir agora'}</span>
+                   <span class="chip cinza" style="font-size:12.5px;padding:6px 12px">${feitos} ${feitos === 1 ? 'corrigido' : 'corrigidos'}</span>
+                   <span class="chip cinza" style="font-size:12.5px;padding:6px 12px">${ATIVIDADES.length} ${ATIVIDADES.length === 1 ? 'atividade' : 'atividades'}</span>`
+                : '';
+        }
 
-            container.innerHTML = atividades.map((atv) => {
-                const envios = atv.envios || [];
-                const pendentes = envios.filter(e => e.status !== 'avaliado').length;
+        function seloAtividade(a) {
+            const p = pendentesDe(a).length;
+            if (p) return `<span class="chip ambar" title="${p} para corrigir">${p}</span>`;
+            if ((a.envios || []).length) return '<span class="chip verde" title="Tudo corrigido">ok</span>';
+            return '<span class="chip cinza" title="Nenhum envio ainda">0</span>';
+        }
 
-                const enviosHtml = envios.length === 0
-                    ? '<p class="text-xs text-gray-400 px-5 pb-4">Nenhum aluno enviou trabalho para esta atividade ainda.</p>'
-                    : envios.map(e => {
-                        const avaliado = e.status === 'avaliado';
-                        return `
-                            <div class="px-5 py-4 border-t border-gray-100">
-                                <div class="flex items-start justify-between gap-3 mb-2">
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <p class="text-sm font-bold text-gray-800">${escaparHtml(e.alunoNome)}</p>
-                                            ${avaliado
-                                                ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700">Corrigido${e.nota !== null && e.nota !== undefined ? ' · nota ' + e.nota : ''}</span>`
-                                                : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Aguardando correção</span>'}
-                                        </div>
-                                        <p class="text-[11px] text-gray-400 mt-0.5">Enviado em ${formatarData(e.enviado_em)}</p>
-                                        ${e.resposta_texto ? `
-                                            <div class="mt-2 border border-blue-100 bg-blue-50/40 rounded-lg p-3">
-                                                <p class="text-[10px] font-bold uppercase text-blue-700 mb-1">Resposta escrita</p>
-                                                <p class="text-sm text-gray-800 whitespace-pre-wrap break-words">${escaparHtml(e.resposta_texto)}</p>
-                                            </div>` : ''}
-                                        ${e.comentario_aluno ? `<p class="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5 mt-2 whitespace-pre-wrap">${escaparHtml(e.comentario_aluno)}</p>` : ''}
-                                    </div>
-                                    ${e.arquivo_url ? `<a href="${escaparHtml(/^https?:\/\//i.test(e.arquivo_url) ? e.arquivo_url : '#')}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir trabalho →</a>` : ''}
-                                </div>
+        function desenharMenu() {
+            const nav = document.getElementById('menu-atividades');
+            const sel = document.getElementById('sel-atividade');
+            if (!ATIVIDADES.length) { nav.innerHTML = ''; sel.innerHTML = ''; return; }
 
-                                <div class="flex flex-wrap items-end gap-2 pt-2">
-                                    <div class="w-24">
-                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Nota</label>
-                                        <input id="nota-${e.id}" type="number" step="0.1" min="0" placeholder="0 a 10"
-                                               value="${e.nota !== null && e.nota !== undefined ? e.nota : ''}"
-                                               class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                    </div>
-                                    ${atv.horas_maximas ? `
-                                    <div class="w-28">
-                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Horas (até ${atv.horas_maximas}h)</label>
-                                        <input id="horas-${e.id}" type="number" step="0.5" min="0" max="${atv.horas_maximas}" placeholder="0 a ${atv.horas_maximas}"
-                                               value="${e.horas_concedidas !== null && e.horas_concedidas !== undefined ? e.horas_concedidas : ''}"
-                                               class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                    </div>
-                                    ` : ''}
-                                    <div class="flex-1 min-w-[200px]">
-                                        <label class="block text-[11px] font-bold text-gray-500 mb-1">Comentário para o aluno (opcional)</label>
-                                        <input id="feedback-${e.id}" value="${escaparHtml(e.feedback_professor || '')}"
-                                               class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                    </div>
-                                    <button onclick="salvarCorrecao('${e.id}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2 rounded-lg shrink-0">
-                                        ${avaliado ? 'Atualizar nota' : 'Salvar correção'}
-                                    </button>
-                                    ${avaliado ? `<button onclick="reabrirTrabalho('${e.id}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg shrink-0">Reabrir</button>` : ''}
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+            nav.innerHTML = `
+                <p class="text-[11px] font-bold uppercase tracking-wide text-gray-500 px-2 mb-2">Atividades (mais novas primeiro)</p>
+                <div class="space-y-1">${ATIVIDADES.map((a) => {
+                    const pz = L.prazo(a.data_entrega);
+                    return `<button type="button" class="item-atv" data-id="${esc(a.id)}" aria-current="${a.id === SEL}">
+                        <span class="min-w-0 flex-1"><span class="t">${esc(a.titulo)}</span>
+                        <span class="m block">${a.modulos ? esc(a.modulos.titulo) : ''}${pz.estado !== 'sem' ? ' · ' + esc(pz.estado === 'passou' ? 'encerrada' : pz.texto) : ''}</span></span>
+                        ${seloAtividade(a)}</button>`;
+                }).join('')}</div>`;
+            nav.querySelectorAll('.item-atv').forEach((b) => { b.onclick = () => escolherAtividade(b.dataset.id); });
 
-                return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="p-5">
-                            <p class="font-bold text-gray-800 text-sm">${escaparHtml(atv.titulo)}</p>
-                            <p class="text-xs text-gray-500 mt-0.5">${atv.modulos ? escaparHtml(atv.modulos.titulo) : ''}</p>
-                        </div>
-                        <div class="bg-gray-50 px-5 py-2 border-t border-gray-100 flex items-center justify-between gap-2">
-                            <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
-                            ${pendentes > 0 ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">${pendentes} p/ corrigir</span>` : ''}
-                        </div>
-                        ${enviosHtml}
-                    </div>
-                `;
+            sel.innerHTML = ATIVIDADES.map((a) => {
+                const p = pendentesDe(a).length;
+                return `<option value="${esc(a.id)}" ${a.id === SEL ? 'selected' : ''}>${esc(a.titulo)}${p ? ` (${p} p/ corrigir)` : ''}</option>`;
             }).join('');
+            sel.onchange = () => escolherAtividade(sel.value);
         }
 
-        window.salvarCorrecao = async (trabalhoId) => {
+        function escolherAtividade(id) {
+            SEL = id;
+            BUSCA = '';
+            ABA = pendentesDe(atual()).length ? 'pendentes' : ((atual().envios || []).length ? 'corrigidos' : 'pendentes');
+            ABERTOS.clear();
+            desenhar();
+            document.getElementById('painel').scrollIntoView({ block: 'nearest' });
+        }
+
+        const atual = () => ATIVIDADES.find((a) => a.id === SEL);
+
+        // ------------------------------------------------------------ painel da atividade
+        function enviosFiltrados(a) {
+            const termo = BUSCA.trim().toLowerCase();
+            return (a.envios || [])
+                .filter((e) => ABA === 'todos' || (ABA === 'pendentes' ? !avaliado(e) : avaliado(e)))
+                .filter((e) => !termo || (e.alunoNome || '').toLowerCase().includes(termo))
+                .sort((x, y) => (y.enviado_em || '').localeCompare(x.enviado_em || ''));
+        }
+
+        function desenharPainel() {
+            const painel = document.getElementById('painel');
+            if (!ATIVIDADES.length) {
+                painel.innerHTML = '<div class="vazio-lista"><b>Nenhuma atividade criada ainda</b>Crie uma na página <a class="underline font-semibold" href="atividades.html">Atividades</a>.</div>';
+                return;
+            }
+            const a = atual();
+            const envios = a.envios || [];
+            const pend = pendentesDe(a).length;
+            const pz = L.prazo(a.data_entrega);
+
+            const proxima = ATIVIDADES.find((x) => x.id !== a.id && pendentesDe(x).length);
+
+            painel.innerHTML = `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+                    <div class="flex items-start justify-between gap-3 flex-wrap">
+                        <div class="min-w-0">
+                            <h2 class="font-black text-gray-800 text-lg leading-snug">${esc(a.titulo)}</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">${a.modulos ? esc(a.modulos.titulo) : ''}</p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            ${pz.estado !== 'sem' ? `<span class="chip ${pz.estado === 'passou' ? 'vermelho' : pz.estado === 'perto' ? 'ambar' : 'azul'}">${esc(pz.texto)}</span>` : ''}
+                            ${a.horas_maximas ? `<span class="chip ambar" style="background:#FEF3C7">Vale até ${esc(a.horas_maximas)}h</span>` : ''}
+                        </div>
+                    </div>
+                    ${a.descricao ? `<details class="mt-3"><summary class="text-xs font-bold text-blue-700 cursor-pointer">Ver enunciado</summary><p class="text-sm text-gray-700 mt-2 whitespace-pre-wrap">${esc(a.descricao)}</p></details>` : ''}
+                    <p class="text-xs text-gray-500 mt-3">${envios.length} ${envios.length === 1 ? 'envio' : 'envios'}${envios.length ? ' · último ' + esc(L.tempo(ultimoEnvio(a))) : ''}</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div id="abas-envios"></div>
+                    <input id="busca-aluno" type="search" class="caixa-busca" style="max-width:240px" placeholder="Buscar aluno pelo nome" value="${esc(BUSCA)}" aria-label="Buscar aluno pelo nome">
+                </div>
+
+                <div id="lista-envios"></div>
+                ${!pend && proxima ? `<div class="mt-4"><button type="button" id="ir-proxima" class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold px-4 py-2.5 rounded-xl">Próxima atividade com trabalhos para corrigir: ${esc(proxima.titulo)} &rarr;</button></div>` : ''}`;
+
+            const corrigidos = envios.filter(avaliado).length;
+            L.abas(document.getElementById('abas-envios'), [
+                { id: 'pendentes', rotulo: 'Para corrigir', n: pend, alerta: pend > 0 },
+                { id: 'corrigidos', rotulo: 'Corrigidos', n: corrigidos },
+                { id: 'todos', rotulo: 'Todos', n: envios.length },
+            ], ABA, (id) => { ABA = id; abrirPrimeiroPendente(); desenharPainel(); });
+
+            const campo = document.getElementById('busca-aluno');
+            campo.oninput = () => { BUSCA = campo.value; desenharLista(); };
+            const irProxima = document.getElementById('ir-proxima');
+            if (irProxima) irProxima.onclick = () => escolherAtividade(proxima.id);
+
+            if (!ABERTOS.size) abrirPrimeiroPendente();
+            desenharLista();
+        }
+
+        // Ao entrar na aba "Para corrigir", já deixa aberto o envio mais novo.
+        function abrirPrimeiroPendente() {
+            ABERTOS.clear();
+            if (ABA !== 'pendentes') return;
+            const a = atual();
+            const primeiro = a ? enviosFiltrados(a)[0] : null;
+            if (primeiro) ABERTOS.add(primeiro.id);
+        }
+
+        function desenharLista() {
+            const a = atual();
+            const cont = document.getElementById('lista-envios');
+            if (!a || !cont) return;
+            const rascunhos = guardarRascunhos();
+            const lista = enviosFiltrados(a);
+
+            if (!lista.length) {
+                const total = (a.envios || []).length;
+                cont.innerHTML = BUSCA.trim()
+                    ? '<div class="vazio-lista"><b>Nenhum aluno com esse nome</b>Tente outro trecho do nome.</div>'
+                    : ABA === 'pendentes'
+                        ? `<div class="vazio-lista"><b>${total ? 'Tudo corrigido nesta atividade' : 'Nenhum aluno enviou ainda'}</b>${total ? 'Não há trabalhos esperando correção aqui.' : 'Quando alguém enviar, aparece aqui.'}</div>`
+                        : '<div class="vazio-lista"><b>Nada por aqui</b>Nenhum envio nesta aba.</div>';
+                return;
+            }
+
+            cont.innerHTML = lista.map((e) => cartaoEnvio(a, e)).join('');
+            restaurarRascunhos(rascunhos);
+
+            cont.querySelectorAll('details.cx').forEach((d) => {
+                d.addEventListener('toggle', () => { if (d.open) ABERTOS.add(d.dataset.id); else ABERTOS.delete(d.dataset.id); });
+            });
+        }
+
+        function cartaoEnvio(a, e) {
+            const ok = avaliado(e);
+            const previa = e.resposta_texto || e.comentario_aluno || (e.arquivo_url ? 'Enviou arquivo ou link' : '');
+            return `
+            <details class="cx" data-id="${esc(e.id)}" ${ABERTOS.has(e.id) ? 'open' : ''}>
+                <summary>
+                    <span class="avatar-ini" aria-hidden="true">${esc(L.iniciais(e.alunoNome))}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="cx-titulo flex items-center gap-2 flex-wrap">${esc(e.alunoNome)}
+                            ${ok ? `<span class="chip verde">Corrigido${e.nota !== null && e.nota !== undefined ? ' · nota ' + esc(e.nota) : ''}</span>` : '<span class="chip ambar">Aguardando correção</span>'}
+                        </span>
+                        <span class="cx-sub block">Enviado ${esc(L.tempo(e.enviado_em))} · ${esc(L.dataHora(e.enviado_em))}</span>
+                        ${previa ? `<span class="cx-previa">${esc(previa)}</span>` : ''}
+                    </span>
+                </summary>
+                <div class="cx-corpo">
+                    ${e.resposta_texto ? `
+                        <div class="border border-blue-100 bg-blue-50/40 rounded-xl p-3">
+                            <p class="text-[10px] font-bold uppercase text-blue-700 mb-1">Resposta escrita</p>
+                            <p class="text-sm text-gray-800 whitespace-pre-wrap break-words">${esc(e.resposta_texto)}</p>
+                        </div>` : ''}
+                    ${e.comentario_aluno ? `<p class="text-xs text-gray-600 bg-gray-50 rounded-xl p-3 mt-2 whitespace-pre-wrap"><span class="font-bold">Comentário do aluno:</span> ${esc(e.comentario_aluno)}</p>` : ''}
+                    ${e.arquivo_url ? `<p class="mt-3"><a href="${esc(/^https?:\/\//i.test(e.arquivo_url) ? e.arquivo_url : '#')}" target="_blank" rel="noopener" class="text-blue-700 text-sm font-bold hover:underline">Abrir arquivo ou link enviado &rarr;</a></p>` : ''}
+                    ${!e.resposta_texto && !e.comentario_aluno && !e.arquivo_url ? '<p class="text-sm text-gray-500">Este envio não tem texto, arquivo nem link.</p>' : ''}
+
+                    <div class="flex flex-wrap items-end gap-2 mt-4 pt-4 border-t border-gray-100">
+                        <div class="w-24">
+                            <label class="block text-[11px] font-bold text-gray-500 mb-1" for="nota-${esc(e.id)}">Nota</label>
+                            <input id="nota-${esc(e.id)}" data-rasc type="number" step="0.1" min="0" placeholder="0 a 10"
+                                   value="${e.nota !== null && e.nota !== undefined ? esc(e.nota) : ''}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                        ${a.horas_maximas ? `
+                        <div class="w-28">
+                            <label class="block text-[11px] font-bold text-gray-500 mb-1" for="horas-${esc(e.id)}">Horas (até ${esc(a.horas_maximas)}h)</label>
+                            <input id="horas-${esc(e.id)}" data-rasc type="number" step="0.5" min="0" max="${esc(a.horas_maximas)}" placeholder="0 a ${esc(a.horas_maximas)}"
+                                   value="${e.horas_concedidas !== null && e.horas_concedidas !== undefined ? esc(e.horas_concedidas) : ''}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>` : ''}
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-[11px] font-bold text-gray-500 mb-1" for="feedback-${esc(e.id)}">Comentário para o aluno (opcional)</label>
+                            <input id="feedback-${esc(e.id)}" data-rasc value="${esc(e.feedback_professor || '')}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button type="button" onclick="salvarCorrecao('${esc(e.id)}', false)" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded-lg">${ok ? 'Atualizar nota' : 'Salvar correção'}</button>
+                        ${!ok ? `<button type="button" onclick="salvarCorrecao('${esc(e.id)}', true)" class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-lg">Salvar e ir para o próximo</button>` : ''}
+                        ${ok ? `<button type="button" onclick="reabrirTrabalho('${esc(e.id)}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold px-4 py-2 rounded-lg">Reabrir</button>` : ''}
+                    </div>
+                </div>
+            </details>`;
+        }
+
+        // Quem está digitando em vários envios abertos não perde o texto quando a lista é redesenhada.
+        function guardarRascunhos() {
+            const r = {};
+            document.querySelectorAll('#lista-envios [data-rasc]').forEach((i) => { r[i.id] = i.value; });
+            return r;
+        }
+        function restaurarRascunhos(r) {
+            Object.keys(r).forEach((id) => { const i = document.getElementById(id); if (i) i.value = r[id]; });
+        }
+
+        function achar(trabalhoId) {
+            for (const a of ATIVIDADES) {
+                const e = (a.envios || []).find((x) => x.id === trabalhoId);
+                if (e) return { a, e };
+            }
+            return null;
+        }
+
+        window.salvarCorrecao = async (trabalhoId, irParaProximo) => {
             const nota = document.getElementById(`nota-${trabalhoId}`).value.trim();
             const feedback = document.getElementById(`feedback-${trabalhoId}`).value.trim();
             const campoHoras = document.getElementById(`horas-${trabalhoId}`);
             const horasConcedidas = campoHoras && campoHoras.value.trim() !== '' ? Number(campoHoras.value.trim()) : null;
 
             const resultado = await chamarCorrigirTrabalho('corrigir', { trabalhoId, nota, feedback, horasConcedidas });
-            if (resultado) carregarTrabalhos();
+            if (!resultado) return;
+
+            const achado = achar(trabalhoId);
+            if (achado) {
+                const t = resultado.trabalho || {};
+                Object.assign(achado.e, {
+                    status: t.status || 'avaliado', nota: t.nota, feedback_professor: t.feedback_professor,
+                    horas_concedidas: t.horas_concedidas, avaliado_em: t.avaliado_em,
+                });
+                ABERTOS.delete(trabalhoId);
+                const falta = pendentesDe(achado.a).length;
+                aviso(`Correção de ${achado.e.alunoNome} salva.${falta ? ` Faltam ${falta}.` : ' Esta atividade está toda corrigida.'}`);
+                if (irParaProximo || ABA === 'pendentes') {
+                    const proximo = enviosFiltrados(achado.a).find((x) => x.id !== trabalhoId && !avaliado(x));
+                    if (proximo) ABERTOS.add(proximo.id);
+                } else {
+                    ABERTOS.add(trabalhoId);
+                }
+            }
+            desenhar();
+            const aberto = document.querySelector('#lista-envios details[open]');
+            if (aberto && irParaProximo) aberto.scrollIntoView({ block: 'center', behavior: 'smooth' });
         };
 
         window.reabrirTrabalho = async (trabalhoId) => {
             if (!confirm('Reabrir este trabalho? A nota e o comentário serão apagados e o aluno volta a ver "aguardando correção".')) return;
             const resultado = await chamarCorrigirTrabalho('reabrir', { trabalhoId });
-            if (resultado) carregarTrabalhos();
+            if (!resultado) return;
+            const achado = achar(trabalhoId);
+            if (achado) {
+                Object.assign(achado.e, { status: 'enviado', nota: null, feedback_professor: null, horas_concedidas: null, avaliado_em: null });
+                ABERTOS.add(trabalhoId);
+                aviso(`Trabalho de ${achado.e.alunoNome} reaberto.`);
+            }
+            desenhar();
         };
 
         iniciarShellEquipe('trabalhos').then(async (sessao) => {
@@ -173,17 +380,26 @@
 
             TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
                 TURMA_ATUAL = turmaId;
-                document.getElementById('lista-atividades').innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
-                carregarTrabalhos();
+                SEL = null; ABERTOS.clear();
+                document.getElementById('painel').innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
+                carregarTrabalhos(false);
             });
 
             if (!TURMA_ATUAL) {
-                document.getElementById('lista-atividades').innerHTML = '';
+                document.getElementById('painel').innerHTML = '';
                 return;
             }
 
-            carregarTrabalhos();
+            carregarTrabalhos(false);
         });
+
+        // Atualiza sozinho de tempos em tempos (sem fechar o que está aberto nem apagar o que foi digitado).
+        setInterval(() => {
+            if (document.hidden || !TURMA_ATUAL || !TOKEN_EQUIPE) return;
+            if (document.querySelector('#lista-envios [data-rasc]:focus')) return;
+            const rascunhos = guardarRascunhos();
+            carregarTrabalhos(true).then(() => restaurarRascunhos(rascunhos));
+        }, 60000);
     </script>
 </body>
 </html>

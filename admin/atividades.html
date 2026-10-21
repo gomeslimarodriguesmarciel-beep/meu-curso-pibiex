@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -22,9 +23,15 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">Gerenciar Atividades</h1>
             <p class="text-gray-500 mb-6">Crie atividades com prazo, vinculadas a um módulo. Isso aparece na área do aluno.</p>
 
-            <div id="seletor-turma" class="mb-6"></div>
+            <div id="seletor-turma" class="mb-5"></div>
 
-            <form id="form-nova-atividade" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div id="abas-atividades"></div>
+                <button type="button" id="btn-nova" aria-expanded="false" aria-controls="form-nova-atividade"
+                        class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Nova atividade</button>
+            </div>
+
+            <form id="form-nova-atividade" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 space-y-3">
                 <div class="flex flex-wrap gap-3">
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Módulo</label>
@@ -47,8 +54,11 @@
                     <label class="block text-xs font-bold text-gray-500 mb-1">Descrição / enunciado (opcional)</label>
                     <textarea id="nova-descricao" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
                 </div>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Nova atividade</button>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Publicar atividade</button>
+                <button type="button" id="btn-cancelar-nova" class="ml-2 text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
             </form>
+
+            <input id="busca-atividade" type="search" class="caixa-busca mb-4" placeholder="Buscar atividade pelo título" aria-label="Buscar atividade pelo título">
 
             <div id="lista-atividades" class="space-y-3">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
@@ -90,11 +100,21 @@
             return data;
         }
 
+        let ATIVIDADES = [];
+        let CONTAGEM = {};            // atividade_id -> { total, pendentes }
+        let FILTRO = 'todas';         // 'todas' | 'abertas' | 'encerradas'
+        let BUSCA = '';
+        let ABERTA = null;
+        const L = window.PibiexLista;
+        const esc = L.esc;
+
+        const encerrada = (a) => !!a.data_entrega && new Date(a.data_entrega) < new Date();
+
         async function carregarAtividades() {
             const { data, error } = await window.supabaseClient
                 .from('atividades')
-                .select('id, titulo, descricao, data_entrega, horas_maximas, modulo_id, modulos(titulo, turma_id)')
-                .order('data_entrega', { ascending: true });
+                .select('id, titulo, descricao, data_entrega, horas_maximas, modulo_id, criado_em, modulos(titulo, turma_id)')
+                .order('criado_em', { ascending: false });
 
             if (error) {
                 document.getElementById('lista-atividades').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar atividades.</p>';
@@ -102,15 +122,47 @@
                 return;
             }
 
-            const daTurma = (data || []).filter(a => a.modulos && a.modulos.turma_id === TURMA_ATUAL);
-            renderizarAtividades(daTurma);
+            ATIVIDADES = (data || []).filter(a => a.modulos && a.modulos.turma_id === TURMA_ATUAL);
+
+            // quantos envios cada atividade recebeu (e quantos ainda faltam corrigir)
+            CONTAGEM = {};
+            if (ATIVIDADES.length) {
+                const { data: envios } = await window.supabaseClient
+                    .from('trabalhos_enviados')
+                    .select('atividade_id, status')
+                    .in('atividade_id', ATIVIDADES.map(a => a.id));
+                (envios || []).forEach((e) => {
+                    const c = CONTAGEM[e.atividade_id] || (CONTAGEM[e.atividade_id] = { total: 0, pendentes: 0 });
+                    c.total++;
+                    if (e.status !== 'avaliado') c.pendentes++;
+                });
+            }
+            desenharTudo();
         }
 
-        function renderizarAtividades(atividades) {
-            const container = document.getElementById('lista-atividades');
+        function desenharTudo() {
+            const abertas = ATIVIDADES.filter(a => !encerrada(a)).length;
+            L.abas(document.getElementById('abas-atividades'), [
+                { id: 'todas', rotulo: 'Todas', n: ATIVIDADES.length },
+                { id: 'abertas', rotulo: 'Abertas', n: abertas },
+                { id: 'encerradas', rotulo: 'Encerradas', n: ATIVIDADES.length - abertas },
+            ], FILTRO, (id) => { FILTRO = id; desenharTudo(); });
+            renderizarAtividades();
+        }
 
+        function renderizarAtividades() {
+            const container = document.getElementById('lista-atividades');
+            const termo = BUSCA.trim().toLowerCase();
+            const atividades = ATIVIDADES
+                .filter(a => FILTRO === 'todas' || (FILTRO === 'abertas' ? !encerrada(a) : encerrada(a)))
+                .filter(a => !termo || (a.titulo || '').toLowerCase().includes(termo));
+
+            if (ATIVIDADES.length === 0) {
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhuma atividade criada ainda</b>Clique em "+ Nova atividade" para publicar a primeira.</div>';
+                return;
+            }
             if (atividades.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma atividade criada ainda.</p>';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhuma atividade encontrada</b>Mude a aba ou a busca.</div>';
                 return;
             }
 
@@ -121,8 +173,8 @@
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
                             <select id="edit-modulo-${atv.id}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${opcoesModulo(atv.modulo_id)}</select>
-                            <input id="edit-titulo-${atv.id}" value="${escaparHtml(atv.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <textarea id="edit-descricao-${atv.id}" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(atv.descricao || '')}</textarea>
+                            <input id="edit-titulo-${atv.id}" value="${esc(atv.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-descricao-${atv.id}" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${esc(atv.descricao || '')}</textarea>
                             <input id="edit-prazo-${atv.id}" type="datetime-local" value="${paraDatetimeLocal(atv.data_entrega)}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
                             <input id="edit-horas-${atv.id}" type="number" min="0" step="0.5" placeholder="Vale horas (opcional)" value="${atv.horas_maximas ?? ''}" class="w-40 border border-gray-200 rounded-lg px-3 py-2 text-sm">
                             <div class="flex gap-2">
@@ -133,28 +185,48 @@
                     `;
                 }
 
-                const prazo = formatarPrazo(atv.data_entrega);
+                const pz = L.prazo(atv.data_entrega);
+                const c = CONTAGEM[atv.id] || { total: 0, pendentes: 0 };
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <p class="font-bold text-gray-800 text-sm">${escaparHtml(atv.titulo)}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">${atv.modulos ? escaparHtml(atv.modulos.titulo) : ''}</p>
-                                ${atv.descricao ? `<p class="text-sm text-gray-600 mt-2">${escaparHtml(atv.descricao)}</p>` : ''}
-                            </div>
-                            <div class="flex flex-col items-end gap-2 shrink-0">
-                                ${prazo ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 whitespace-nowrap">Prazo: ${prazo}</span>` : ''}
-                                ${atv.horas_maximas ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 whitespace-nowrap">Vale até ${atv.horas_maximas}h</span>` : ''}
-                                <div class="flex gap-2">
-                                    <button onclick="editarAtividade('${atv.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                    <button onclick="excluirAtividade('${atv.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
-                                </div>
+                    <details class="cx" ${ABERTA === atv.id ? 'open' : ''} data-id="${atv.id}">
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${esc(atv.titulo)}</span>
+                                <span class="cx-sub block">${atv.modulos ? esc(atv.modulos.titulo) : ''} · criada ${esc(L.tempo(atv.criado_em))}</span>
+                                <span class="flex flex-wrap gap-1.5 mt-2">
+                                    <span class="chip ${pz.estado === 'passou' ? 'vermelho' : pz.estado === 'perto' ? 'ambar' : pz.estado === 'ok' ? 'azul' : 'cinza'}">${esc(pz.texto)}</span>
+                                    ${atv.horas_maximas ? `<span class="chip ambar">Vale até ${esc(atv.horas_maximas)}h</span>` : ''}
+                                    <span class="chip ${c.pendentes ? 'ambar' : c.total ? 'verde' : 'cinza'}">${c.total ? `${c.total} ${c.total === 1 ? 'envio' : 'envios'}${c.pendentes ? ` · ${c.pendentes} p/ corrigir` : ' · tudo corrigido'}` : 'Nenhum envio'}</span>
+                                </span>
+                            </span>
+                        </summary>
+                        <div class="cx-corpo">
+                            ${atv.descricao ? `<p class="text-sm text-gray-700 whitespace-pre-wrap mb-4">${esc(atv.descricao)}</p>` : '<p class="text-sm text-gray-500 mb-4">Sem enunciado.</p>'}
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a href="trabalhos.html?atividade=${atv.id}" class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-lg">${c.pendentes ? `Corrigir (${c.pendentes})` : 'Ver envios'}</a>
+                                <button onclick="editarAtividade('${atv.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Editar</button>
+                                <button onclick="excluirAtividade('${atv.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
                 `;
             }).join('');
+
+            container.querySelectorAll('details.cx').forEach((d) => {
+                d.addEventListener('toggle', () => { if (d.open) ABERTA = d.dataset.id; else if (ABERTA === d.dataset.id) ABERTA = null; });
+            });
         }
+
+        document.getElementById('busca-atividade').addEventListener('input', (e) => { BUSCA = e.target.value; renderizarAtividades(); });
+
+        function mostrarFormulario(mostrar) {
+            const f = document.getElementById('form-nova-atividade');
+            f.classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-nova').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('nova-titulo').focus();
+        }
+        document.getElementById('btn-nova').addEventListener('click', () => mostrarFormulario(document.getElementById('form-nova-atividade').classList.contains('hidden')));
+        document.getElementById('btn-cancelar-nova').addEventListener('click', () => { document.getElementById('form-nova-atividade').reset(); mostrarFormulario(false); });
 
         document.getElementById('form-nova-atividade').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -170,6 +242,7 @@
             const resultado = await chamarGerenciarAtividades('criar', { moduloId, titulo, descricao, dataEntrega, horasMaximas });
             if (resultado) {
                 document.getElementById('form-nova-atividade').reset();
+                mostrarFormulario(false);
                 carregarAtividades();
             }
         });
