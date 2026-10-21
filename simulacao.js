@@ -85,8 +85,9 @@
     }
 
     // O que o "aluno" fez durante a simulação, só para a tela mostrar o resultado.
-    let sombra = { trabalhos: {}, votos: {} };
+    let sombra = { trabalhos: {}, votos: {}, chat: [] };
     try { sombra = { ...sombra, ...(JSON.parse(sessionStorage.getItem(CHAVE_SOMBRA) || '{}')) }; } catch (e) { /* começa limpo */ }
+    if (!Array.isArray(sombra.chat)) sombra.chat = [];
     const guardarSombra = () => { try { sessionStorage.setItem(CHAVE_SOMBRA, JSON.stringify(sombra)); } catch (e) { /* ok */ } };
 
     let ultimoAviso = 0;
@@ -118,6 +119,17 @@
             avisar('Modo simulação: a resposta apareceu para você, mas não foi enviada ao professor.');
             return { trabalho: t };
         }
+        if (nome === 'chat-turma' && acao === 'enviar' && corpo.mensagem) {
+            // a mensagem aparece só para quem está simulando; ninguém mais vê
+            const m = {
+                id: 'simulacao-' + Date.now(), autorTipo: 'aluno', autorId: sim.dados.id, autorNome: sim.dados.nomeCompleto, autorFotoUrl: null,
+                souEu: true, mensagem: String(corpo.mensagem), apagada: false, editada: false, criadoEm: new Date().toISOString(),
+                podeEditar: false, podeApagar: false, anexo: null, reacoes: [],
+            };
+            sombra.chat.push(m); guardarSombra();
+            avisar('Modo simulação: a mensagem aparece só para você; a turma não a vê.');
+            return { ok: true, mensagem: m };
+        }
         if (acao === 'gerar_url_upload' || acao === 'preparar_anexo' || acao === 'gerar_url_upload_foto') {
             avisar('Modo simulação: arquivos não são enviados.');
             return { caminho: 'simulacao/' + Date.now(), token: 'simulacao', ok: true };
@@ -139,6 +151,9 @@
         if (nome === 'enviar-trabalho' && acao === 'listar') {
             const lista = (data.trabalhos || []).filter((t) => !sombra.trabalhos[t.atividade_id]);
             data.trabalhos = lista.concat(Object.values(sombra.trabalhos));
+        }
+        if (nome === 'chat-turma' && acao === 'listar' && Array.isArray(data.mensagens) && sombra.chat.length) {
+            data.mensagens = data.mensagens.concat(sombra.chat).sort((x, y) => String(x.criadoEm).localeCompare(String(y.criadoEm)));
         }
         if (nome === 'enquetes-aluno') {
             if (acao === 'pendentes' && Array.isArray(data.pendentes)) data.pendentes = data.pendentes.filter((e) => !sombra.votos[e.id]);
@@ -230,7 +245,7 @@
         const st = document.createElement('style');
         st.textContent = `
             html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 4px; background: #F59E0B; z-index: 2147483000; pointer-events: none; }
-            body { padding-bottom: 72px !important; }
+            body { padding-bottom: 56px !important; }
             #sim-faixa { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 2147483001; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;
                          max-width: calc(100vw - 24px); padding: 10px 14px; border-radius: 16px; background: #111827; color: #fff; border: 2px solid #F59E0B;
                          box-shadow: 0 14px 40px rgba(0,0,0,.35); font: 600 13px/1.3 'Inter', system-ui, sans-serif; }
@@ -240,7 +255,11 @@
             #sim-faixa .trocar { background: #374151; color: #fff; }
             #sim-faixa .sair { background: #F59E0B; color: #111827; }
             #sim-faixa button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-            @media (max-width: 640px) { #sim-faixa { left: 8px; right: 8px; transform: none; max-width: none; bottom: 8px; } #sim-faixa .texto { flex-basis: 100%; text-align: center; } }
+            #sim-faixa .tag { cursor: pointer; border: 0; }
+            #sim-faixa.compacto { left: 12px; transform: none; bottom: 12px; padding: 6px 8px; gap: 8px; flex-wrap: nowrap; border-radius: 14px; }
+            #sim-faixa.compacto .texto, #sim-faixa.compacto .trocar { display: none; }
+            #sim-faixa.compacto .sair { padding: 6px 10px; }
+                        @media (max-width: 640px) { #sim-faixa { left: 8px; right: 8px; transform: none; max-width: none; bottom: 8px; } #sim-faixa .texto { flex-basis: 100%; text-align: center; } }
         `;
         document.head.appendChild(st);
 
@@ -261,6 +280,19 @@
         el.querySelector('.trocar').onclick = () => window.PibiexSimulacao.sair(true);
         el.querySelector('.sair').onclick = () => window.PibiexSimulacao.sair(false);
         document.body.appendChild(el);
+
+        // A faixa recolhe sozinha depois de alguns segundos para não cobrir o que está embaixo (ex.: campo do chat).
+        // Tocar em "SIMULAÇÃO" abre de novo.
+        const tag = el.querySelector('.tag');
+        tag.setAttribute('role', 'button'); tag.setAttribute('tabindex', '0');
+        tag.setAttribute('aria-label', 'Mostrar ou esconder os detalhes da simulação');
+        const alternar = () => { el.classList.toggle('compacto'); try { sessionStorage.setItem('pibiex_sim_compacto', el.classList.contains('compacto') ? '1' : '0'); } catch (e) { /* ok */ } };
+        tag.onclick = alternar;
+        tag.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternar(); } };
+        let preferencia = null;
+        try { preferencia = sessionStorage.getItem('pibiex_sim_compacto'); } catch (e) { /* ok */ }
+        if (preferencia === '1') el.classList.add('compacto');
+        else if (preferencia === null) setTimeout(() => el.classList.add('compacto'), 7000);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', faixa); else faixa();
 
