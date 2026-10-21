@@ -255,6 +255,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
                 <a href="${item.href}" class="${classesBase} ${classesAtivo}">
                     ${iconeSvg(item.id)}
                     <span>${item.label}</span>
+                    ${(item.id === 'trabalhos' || item.id === 'desafios') ? `<span data-pend="${item.id}" class="pend-badge" hidden aria-live="polite"></span>` : ''}
                 </a>
             `;
         }).join('');
@@ -714,6 +715,47 @@ function injetarManifestoEIcone() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Aviso de "trabalho novo": quantos envios esperam correção (número no menu e na aba do navegador)
+// e um aviso na tela quando chega um novo. Confere a cada 60 s, só com a aba à vista; é só uma contagem.
+// ---------------------------------------------------------------------------
+function iniciarPendencias(paginaAtivaId) {
+    const tituloBase = document.title.replace(/^\(\d+\)\s*/, '');
+    let anterior = null;
+
+    function pintar(id, n) {
+        document.querySelectorAll(`[data-pend="${id}"]`).forEach((el) => {
+            el.textContent = n > 99 ? '99+' : String(n);
+            el.hidden = !n;
+            el.setAttribute('aria-label', `${n} para corrigir`);
+        });
+    }
+
+    async function ver() {
+        if (document.hidden) return;
+        const tokenEquipe = localStorage.getItem('pibiex_equipe_token');
+        if (!tokenEquipe) return;
+        let data = null;
+        try { ({ data } = await window.supabaseClient.functions.invoke('admin-pendencias', { body: { tokenEquipe } })); } catch (e) { return; }
+        if (!data || data.erro) return;
+        const trab = data.trabalhos || 0, des = data.desafios || 0, total = trab + des;
+        pintar('trabalhos', trab); pintar('desafios', des);
+        document.title = (total ? `(${total}) ` : '') + tituloBase;
+        if (anterior !== null && total > anterior && data.ultimo) {
+            const u = data.ultimo;
+            const jaEstaNaPagina = (u.tipo === 'trabalho' && paginaAtivaId === 'trabalhos') || (u.tipo === 'desafio' && paginaAtivaId === 'desafios');
+            if (!jaEstaNaPagina && window.PibiexA11y && window.PibiexA11y.aviso) {
+                window.PibiexA11y.aviso(`${u.tipo === 'trabalho' ? 'Novo trabalho' : 'Novo envio de desafio'}: ${u.aluno}${u.titulo ? ' — ' + u.titulo : ''}`);
+            }
+        }
+        anterior = total;
+    }
+
+    ver();
+    setInterval(ver, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) ver(); });
+}
+
 async function iniciarShellEquipe(paginaAtivaId) {
     injetarManifestoEIcone();
 
@@ -723,6 +765,7 @@ async function iniciarShellEquipe(paginaAtivaId) {
     montarMenuLateralEquipe(paginaAtivaId);
     montarTopoEquipe(sessao.dados);
     iniciarIndicadorEnquetes();
+    iniciarPendencias(paginaAtivaId);
 
     return { token: sessao.token, dados: sessao.dados };
 }
