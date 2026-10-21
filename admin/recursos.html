@@ -10,7 +10,11 @@
     <script src="/painel-listas.js"></script>
     <link rel="stylesheet" href="/fonts/inter.css">
     <script src="/vendor/supabase/supabase.js"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .zona-arquivo { border: 2px dashed #cbd5e1; border-radius: 12px; background: #fff; transition: border-color .15s, background .15s; }
+        .zona-arquivo.arrastando { border-color: #2563eb; background: #eff6ff; }
+    </style>
 </head>
 <body class="flex min-h-screen bg-gray-50">
 
@@ -49,10 +53,23 @@
                         <input id="novo-ordem" type="number" value="0" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">URL</label>
-                    <input id="novo-url" required type="url" placeholder="https://..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                <div class="flex gap-4 text-sm font-semibold text-gray-700" role="radiogroup" aria-label="Origem do recurso">
+                    <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="modo-novo" value="arquivo" checked> Enviar arquivo</label>
+                    <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="modo-novo" value="link"> Colar link</label>
                 </div>
+                <div id="bloco-arquivo-novo">
+                    <label id="zona-novo" class="zona-arquivo flex flex-col items-center justify-center gap-1 px-4 py-6 text-center cursor-pointer">
+                        <span id="zona-texto-novo" class="text-sm font-semibold text-gray-700">Arraste o arquivo aqui ou clique para escolher</span>
+                        <span class="text-xs text-gray-500">PDF, PPTX, PNG, JPG, WEBP ou MP4 · até 20 MB</span>
+                        <input type="file" id="novo-arquivo" class="sr-only" accept=".pdf,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.mp4">
+                    </label>
+                    <label class="flex items-center gap-1.5 text-xs text-gray-600 mt-2"><input type="checkbox" id="novo-baixar" checked> Permitir que o aluno baixe o arquivo</label>
+                </div>
+                <div id="bloco-link-novo" class="hidden">
+                    <label for="novo-url" class="block text-xs font-bold text-gray-500 mb-1">URL</label>
+                    <input id="novo-url" type="url" placeholder="https://..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <p id="msg-envio" class="hidden text-xs font-semibold text-blue-700" role="status"></p>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">Descrição (opcional)</label>
                     <input id="novo-descricao" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
@@ -98,6 +115,41 @@
             return data;
         }
 
+        const LIMITE_BYTES = 20 * 1024 * 1024;
+        const EXTENSOES = ['pdf', 'pptx', 'ppt', 'png', 'jpg', 'jpeg', 'webp', 'mp4'];
+
+        function formatarTamanho(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KB';
+            return (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+        }
+
+        function validarArquivo(arquivo) {
+            const i = arquivo.name.lastIndexOf('.');
+            const ext = i > 0 ? arquivo.name.slice(i + 1).toLowerCase() : '';
+            if (!EXTENSOES.includes(ext)) return 'Tipo não permitido. Envie PDF, PPTX, PNG, JPG, WEBP ou MP4.';
+            if (arquivo.size > LIMITE_BYTES) return `O arquivo tem ${formatarTamanho(arquivo.size)} e o limite é 20 MB.`;
+            if (arquivo.size === 0) return 'O arquivo está vazio.';
+            return null;
+        }
+
+        // Envia o arquivo direto ao armazenamento privado e devolve os dados para salvar no recurso.
+        async function enviarArquivo(arquivo) {
+            const preparo = await chamarGerenciarRecursos('gerar_url_upload', { nomeArquivo: arquivo.name, tamanho: arquivo.size });
+            if (!preparo) throw new Error('Não foi possível preparar o envio.');
+            const { error } = await window.supabaseClient.storage
+                .from('materiais')
+                .uploadToSignedUrl(preparo.caminho, preparo.token, arquivo, { contentType: preparo.mime });
+            if (error) throw new Error('Não foi possível enviar o arquivo. Tente de novo.');
+            return { arquivoCaminho: preparo.caminho, arquivoNome: arquivo.name, arquivoTamanho: arquivo.size };
+        }
+
+        function mostrarEnvio(texto) {
+            const el = document.getElementById('msg-envio');
+            el.textContent = texto || '';
+            el.classList.toggle('hidden', !texto);
+        }
+
         async function carregarRecursos() {
             const resultado = await chamarGerenciarRecursos('listar', {});
             if (!resultado) {
@@ -137,7 +189,12 @@
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
                             <input id="edit-titulo-${r.id}" value="${L.esc(r.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold" aria-label="Título">
-                            <input id="edit-url-${r.id}" value="${L.esc(r.url)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="URL">
+                            ${r.arquivo_caminho ? `
+                                <p class="text-xs text-gray-700">${icone('anexo', 14)} <b>${L.esc(r.arquivo_nome || 'arquivo')}</b>${r.arquivo_tamanho ? ' · ' + formatarTamanho(r.arquivo_tamanho) : ''}</p>
+                                <label class="block text-xs font-bold text-gray-500" for="edit-arquivo-${r.id}">Trocar o arquivo (opcional)</label>
+                                <input type="file" id="edit-arquivo-${r.id}" accept=".pdf,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.mp4" class="block w-full text-xs text-gray-600">
+                                <label class="flex items-center gap-1.5 text-xs text-gray-600"><input type="checkbox" id="edit-baixar-${r.id}" ${r.permite_baixar !== false ? 'checked' : ''}> Permitir que o aluno baixe</label>`
+                              : `<input id="edit-url-${r.id}" value="${L.esc(r.url || '')}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="URL">`}
                             <input id="edit-descricao-${r.id}" value="${L.esc(r.descricao || '')}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Descrição">
                             <div class="flex gap-2 flex-wrap">
                                 <select id="edit-tipo-${r.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Tipo">${opcoesTipo(r.tipo)}</select>
@@ -153,7 +210,9 @@
                             <span class="shrink-0 text-gray-500">${icone(ICONE_POR_TIPO[r.tipo] || 'link', 24)}</span>
                             <div class="min-w-0">
                                 <p class="font-bold text-gray-800 text-sm flex items-center gap-2 flex-wrap">${L.esc(r.titulo)} <span class="chip azul">${L.esc(ROTULO_TIPO[r.tipo] || r.tipo)}</span></p>
-                                <a href="${L.esc(/^https?:\/\//i.test(r.url) ? r.url : '#')}" target="_blank" rel="noopener" class="text-blue-700 text-xs truncate block hover:underline">${L.esc(r.url)}</a>
+                                ${r.arquivo_caminho
+                                    ? `<p class="text-xs text-gray-600 truncate">${icone('anexo', 14)} ${L.esc(r.arquivo_nome || 'arquivo')}${r.arquivo_tamanho ? ' · ' + formatarTamanho(r.arquivo_tamanho) : ''}${r.permite_baixar === false ? ' · sem download' : ''}</p>`
+                                    : `<a href="${L.esc(/^https?:\/\//i.test(r.url) ? r.url : '#')}" target="_blank" rel="noopener" class="text-blue-700 text-xs truncate block hover:underline">${L.esc(r.url)}</a>`}
                                 ${r.descricao ? `<p class="text-xs text-gray-600 mt-0.5">${L.esc(r.descricao)}</p>` : ''}
                             </div>
                         </div>
@@ -175,21 +234,68 @@
         document.getElementById('btn-cancelar-recurso').addEventListener('click', () => { document.getElementById('form-novo').reset(); mostrarFormulario(false); });
 
 
+        function modoNovo() { return document.querySelector('input[name="modo-novo"]:checked').value; }
+        document.querySelectorAll('input[name="modo-novo"]').forEach((r) => r.addEventListener('change', () => {
+            const arquivo = modoNovo() === 'arquivo';
+            document.getElementById('bloco-arquivo-novo').classList.toggle('hidden', !arquivo);
+            document.getElementById('bloco-link-novo').classList.toggle('hidden', arquivo);
+        }));
+
+        const campoArquivo = document.getElementById('novo-arquivo');
+        const zona = document.getElementById('zona-novo');
+        campoArquivo.addEventListener('change', () => {
+            const arq = campoArquivo.files[0];
+            const texto = document.getElementById('zona-texto-novo');
+            if (!arq) { texto.textContent = 'Arraste o arquivo aqui ou clique para escolher'; return; }
+            const problema = validarArquivo(arq);
+            if (problema) { PibiexA11y.aviso(problema); campoArquivo.value = ''; texto.textContent = 'Arraste o arquivo aqui ou clique para escolher'; return; }
+            texto.textContent = `${arq.name} · ${formatarTamanho(arq.size)}`;
+            const titulo = document.getElementById('novo-titulo');
+            if (!titulo.value.trim()) titulo.value = arq.name.replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ');
+        });
+        ['dragenter', 'dragover'].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.add('arrastando'); }));
+        ['dragleave', 'drop'].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.remove('arrastando'); }));
+        zona.addEventListener('drop', (e) => {
+            if (e.dataTransfer && e.dataTransfer.files.length) { campoArquivo.files = e.dataTransfer.files; campoArquivo.dispatchEvent(new Event('change')); }
+        });
+
         document.getElementById('form-novo').addEventListener('submit', async (e) => {
             e.preventDefault();
             const titulo = document.getElementById('novo-titulo').value.trim();
             const tipo = document.getElementById('novo-tipo').value;
-            const url = document.getElementById('novo-url').value.trim();
             const descricao = document.getElementById('novo-descricao').value.trim();
             const ordem = parseInt(document.getElementById('novo-ordem').value || '0', 10);
-            if (!titulo || !url) return;
+            if (!titulo) return;
 
-            const resultado = await chamarGerenciarRecursos('criar', { titulo, tipo, url, descricao, ordem });
-            if (resultado) {
-                document.getElementById('form-novo').reset();
-                mostrarFormulario(false);
-                document.getElementById('novo-ordem').value = '0';
-                carregarRecursos();
+            const dados = { titulo, tipo, descricao, ordem };
+            const botao = e.submitter || e.target.querySelector('button[type="submit"]');
+            try {
+                if (modoNovo() === 'arquivo') {
+                    const arquivo = campoArquivo.files[0];
+                    if (!arquivo) { PibiexA11y.aviso('Escolha um arquivo para enviar.'); return; }
+                    const problema = validarArquivo(arquivo);
+                    if (problema) { PibiexA11y.aviso(problema); return; }
+                    botao.disabled = true;
+                    mostrarEnvio(`Enviando ${arquivo.name} (${formatarTamanho(arquivo.size)})…`);
+                    Object.assign(dados, await enviarArquivo(arquivo), { permiteBaixar: document.getElementById('novo-baixar').checked });
+                } else {
+                    dados.url = document.getElementById('novo-url').value.trim();
+                    if (!dados.url) { PibiexA11y.aviso('Cole o endereço do recurso.'); return; }
+                }
+                const resultado = await chamarGerenciarRecursos('criar', dados);
+                if (resultado) {
+                    document.getElementById('form-novo').reset();
+                    document.getElementById('zona-texto-novo').textContent = 'Arraste o arquivo aqui ou clique para escolher';
+                    document.querySelector('input[name="modo-novo"][value="arquivo"]').dispatchEvent(new Event('change'));
+                    mostrarFormulario(false);
+                    document.getElementById('novo-ordem').value = '0';
+                    carregarRecursos();
+                }
+            } catch (erro) {
+                PibiexA11y.aviso(erro.message || 'Erro ao salvar. Tente novamente.');
+            } finally {
+                mostrarEnvio('');
+                if (botao) botao.disabled = false;
             }
         });
 
@@ -199,13 +305,31 @@
         window.salvarRecurso = async (recursoId) => {
             const titulo = document.getElementById(`edit-titulo-${recursoId}`).value.trim();
             const tipo = document.getElementById(`edit-tipo-${recursoId}`).value;
-            const url = document.getElementById(`edit-url-${recursoId}`).value.trim();
             const descricao = document.getElementById(`edit-descricao-${recursoId}`).value.trim();
             const ordem = parseInt(document.getElementById(`edit-ordem-${recursoId}`).value || '0', 10);
-            if (!titulo || !url) return;
+            if (!titulo) return;
 
-            const resultado = await chamarGerenciarRecursos('atualizar', { recursoId, titulo, tipo, url, descricao, ordem });
-            if (resultado) { idEmEdicao = null; carregarRecursos(); }
+            const dados = { recursoId, titulo, tipo, descricao, ordem };
+            try {
+                const campoUrl = document.getElementById(`edit-url-${recursoId}`);
+                if (campoUrl) {
+                    dados.url = campoUrl.value.trim();
+                    if (!dados.url) return;
+                } else {
+                    dados.permiteBaixar = document.getElementById(`edit-baixar-${recursoId}`).checked;
+                    const novo = document.getElementById(`edit-arquivo-${recursoId}`).files[0];
+                    if (novo) {
+                        const problema = validarArquivo(novo);
+                        if (problema) { PibiexA11y.aviso(problema); return; }
+                        PibiexA11y.aviso(`Enviando ${novo.name}…`);
+                        Object.assign(dados, await enviarArquivo(novo));
+                    }
+                }
+                const resultado = await chamarGerenciarRecursos('atualizar', dados);
+                if (resultado) { idEmEdicao = null; carregarRecursos(); }
+            } catch (erro) {
+                PibiexA11y.aviso(erro.message || 'Erro ao salvar. Tente novamente.');
+            }
         };
 
         window.excluirRecurso = async (recursoId) => {

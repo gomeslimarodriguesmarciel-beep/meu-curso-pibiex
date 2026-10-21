@@ -35,6 +35,7 @@
     <div id="assistente-flutuante"></div>
 
     <script src="shell.js"></script>
+    <script src="../leitor-material.js"></script>
     <script>
         function escaparHtml(texto) {
             const div = document.createElement('div');
@@ -74,8 +75,8 @@
             }
 
             container.innerHTML = recursos.map(r => `
-                <a href="${escaparHtml(urlSegura(r.url))}" target="_blank" rel="noopener"
-                   class="flex items-center gap-4 bg-white rounded-lg p-4 border hover:shadow-sm transition" style="border-color: var(--pibiex-borda);">
+                <${r.arquivo_caminho ? `button type="button" onclick="abrirRecurso('${escaparHtml(r.id)}')"` : `a href="${escaparHtml(urlSegura(r.url))}" target="_blank" rel="noopener"`}
+                   class="w-full text-left flex items-center gap-4 bg-white rounded-lg p-4 border hover:shadow-sm transition" style="border-color: var(--pibiex-borda);">
                     <div class="shrink-0" style="color: var(--pibiex-texto-suave);">${icone(ICONE_POR_TIPO[r.tipo] || 'link', 26)}</div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
@@ -84,15 +85,41 @@
                         </div>
                         ${r.descricao ? `<p class="text-xs mt-0.5" style="color: var(--pibiex-texto-suave);">${escaparHtml(r.descricao)}</p>` : ''}
                     </div>
-                    <span class="text-sm shrink-0" style="color: var(--pibiex-texto-suave);">Abrir →</span>
-                </a>
+                    <span class="text-sm shrink-0" style="color: var(--pibiex-texto-suave);">${r.arquivo_caminho ? 'Ler agora' : 'Abrir →'}</span>
+                </${r.arquivo_caminho ? 'button' : 'a'}>
             `).join('');
         }
+
+        async function pedirRecurso(recursoId, baixar) {
+            const token = localStorage.getItem('pibiex_aluno_token');
+            const { data, error } = await window.supabaseClient.functions.invoke('ver-material', {
+                body: { token, recursoId, baixar: !!baixar },
+            });
+            if (error || !data || data.erro) {
+                let mensagem = data && data.erro;
+                if (!mensagem && error && error.context) {
+                    try { mensagem = (await error.context.json()).erro; } catch (e) { /* sem corpo */ }
+                }
+                throw new Error(mensagem || 'Não foi possível abrir o material. Tente de novo.');
+            }
+            return data;
+        }
+
+        window.abrirRecurso = (id) => {
+            const r = TODOS.find((x) => x.id === id);
+            if (!r) return;
+            abrirLeitorMaterial({
+                titulo: r.titulo,
+                chaveProgresso: 'recurso:' + id,
+                obterArquivo: () => pedirRecurso(id, false),
+                obterDownload: async () => (await pedirRecurso(id, true)).url,
+            });
+        };
 
         async function carregar() {
             const { data, error } = await window.supabaseClient
                 .from('recursos_extras')
-                .select('titulo, tipo, url, descricao, categoria, ordem')
+                .select('id, titulo, tipo, url, descricao, categoria, ordem, arquivo_caminho, arquivo_tamanho')
                 .order('ordem', { ascending: true });
 
             if (error) {
