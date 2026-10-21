@@ -186,6 +186,7 @@ function iconeSvg(id) {
 // emojis: no painel da equipe a interface usa só ícones desenhados, como no menu.
 const CAMINHOS_ICONE = {
     editar: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/>',
+    olho: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     excluir: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12h10l1-12"/><path d="M9 7V4h6v3"/>',
     fechar: '<path d="M6 6l12 12M18 6 6 18"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
@@ -318,6 +319,9 @@ function montarTopoEquipe(dados) {
                 </p>
             </div>
             <div class="flex items-center gap-3 shrink-0">
+            ${dados.nivelAcesso === 'total' ? `<button type="button" id="btn-ver-aluno" onclick="window.verComoAluno()" title="Ver a plataforma como um aluno vê (nada é salvo)"
+                    class="shrink-0 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 px-3 py-2 text-xs font-bold text-gray-800">
+                    ${icone('olho', 16)}<span class="hidden lg:inline">Ver como aluno</span></button>` : ''}
             <div id="indicador-enquete" class="min-w-0"></div>
             <div class="relative shrink-0">
                 <button onclick="window.alternarMenuContaEquipe()" id="botao-conta-equipe" class="flex items-center rounded-full transition hover:opacity-80" aria-label="Minha conta">
@@ -344,7 +348,105 @@ function montarTopoEquipe(dados) {
     if (dados.fotoUrl === undefined) {
         atualizarFotoDoTopoUmaVez(dados);
     }
+    if (dados.nivelAcesso === 'total' && new URLSearchParams(location.search).get('simular') === '1') setTimeout(() => window.verComoAluno(), 400);
 }
+
+
+// ---------------------------------------------------------------------------
+// "Ver como aluno": escolhe um aluno e abre a tela dele em modo simulação (nada é salvo).
+// A parte que impede de gravar fica no servidor (sessão marcada como simulação) e em /simulacao.js.
+// ---------------------------------------------------------------------------
+window.verComoAluno = async function (alunoIdInicial) {
+    if (document.getElementById('modal-ver-aluno')) return;
+    const fundo = document.createElement('div');
+    fundo.id = 'modal-ver-aluno';
+    fundo.className = 'fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60';
+    fundo.innerHTML = `
+        <div role="dialog" aria-modal="true" aria-labelledby="tit-ver-aluno" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="px-6 pt-6 pb-3">
+                <h2 id="tit-ver-aluno" class="text-lg font-black text-gray-900">Ver como aluno</h2>
+                <p class="text-sm text-gray-600 mt-1">Você vai ver a plataforma exatamente como o aluno vê, com os dados dele em tempo real.
+                    Pode clicar e testar: <b>nada do que você fizer é salvo</b>. A simulação dura 2 horas e fica registrada.</p>
+                <input id="busca-ver-aluno" type="search" class="caixa-busca mt-4" placeholder="Buscar aluno pelo nome" aria-label="Buscar aluno pelo nome" autocomplete="off">
+            </div>
+            <div id="lista-ver-aluno" class="px-3 overflow-y-auto flex-1 min-h-[120px]" role="listbox" aria-label="Alunos">
+                <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+            </div>
+            <p id="erro-ver-aluno" class="px-6 pb-2 text-sm text-red-600 hidden" role="alert"></p>
+            <div class="px-6 py-4 flex gap-2 justify-end border-t border-gray-100">
+                <button type="button" id="cancelar-ver-aluno" class="px-4 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
+                <button type="button" id="entrar-ver-aluno" disabled class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed">Entrar na tela do aluno</button>
+            </div>
+        </div>`;
+    document.body.appendChild(fundo);
+
+    let alunos = [];
+    let escolhido = null;
+    const lista = fundo.querySelector('#lista-ver-aluno');
+    const entrar = fundo.querySelector('#entrar-ver-aluno');
+    const erro = fundo.querySelector('#erro-ver-aluno');
+    const busca = fundo.querySelector('#busca-ver-aluno');
+    const fechar = () => { fundo.remove(); document.removeEventListener('keydown', aoTeclar); };
+    const aoTeclar = (e) => { if (e.key === 'Escape') fechar(); };
+    document.addEventListener('keydown', aoTeclar);
+    fundo.addEventListener('mousedown', (e) => { if (e.target === fundo) fechar(); });
+    fundo.querySelector('#cancelar-ver-aluno').onclick = fechar;
+    busca.focus();
+
+    function desenhar() {
+        const termo = busca.value.trim().toLowerCase();
+        const vistos = alunos.filter((a) => !termo || (a.nome_completo || '').toLowerCase().includes(termo));
+        if (!vistos.length) {
+            lista.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">Nenhum aluno encontrado.</p>';
+            return;
+        }
+        lista.innerHTML = vistos.map((a) => {
+            const turma = Array.isArray(a.turmas) ? a.turmas[0] : a.turmas;
+            const bloqueado = !a.ativo || !turma || turma.ativa !== true;
+            const motivo = !a.ativo ? 'Aluno inativo' : (!turma ? 'Sem turma' : (turma.ativa !== true ? 'Turma pausada' : ''));
+            return `<button type="button" role="option" data-id="${escaparHtml(a.id)}" aria-selected="${a.id === escolhido}" ${bloqueado ? 'disabled' : ''}
+                        class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 ${a.id === escolhido ? 'border-gray-900 bg-gray-50' : 'border-transparent hover:bg-gray-50'} disabled:opacity-50 disabled:cursor-not-allowed">
+                        ${avatarHtml(a.nome_completo, null, 32)}
+                        <span class="min-w-0 flex-1"><span class="block text-sm font-bold text-gray-900 truncate">${escaparHtml(a.nome_completo)}</span>
+                        <span class="block text-xs text-gray-500">${turma ? escaparHtml(turma.nome) : 'Sem turma'}${motivo ? ' · ' + motivo : ''}</span></span></button>`;
+        }).join('');
+        lista.querySelectorAll('[data-id]').forEach((b) => {
+            b.onclick = () => { escolhido = b.dataset.id; entrar.disabled = false; erro.classList.add('hidden'); desenhar(); };
+            b.ondblclick = () => entrar.click();
+        });
+    }
+    busca.addEventListener('input', desenhar);
+
+    const { data, error } = await window.supabaseClient
+        .from('alunos')
+        .select('id, nome_completo, ativo, turma_id, turmas(nome, ativa)')
+        .order('nome_completo', { ascending: true });
+    if (error) { lista.innerHTML = '<p class="text-sm text-red-600 text-center py-8">Não foi possível carregar os alunos.</p>'; return; }
+    alunos = data || [];
+    if (alunoIdInicial && alunos.some((a) => a.id === alunoIdInicial)) { escolhido = alunoIdInicial; entrar.disabled = false; }
+    desenhar();
+    if (escolhido) { const sel = lista.querySelector('[aria-selected="true"]'); if (sel) sel.scrollIntoView({ block: 'center' }); entrar.focus(); }
+
+    entrar.onclick = async () => {
+        if (!escolhido) return;
+        entrar.disabled = true;
+        entrar.textContent = 'Abrindo...';
+        erro.classList.add('hidden');
+        const tokenEquipe = localStorage.getItem('pibiex_equipe_token');
+        const { data: r, error: e } = await window.supabaseClient.functions.invoke('simular-aluno', { body: { tokenEquipe, acao: 'iniciar', alunoId: escolhido } });
+        if (e || !r || r.erro || !r.token) {
+            erro.textContent = (r && r.erro) || 'Não foi possível abrir a tela do aluno agora. Tente de novo.';
+            erro.classList.remove('hidden');
+            entrar.disabled = false;
+            entrar.textContent = 'Entrar na tela do aluno';
+            return;
+        }
+        // a simulação vale só nesta aba (sessionStorage); o login do professor não muda
+        sessionStorage.setItem('pibiex_simulacao', JSON.stringify({ token: r.token, dados: r.aluno, expiraEm: new Date(r.expiraEm).getTime() }));
+        sessionStorage.removeItem('pibiex_simulacao_sombra');
+        location.href = '/aluno/inicio.html';
+    };
+};
 
 async function atualizarFotoDoTopoUmaVez(dados) {
     const tokenEquipe = localStorage.getItem('pibiex_equipe_token');

@@ -254,6 +254,7 @@
                             <button onclick="moverAluno('${a.id}')" class="bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg shrink-0">
                                 Mover
                             </button>
+                            ${(JSON.parse(localStorage.getItem('pibiex_equipe_dados') || '{}').nivelAcesso === 'total') ? `<button onclick="verComoAluno('${a.id}')" class="inline-flex items-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold px-4 py-2 rounded-lg shrink-0">${icone('olho', 14)} Ver como aluno</button>` : ''}
                             <button onclick="abrirModalEditar('${a.id}')" class="border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold px-4 py-2 rounded-lg shrink-0">
                                 Editar dados
                             </button>
