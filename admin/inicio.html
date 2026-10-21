@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <script src="/vendor/supabase/supabase.js"></script>
 </head>
 <body class="flex min-h-screen bg-gray-50">
@@ -19,28 +20,34 @@
         <main class="p-4 md:p-8 max-w-6xl mx-auto">
             <div class="rounded-2xl overflow-hidden mb-8 relative" style="background: var(--pibiex-gradiente);">
                 <div class="pibiex-textura-grade"></div>
-                <div class="px-8 py-7 relative">
+                <div class="px-6 md:px-8 py-7 relative">
                     <p class="text-[11px] font-black uppercase tracking-[0.16em]" style="color: var(--pibiex-acento);">Área restrita · Equipe</p>
-                    <h1 class="text-white text-3xl font-black mt-1">Painel do Professor</h1>
-                    <p class="text-blue-100/80 text-sm mt-2">Visão geral da turma PIBIEX 2026.</p>
+                    <h1 id="saudacao" class="text-white text-3xl font-black mt-1">Painel do Professor</h1>
+                    <p class="text-blue-100/80 text-sm mt-2">Veja o que precisa da sua atenção hoje e vá direto ao que importa.</p>
                 </div>
             </div>
 
-            <div id="cartoes-estatisticas" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                <p class="text-sm text-gray-400 col-span-4">Carregando estatísticas...</p>
-            </div>
+            <section aria-labelledby="titulo-atencao" class="mb-10">
+                <h2 id="titulo-atencao" class="text-xs font-black uppercase tracking-wide text-gray-500 mb-3">Precisa da sua atenção</h2>
+                <div id="atencao" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="skel col-span-3" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+                </div>
+            </section>
+
+            <div id="cartoes-estatisticas" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"></div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <section>
-                    <h2 class="text-xs font-black uppercase tracking-wide text-gray-400 mb-3">Acesso rápido</h2>
+                    <h2 class="text-xs font-black uppercase tracking-wide text-gray-500 mb-3">Acesso rápido</h2>
                     <div id="atalhos" class="grid grid-cols-2 gap-3"></div>
                 </section>
 
                 <section>
-                    <h2 class="text-xs font-black uppercase tracking-wide text-gray-400 mb-3">Avisos recentes</h2>
+                    <h2 class="text-xs font-black uppercase tracking-wide text-gray-500 mb-3">Avisos recentes</h2>
                     <div id="lista-avisos" class="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
                         <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
                     </div>
+                    <a href="avisos.html" class="inline-block mt-3 text-sm font-bold text-blue-700 hover:underline">Gerenciar avisos &rarr;</a>
                 </section>
             </div>
         </main>
@@ -48,74 +55,114 @@
 
     <script src="shell.js"></script>
     <script>
+        const L = window.PibiexLista;
         const ATALHOS = [
-            { label: 'Cadastrar Aluno', href: 'alunos.html', icone: 'alunos', cor: 'bg-blue-50 text-blue-700' },
-            { label: 'Conteúdo',        href: 'conteudo.html', icone: 'conteudo', cor: 'bg-purple-50 text-purple-700' },
-            { label: 'Atividades',      href: 'atividades.html', icone: 'atividades', cor: 'bg-amber-50 text-amber-700' },
-            { label: 'Avisos',          href: 'avisos.html', icone: 'avisos', cor: 'bg-red-50 text-red-700' },
-            { label: 'Chat da Turma',   href: 'chat.html', icone: 'chat', cor: 'bg-green-50 text-green-700' },
-            { label: 'Galeria',         href: 'galeria.html', icone: 'galeria', cor: 'bg-pink-50 text-pink-700' },
+            { label: 'Corrigir Trabalhos', href: 'trabalhos.html', icone: 'atividades', cor: 'bg-amber-50 text-amber-800' },
+            { label: 'Frequência',         href: 'frequencia.html', icone: 'frequencia', cor: 'bg-blue-50 text-blue-700' },
+            { label: 'Enquetes',           href: 'enquetes.html', icone: 'enquetes', cor: 'bg-purple-50 text-purple-700' },
+            { label: 'Cadastrar Aluno',    href: 'alunos.html', icone: 'alunos', cor: 'bg-green-50 text-green-700' },
+            { label: 'Avisos',             href: 'avisos.html', icone: 'avisos', cor: 'bg-red-50 text-red-700' },
+            { label: 'Chat da Turma',      href: 'chat.html', icone: 'chat', cor: 'bg-pink-50 text-pink-700' },
         ];
 
         function renderizarAtalhos() {
-            document.getElementById('atalhos').innerHTML = ATALHOS.map(a => `
+            document.getElementById('atalhos').innerHTML = ATALHOS.map((a) => `
                 <a href="${a.href}" class="flex items-center gap-3 ${a.cor} rounded-xl p-4 font-bold text-sm hover:opacity-80 transition">
                     ${iconeSvg(a.icone)}
                     <span>${a.label}</span>
-                </a>
-            `).join('');
+                </a>`).join('');
         }
 
-        function formatarData(dataIso) {
-            return new Date(dataIso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        function cartaoAtencao({ href, valor, rotulo, detalhe, tom }) {
+            const cores = { ambar: ['#FEF3C7', '#92400E'], verde: ['#DCFCE7', '#166534'], azul: ['#DBEAFE', '#1E40AF'], cinza: ['#F3F4F6', '#374151'] }[tom] || ['#F3F4F6', '#374151'];
+            return `<a href="${href}" class="block bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition">
+                <span class="inline-block text-xs font-black px-2.5 py-1 rounded-full" style="background:${cores[0]};color:${cores[1]}">${rotulo}</span>
+                <p class="text-3xl font-black text-gray-900 mt-3">${valor}</p>
+                <p class="text-sm text-gray-600 mt-1">${detalhe}</p>
+            </a>`;
+        }
+
+        function renderizarAtencao(pend, proxima) {
+            const t = pend ? pend.trabalhos : null, d = pend ? pend.desafios : null;
+            const cartoes = [];
+            cartoes.push(t === null
+                ? cartaoAtencao({ href: 'trabalhos.html', valor: '—', rotulo: 'Trabalhos', detalhe: 'Não foi possível contar agora.', tom: 'cinza' })
+                : cartaoAtencao({ href: 'trabalhos.html', valor: t, rotulo: t ? 'Para corrigir' : 'Em dia', detalhe: t ? (t === 1 ? 'trabalho esperando correção' : 'trabalhos esperando correção') : 'Nenhum trabalho esperando correção.', tom: t ? 'ambar' : 'verde' }));
+            cartoes.push(d === null
+                ? cartaoAtencao({ href: 'desafios.html', valor: '—', rotulo: 'Desafios', detalhe: 'Não foi possível contar agora.', tom: 'cinza' })
+                : cartaoAtencao({ href: 'desafios.html', valor: d, rotulo: d ? 'Dar nota' : 'Em dia', detalhe: d ? (d === 1 ? 'envio de desafio sem nota' : 'envios de desafio sem nota') : 'Nenhum envio de desafio sem nota.', tom: d ? 'ambar' : 'verde' }));
+            cartoes.push(proxima
+                ? cartaoAtencao({ href: 'cronograma.html', valor: L.esc(proxima.data), rotulo: 'Próxima aula', detalhe: `${L.esc(proxima.titulo)}${proxima.hora ? ' · ' + L.esc(proxima.hora) : ''}`, tom: 'azul' })
+                : cartaoAtencao({ href: 'cronograma.html', valor: '—', rotulo: 'Próxima aula', detalhe: 'Nenhuma aula marcada para os próximos dias.', tom: 'cinza' }));
+            document.getElementById('atencao').innerHTML = cartoes.join('');
+            if (pend && pend.ultimo) {
+                const u = pend.ultimo;
+                document.getElementById('atencao').insertAdjacentHTML('afterend', `<p class="text-xs text-gray-500 mt-3">Último envio: <b>${L.esc(u.aluno)}</b>${u.titulo ? ' em ' + L.esc(u.titulo) : ''}, ${L.esc(L.tempo(u.quando))}.</p>`);
+            }
         }
 
         function renderizarEstatisticas(dados) {
             const cartoes = [
-                { valor: dados.totalAlunos, label: 'Alunos cadastrados', cor: 'text-blue-700' },
-                { valor: dados.trabalhosPendentes, label: 'Trabalhos p/ corrigir', cor: 'text-amber-700' },
-                { valor: dados.totalDesafiosEnviados, label: 'Respostas a desafios', cor: 'text-green-700' },
-                { valor: dados.totalProjetosGaleria, label: 'Projetos na galeria', cor: 'text-pink-700' },
+                { valor: dados.totalAlunos, label: 'Alunos cadastrados', cor: 'text-blue-700', href: 'alunos.html' },
+                { valor: dados.totalDesafiosEnviados, label: 'Respostas a desafios', cor: 'text-green-700', href: 'desafios.html' },
+                { valor: dados.totalProjetosGaleria, label: 'Projetos na galeria', cor: 'text-pink-700', href: 'galeria.html' },
+                { valor: dados.trabalhosPendentes, label: 'Trabalhos p/ corrigir', cor: 'text-amber-700', href: 'trabalhos.html' },
             ];
-
-            document.getElementById('cartoes-estatisticas').innerHTML = cartoes.map(c => `
-                <div class="bg-white rounded-xl border border-gray-100 p-5">
-                    <p class="text-3xl font-black ${c.cor}">${c.valor}</p>
-                    <p class="text-xs font-semibold text-gray-500 mt-1">${c.label}</p>
-                </div>
-            `).join('');
+            document.getElementById('cartoes-estatisticas').innerHTML = cartoes.map((c) => `
+                <a href="${c.href}" class="block bg-white rounded-xl border border-gray-100 p-5 hover:shadow-sm transition">
+                    <p class="text-3xl font-black ${c.cor}">${c.valor ?? 0}</p>
+                    <p class="text-xs font-semibold text-gray-600 mt-1">${c.label}</p>
+                </a>`).join('');
         }
 
         function renderizarAvisos(avisos) {
             const container = document.getElementById('lista-avisos');
             if (!avisos || avisos.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-400 p-4">Nenhum aviso publicado ainda.</p>`;
+                container.innerHTML = '<div class="vazio-lista" style="border:0"><b>Nenhum aviso publicado ainda</b></div>';
                 return;
             }
-            container.innerHTML = avisos.map(a => `
-                <div class="flex items-center justify-between p-4">
-                    <p class="text-sm font-semibold text-gray-800">${escaparHtml(a.titulo)}</p>
-                    <span class="text-xs text-gray-400 shrink-0">${formatarData(a.criado_em)}</span>
-                </div>
-            `).join('');
+            container.innerHTML = avisos.map((a) => `
+                <div class="flex items-center justify-between gap-3 p-4">
+                    <p class="text-sm font-semibold text-gray-800">${L.esc(a.titulo)}</p>
+                    <span class="text-xs text-gray-500 shrink-0">${L.esc(L.tempo(a.criado_em))}</span>
+                </div>`).join('');
+        }
+
+        async function proximaAula() {
+            try {
+                const hoje = new Date().toISOString().slice(0, 10);
+                const { data } = await window.supabaseClient.from('aulas')
+                    .select('titulo, data_aula, horario_inicio').gte('data_aula', hoje).order('data_aula', { ascending: true }).limit(1);
+                const a = data && data[0];
+                if (!a) return null;
+                const [ano, mes, dia] = a.data_aula.split('-');
+                return { titulo: a.titulo, data: `${dia}/${mes}`, hora: a.horario_inicio ? a.horario_inicio.slice(0, 5) : '' };
+            } catch (e) { return null; }
         }
 
         iniciarShellEquipe('inicio').then(async (sessao) => {
             if (!sessao) return;
             renderizarAtalhos();
+            const hora = new Date().getHours();
+            const primeiro = String(sessao.dados.nomeCompleto || '').trim().split(/\s+/)[0] || '';
+            document.getElementById('saudacao').textContent = (hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite') + (primeiro ? ', ' + primeiro : '');
 
-            const { data, error } = await window.supabaseClient.functions.invoke('admin-dashboard', {
-                body: { token: sessao.token, acao: 'resumo' },
-            });
+            const [resPend, resDash, proxima] = await Promise.all([
+                window.supabaseClient.functions.invoke('admin-pendencias', { body: { tokenEquipe: sessao.token } }),
+                window.supabaseClient.functions.invoke('admin-dashboard', { body: { token: sessao.token, acao: 'resumo' } }),
+                proximaAula(),
+            ]);
+            const pend = resPend.data && !resPend.data.erro ? resPend.data : null;
+            renderizarAtencao(pend, proxima);
 
-            if (error || !data || data.erro) {
-                document.getElementById('cartoes-estatisticas').innerHTML =
-                    `<p class="text-sm text-red-600 col-span-4">Não foi possível carregar as estatísticas.</p>`;
+            const dados = resDash.data;
+            if (resDash.error || !dados || dados.erro) {
+                document.getElementById('cartoes-estatisticas').innerHTML = '<p class="text-sm text-red-600 col-span-4">Não foi possível carregar as estatísticas.</p>';
+                document.getElementById('lista-avisos').innerHTML = '';
                 return;
             }
-
-            renderizarEstatisticas(data);
-            renderizarAvisos(data.avisosRecentes);
+            renderizarEstatisticas(dados);
+            renderizarAvisos(dados.avisosRecentes);
         });
     </script>
 </body>

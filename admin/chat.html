@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link rel="stylesheet" href="/fonts/inter.css">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>
@@ -30,11 +31,7 @@
 
             <div id="seletor-turma" class="mb-6"></div>
 
-            <div class="flex flex-wrap items-center gap-2 mb-5">
-                <button id="aba-turma" onclick="trocarAba('turma')" class="px-4 py-2 rounded-full text-sm font-bold transition">Chat da turma</button>
-                <button id="aba-privado" onclick="trocarAba('privado')" class="px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2">Minhas conversas</button>
-                <button id="aba-moderacao" onclick="trocarAba('moderacao')" class="px-4 py-2 rounded-full text-sm font-bold transition">Conversas da turma</button>
-            </div>
+            <div id="abas-chat" class="mb-5"></div>
 
             <!-- ===== Chat da turma ===== -->
             <section id="painel-turma" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col" style="height: 64vh;">
@@ -723,17 +720,18 @@
         // ============================================================
         // Abas
         // ============================================================
+        let NAO_LIDAS = 0;
         function pintarAbas() {
-            for (const [id, nome] of [['aba-turma', 'turma'], ['aba-privado', 'privado'], ['aba-moderacao', 'moderacao']]) {
-                const b = document.getElementById(id);
-                b.className = 'px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2 ' +
-                    (ABA === nome ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50');
-            }
+            window.PibiexLista.abas(document.getElementById('abas-chat'), [
+                { id: 'turma', rotulo: 'Chat da turma', n: '' },
+                { id: 'privado', rotulo: 'Minhas conversas', n: NAO_LIDAS > 0 ? NAO_LIDAS : '', alerta: true },
+                { id: 'moderacao', rotulo: 'Conversas da turma', n: '' },
+            ], ABA, (id) => trocarAba(id));
         }
 
         function atualizarSeloNaoLidas(total) {
-            document.getElementById('aba-privado').innerHTML = 'Minhas conversas' +
-                (total > 0 ? ` <span class="text-[11px] font-bold text-white bg-red-600 rounded-full px-1.5 py-0.5">${total}</span>` : '');
+            NAO_LIDAS = total;
+            pintarAbas();
         }
 
         window.trocarAba = (aba) => {
