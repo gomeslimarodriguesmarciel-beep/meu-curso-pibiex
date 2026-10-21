@@ -317,7 +317,7 @@
         }
 
         function secao(titulo, corpo) {
-            return `<section class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+            return `<section class="min-w-0 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
                 <h4 class="text-[11px] font-black uppercase tracking-wide text-gray-500 mb-2">${titulo}</h4>${corpo}</section>`;
         }
 
@@ -342,7 +342,7 @@
                     </span>
                 </summary>
                 <div class="cx-corpo">
-                    <div class="grid md:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         ${secao('Acesso', `
                             <dl>
                                 ${linhaDado('Usuário', `<span class="font-mono font-bold">${escaparHtml(a.usuario)}</span>`)}
