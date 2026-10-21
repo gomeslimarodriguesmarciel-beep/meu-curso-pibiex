@@ -219,7 +219,7 @@
         };
 
         window.alternarAtiva = async (equipeId, ativo) => {
-            if (!ativo && !confirm('Desativar esta conta? A pessoa não vai conseguir mais entrar no painel.')) return;
+            if (!ativo && !(await PibiexA11y.confirmar('Desativar esta conta? A pessoa não vai conseguir mais entrar no painel.'))) return;
             const resultado = await chamarGerenciarEquipe('editar', { equipeId, ativo });
             if (resultado) carregarEquipe();
         };

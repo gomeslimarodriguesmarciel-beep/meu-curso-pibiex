@@ -431,7 +431,7 @@
 
         window.reenviarEmail = async (alunoId) => {
             const nome = nomeDe(alunoId);
-            if (!confirm(`Reenviar o e-mail de acesso (usuário + senha atual) para ${nome}?`)) return;
+            if (!(await PibiexA11y.confirmar(`Reenviar o e-mail de acesso (usuário + senha atual) para ${nome}?`))) return;
 
             const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
                 body: { tokenEquipe: TOKEN_EQUIPE, acao: 'reenviar_email', alunoId },
@@ -446,7 +446,7 @@
 
         window.liberarEmail = async (alunoId) => {
             const nome = nomeDe(alunoId);
-            if (!confirm(`Liberar o e-mail de ${nome}? Ele vai poder cadastrar um e-mail novo na próxima vez que recuperar a senha.`)) return;
+            if (!(await PibiexA11y.confirmar(`Liberar o e-mail de ${nome}? Ele vai poder cadastrar um e-mail novo na próxima vez que recuperar a senha.`))) return;
 
             const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
                 body: { tokenEquipe: TOKEN_EQUIPE, acao: 'liberar_email', alunoId },
@@ -668,7 +668,7 @@
 
         window.excluirAluno = async (alunoId) => {
             const nome = nomeDe(alunoId);
-            if (!confirm(`Excluir definitivamente o cadastro de ${nome}?\n\nIsso apaga TODOS os dados ligados a ele: trabalhos enviados, mensagens de chat, conversas com a IA, envios de desafios e laboratório, projetos na galeria e o termo de uso assinado. Não é possível desfazer.`)) return;
+            if (!(await PibiexA11y.confirmar(`Excluir definitivamente o cadastro de ${nome}?\n\nIsso apaga TODOS os dados ligados a ele: trabalhos enviados, mensagens de chat, conversas com a IA, envios de desafios e laboratório, projetos na galeria e o termo de uso assinado. Não é possível desfazer.`))) return;
 
             const { data, error } = await window.supabaseClient.functions.invoke('cadastrar-aluno', {
                 body: { tokenEquipe: TOKEN_EQUIPE, acao: 'excluir', alunoId },

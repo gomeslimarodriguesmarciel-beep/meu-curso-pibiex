@@ -336,7 +336,7 @@
         };
 
         window.excluirDesafio = async (desafioId) => {
-            if (!confirm('Excluir este desafio e todos os envios dos alunos? Essa ação não pode ser desfeita.')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este desafio e todos os envios dos alunos? Essa ação não pode ser desfeita.'))) return;
             const resultado = await chamarGerenciarDesafios('excluir', { desafioId });
             if (resultado) carregarDesafios();
         };
@@ -351,7 +351,7 @@
         };
 
         window.reabrirEnvio = async (envioId) => {
-            if (!confirm('Reabrir este envio? A nota some e ele volta para a fila de correção.')) return;
+            if (!(await PibiexA11y.confirmar('Reabrir este envio? A nota some e ele volta para a fila de correção.'))) return;
             const resultado = await chamarGerenciarDesafios('reabrir_envio', { envioId });
             if (resultado) carregarDesafios();
         };

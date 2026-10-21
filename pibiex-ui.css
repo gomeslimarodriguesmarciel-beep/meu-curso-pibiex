@@ -324,3 +324,22 @@ html.a11y-contraste .ouvir-player { background: #000; border-color: #fff; }
 html.a11y-contraste .ouvir-btn, html.a11y-contraste .ouvir-campos select { border-color: #111827; }
 html.a11y-contraste .a11y-ouvir .desc, html.a11y-contraste .ouvir-nota { color: #111827; }
 
+/* ---------------------------------------------------------------- janelas de confirmação e de pergunta */
+.dlg-fundo { position: fixed; inset: 0; z-index: 2147483200; background: rgba(15,23,42,.62); display: flex; align-items: center; justify-content: center; padding: 16px; animation: dlg-fade .15s ease; }
+.dlg { width: min(440px, 100%); background: #fff; color: #111827; border-radius: 18px; padding: 22px 22px 18px; box-shadow: 0 30px 70px rgba(2,6,23,.5); font-family: 'Inter', system-ui, sans-serif; animation: dlg-sobe .18s ease; }
+.dlg-titulo { margin: 0 0 8px; font-size: 17px; font-weight: 800; }
+.dlg-texto { margin: 0; font-size: 14px; line-height: 1.5; color: #374151; white-space: pre-line; overflow-wrap: anywhere; }
+.dlg-campo { display: block; width: 100%; margin-top: 14px; border: 1.5px solid #CBD5E1; border-radius: 12px; padding: 10px 12px; font-size: 15px; }
+.dlg-botoes { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.dlg-botoes button { border: 0; border-radius: 12px; padding: 11px 18px; font: 700 14px 'Inter', system-ui, sans-serif; cursor: pointer; min-height: 44px; }
+.dlg-nao { background: #F1F5F9; color: #111827; } .dlg-nao:hover { background: #E2E8F0; }
+.dlg-sim { background: #1E3A8A; color: #fff; } .dlg-sim:hover { background: #172F70; }
+.dlg-sim.perigo { background: #DC2626; } .dlg-sim.perigo:hover { background: #B91C1C; }
+.dlg-botoes button:focus-visible, .dlg-campo:focus-visible { outline: 3px solid #1E3A8A; outline-offset: 2px; }
+@keyframes dlg-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dlg-sobe { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dlg-fundo, .dlg { animation: none; } }
+@media (max-width: 480px) { .dlg-botoes { flex-direction: column-reverse; } .dlg-botoes button { width: 100%; } }
+html.a11y-contraste .dlg { border: 3px solid #000; } html.a11y-contraste .dlg-texto { color: #000; }
+html.a11y-contraste .dlg-nao { background: #fff; border: 2px solid #000; } html.a11y-contraste .dlg-sim { background: #000; } html.a11y-contraste .dlg-sim.perigo { background: #7F1D1D; }
+

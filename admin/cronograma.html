@@ -313,7 +313,7 @@
         };
 
         window.excluirModulo = async (moduloId) => {
-            if (!confirm('Excluir este módulo e todas as suas aulas? Essa ação não pode ser desfeita.')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este módulo e todas as suas aulas? Essa ação não pode ser desfeita.'))) return;
             const resultado = await chamarGerenciarCronograma('excluir_modulo', { moduloId });
             if (resultado) carregarModulos();
         };
@@ -347,7 +347,7 @@
         };
 
         window.excluirAula = async (aulaId) => {
-            if (!confirm('Excluir esta aula?')) return;
+            if (!(await PibiexA11y.confirmar('Excluir esta aula?'))) return;
             const resultado = await chamarGerenciarCronograma('excluir_aula', { aulaId });
             if (resultado) carregarModulos();
         };

@@ -249,7 +249,7 @@
         };
 
         window.excluirAviso = async (avisoId) => {
-            if (!confirm('Excluir este aviso?')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este aviso?'))) return;
             const resultado = await chamarGerenciarAvisos('excluir', { avisoId });
             if (resultado) carregarAvisos();
         };

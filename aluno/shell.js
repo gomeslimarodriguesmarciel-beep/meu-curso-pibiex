@@ -587,7 +587,7 @@ window.novoChatAssistente = async () => {
         return;
     }
 
-    if (!confirm('Isso apaga esta conversa com o assistente. Começar um novo chat?')) return;
+    if (!(await PibiexA11y.confirmar('Isso apaga esta conversa com o assistente. Começar um novo chat?'))) return;
 
     const token = localStorage.getItem('pibiex_aluno_token');
     const { data, error } = await window.supabaseClient.functions.invoke('assistente-ia', {

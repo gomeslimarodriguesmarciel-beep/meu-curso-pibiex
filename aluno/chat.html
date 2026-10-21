@@ -526,7 +526,7 @@
         };
 
         window.apagar = async (escopo, mensagemId) => {
-            if (!confirm('Apagar esta mensagem? Ela vira "mensagem apagada" para todo mundo.')) return;
+            if (!(await PibiexA11y.confirmar('Apagar esta mensagem? Ela vira "mensagem apagada" para todo mundo.'))) return;
             const funcao = escopo === 'turma' ? 'chat-turma' : 'chat-privado';
             const r = await chamar(funcao, { acao: 'apagar', mensagemId });
             if (r.erro) { alert(r.erro); return; }

@@ -229,7 +229,7 @@
                 msg.classList.remove('hidden');
                 return;
             }
-            if (!confirm('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?')) return;
+            if (!(await PibiexA11y.confirmar('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?'))) return;
 
             btn.innerText = 'Enviando...';
             btn.disabled = true;

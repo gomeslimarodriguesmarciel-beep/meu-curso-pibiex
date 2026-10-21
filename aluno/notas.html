@@ -260,7 +260,7 @@
         };
 
         window.excluirNota = async (id) => {
-            if (!confirm('Apagar esta nota? Essa ação não pode ser desfeita.')) return;
+            if (!(await PibiexA11y.confirmar('Apagar esta nota? Essa ação não pode ser desfeita.'))) return;
 
             const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-notas', {
                 body: { token: TOKEN_ALUNO, acao: 'excluir', notaId: id },

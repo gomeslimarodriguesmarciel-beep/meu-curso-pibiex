@@ -446,7 +446,7 @@
             painel.querySelector('#enq-fechar-painel').onclick = () => alternar(false);
             painel.querySelectorAll('[data-encerrar]').forEach((b) => {
                 b.onclick = async () => {
-                    if (!confirm('Encerrar esta votação agora? Ninguém mais poderá votar.')) return;
+                    if (!(await PibiexA11y.confirmar('Encerrar esta votação agora? Ninguém mais poderá votar.'))) return;
                     b.disabled = true; b.textContent = 'Encerrando…';
                     try { await config.encerrar(b.dataset.encerrar); } catch (e) { alert((e && e.message) || 'Não foi possível encerrar.'); }
                     await atualizar();

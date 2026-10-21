@@ -171,13 +171,13 @@
         };
 
         window.excluirProjeto = async (projetoId) => {
-            if (!confirm('Excluir este projeto, com todas as curtidas e comentários? Essa ação não pode ser desfeita.')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este projeto, com todas as curtidas e comentários? Essa ação não pode ser desfeita.'))) return;
             const resultado = await chamarModerarGaleria('excluir_projeto', { projetoId });
             if (resultado) carregarGaleria();
         };
 
         window.excluirComentario = async (comentarioId) => {
-            if (!confirm('Excluir este comentário?')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este comentário?'))) return;
             const resultado = await chamarModerarGaleria('excluir_comentario', { comentarioId });
             if (resultado) carregarGaleria();
         };

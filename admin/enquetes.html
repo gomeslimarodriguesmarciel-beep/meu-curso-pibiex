@@ -139,19 +139,19 @@
         }
 
         window.abrirVotacao = async (id) => {
-            if (!confirm('Abrir a votação agora? Os alunos serão avisados na tela e precisarão responder.')) return;
+            if (!(await PibiexA11y.confirmar('Abrir a votação agora? Os alunos serão avisados na tela e precisarão responder.'))) return;
             if (await chamar('abrir', { enqueteId: id })) mostrarLista();
         };
         window.encerrarVotacao = async (id) => {
-            if (!confirm('Encerrar esta votação agora? Ninguém mais poderá votar.')) return;
+            if (!(await PibiexA11y.confirmar('Encerrar esta votação agora? Ninguém mais poderá votar.'))) return;
             if (await chamar('encerrar', { enqueteId: id })) { RESULT ? verResultados(id) : mostrarLista(); }
         };
         window.reabrirVotacao = async (id) => {
-            if (!confirm('Reabrir a votação? Quem ainda não votou poderá votar de novo.')) return;
+            if (!(await PibiexA11y.confirmar('Reabrir a votação? Quem ainda não votou poderá votar de novo.'))) return;
             if (await chamar('reabrir', { enqueteId: id })) { RESULT ? verResultados(id) : mostrarLista(); }
         };
         window.excluirEnquete = async (id) => {
-            if (!confirm('Excluir esta enquete e todas as respostas? Isso não pode ser desfeito.')) return;
+            if (!(await PibiexA11y.confirmar('Excluir esta enquete e todas as respostas? Isso não pode ser desfeito.'))) return;
             if (await chamar('excluir', { enqueteId: id })) mostrarLista();
         };
 

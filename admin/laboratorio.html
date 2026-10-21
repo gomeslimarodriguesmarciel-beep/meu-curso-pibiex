@@ -260,7 +260,7 @@
         };
 
         window.excluirLaboratorio = async (laboratorioId) => {
-            if (!confirm('Excluir este problema e todos os envios dos alunos? Essa ação não pode ser desfeita.')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este problema e todos os envios dos alunos? Essa ação não pode ser desfeita.'))) return;
             const resultado = await chamarGerenciarLaboratorio('excluir', { laboratorioId });
             if (resultado) carregarLaboratorio();
         };

@@ -203,7 +203,7 @@
         };
 
         window.excluirFaq = async (faqId) => {
-            if (!confirm('Excluir esta pergunta?')) return;
+            if (!(await PibiexA11y.confirmar('Excluir esta pergunta?'))) return;
             const resultado = await chamarGerenciarFaq('excluir', { faqId });
             if (resultado) carregarFaq();
         };

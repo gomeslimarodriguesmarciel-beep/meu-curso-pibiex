@@ -210,7 +210,7 @@
         };
 
         window.excluirPrompt = async (promptId) => {
-            if (!confirm('Excluir este prompt?')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este prompt?'))) return;
             const resultado = await chamarGerenciarPrompts('excluir', { promptId });
             if (resultado) carregarPrompts();
         };

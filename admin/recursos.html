@@ -209,7 +209,7 @@
         };
 
         window.excluirRecurso = async (recursoId) => {
-            if (!confirm('Excluir este recurso?')) return;
+            if (!(await PibiexA11y.confirmar('Excluir este recurso?'))) return;
             const resultado = await chamarGerenciarRecursos('excluir', { recursoId });
             if (resultado) carregarRecursos();
         };

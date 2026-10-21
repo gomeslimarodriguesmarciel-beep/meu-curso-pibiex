@@ -504,7 +504,7 @@
             const aviso = item && item.arquivo_caminho
                 ? 'Excluir este conteúdo? O arquivo enviado também será apagado.'
                 : 'Excluir este conteúdo?';
-            if (!confirm(aviso)) return;
+            if (!(await PibiexA11y.confirmar(aviso))) return;
             const resultado = await chamarGerenciarConteudo('excluir', { conteudoId });
             if (resultado) carregarModulos();
         };

@@ -130,7 +130,7 @@
         };
 
         window.removerFoto = async () => {
-            if (!confirm('Remover sua foto de perfil?')) return;
+            if (!(await PibiexA11y.confirmar('Remover sua foto de perfil?'))) return;
             const { data, error } = await window.supabaseClient.functions.invoke('perfil-equipe', {
                 body: { tokenEquipe: TOKEN_EQUIPE, acao: 'remover_foto' },
             });

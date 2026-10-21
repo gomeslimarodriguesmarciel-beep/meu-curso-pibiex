@@ -264,7 +264,7 @@
         };
 
         window.excluirAtividade = async (atividadeId) => {
-            if (!confirm('Excluir esta atividade?')) return;
+            if (!(await PibiexA11y.confirmar('Excluir esta atividade?'))) return;
             const resultado = await chamarGerenciarAtividades('excluir', { atividadeId });
             if (resultado) carregarAtividades();
         };

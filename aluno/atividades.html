@@ -114,7 +114,7 @@
                 msg.className = 'text-xs mt-2 text-red-600';
                 return;
             }
-            if (!confirm('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?')) {
+            if (!(await PibiexA11y.confirmar('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?'))) {
                 return;
             }
 

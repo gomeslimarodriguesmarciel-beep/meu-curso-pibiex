@@ -187,7 +187,7 @@
         window.addEventListener('resize', atualizarBarraProgresso);
 
         document.getElementById('btn-nao-aceito').addEventListener('click', async () => {
-            if (!confirm('Sem aceitar o termo, não é possível usar a plataforma. Deseja sair e voltar para a tela de acesso?')) return;
+            if (!(await PibiexA11y.confirmar('Sem aceitar o termo, não é possível usar a plataforma. Deseja sair e voltar para a tela de acesso?'))) return;
             localStorage.removeItem('pibiex_aluno_token');
             localStorage.removeItem('pibiex_aluno_dados');
             window.location.href = 'login.html?sessao=termos-recusados';

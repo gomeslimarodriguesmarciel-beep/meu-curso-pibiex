@@ -205,7 +205,7 @@
                 document.getElementById('bloco_' + ids[0]).scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
-            if (!confirm('Enviar o seu voto? Depois de enviar, não é possível alterar.')) return;
+            if (!(await PibiexA11y.confirmar('Enviar o seu voto? Depois de enviar, não é possível alterar.'))) return;
 
             const botao = document.getElementById('btn-votar');
             botao.disabled = true; botao.textContent = 'Enviando...';

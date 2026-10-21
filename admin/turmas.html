@@ -201,7 +201,7 @@
         };
 
         window.pausarTurma = async (turmaId) => {
-            if (!confirm('Pausar esta turma? Os alunos dela vão perder o acesso à plataforma imediatamente, inclusive quem estiver logado agora.')) return;
+            if (!(await PibiexA11y.confirmar('Pausar esta turma? Os alunos dela vão perder o acesso à plataforma imediatamente, inclusive quem estiver logado agora.'))) return;
             const resultado = await chamarGerenciarTurmas('pausar', { turmaId });
             if (resultado) carregarTurmas();
         };
@@ -212,7 +212,7 @@
         };
 
         window.excluirTurma = async (turmaId) => {
-            if (!confirm('Excluir esta turma? Só funciona se ela estiver vazia.')) return;
+            if (!(await PibiexA11y.confirmar('Excluir esta turma? Só funciona se ela estiver vazia.'))) return;
             const resultado = await chamarGerenciarTurmas('excluir', { turmaId });
             if (resultado) carregarTurmas();
         };

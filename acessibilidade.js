@@ -276,6 +276,95 @@
     }
 
     // ------------------------------------------------------------------
+    // Janelas de confirmação e de pergunta da plataforma (no lugar de confirm() e prompt() do navegador).
+    //   await PibiexA11y.confirmar('Excluir este item?')  -> true | false
+    //   await PibiexA11y.perguntar('Quantos minutos?', '5') -> texto | null
+    // Teclado: Esc cancela, Enter confirma, Tab fica dentro da janela. O foco volta para onde estava.
+    // ------------------------------------------------------------------
+    function dialogo(cfg) {
+        return new Promise((resolve) => {
+            const anterior = document.activeElement;
+            const id = 'dlg-' + Math.random().toString(36).slice(2, 8);
+            const fundo = document.createElement('div');
+            fundo.className = 'dlg-fundo';
+            const caixa = document.createElement('div');
+            caixa.className = 'dlg';
+            caixa.setAttribute('role', 'alertdialog');
+            caixa.setAttribute('aria-modal', 'true');
+            caixa.setAttribute('aria-labelledby', id + '-t');
+            caixa.setAttribute('aria-describedby', id + '-d');
+
+            const t = document.createElement('h2');
+            t.id = id + '-t'; t.className = 'dlg-titulo'; t.textContent = cfg.titulo;
+            const d = document.createElement('p');
+            d.id = id + '-d'; d.className = 'dlg-texto'; d.textContent = cfg.texto;
+            caixa.append(t, d);
+
+            let campo = null;
+            if (cfg.campo) {
+                campo = document.createElement('input');
+                campo.className = 'dlg-campo'; campo.type = 'text'; campo.value = cfg.padrao || '';
+                campo.setAttribute('aria-label', cfg.texto);
+                caixa.appendChild(campo);
+            }
+
+            const barra = document.createElement('div');
+            barra.className = 'dlg-botoes';
+            const nao = document.createElement('button');
+            nao.type = 'button'; nao.className = 'dlg-nao'; nao.textContent = cfg.nao || 'Cancelar';
+            const sim = document.createElement('button');
+            sim.type = 'button'; sim.className = 'dlg-sim' + (cfg.perigo ? ' perigo' : ''); sim.textContent = cfg.sim || 'Confirmar';
+            barra.append(nao, sim);
+            caixa.appendChild(barra);
+            fundo.appendChild(caixa);
+            document.body.appendChild(fundo);
+
+            const fechar = (valor) => {
+                document.removeEventListener('keydown', teclas, true);
+                fundo.remove();
+                if (anterior && anterior.focus) { try { anterior.focus(); } catch (e) { /* ok */ } }
+                resolve(valor);
+            };
+            const confirmar = () => fechar(campo ? campo.value : true);
+            const cancelar = () => fechar(campo ? null : false);
+            function teclas(e) {
+                if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelar(); }
+                else if (e.key === 'Enter' && (campo ? document.activeElement === campo : document.activeElement === sim)) { e.preventDefault(); confirmar(); }
+                else if (e.key === 'Tab') {
+                    const itens = [...caixa.querySelectorAll('input, button')];
+                    const i = itens.indexOf(document.activeElement);
+                    const prox = e.shiftKey ? itens[(i <= 0 ? itens.length : i) - 1] : itens[(i + 1) % itens.length];
+                    e.preventDefault(); prox.focus();
+                }
+            }
+            document.addEventListener('keydown', teclas, true);
+            sim.onclick = confirmar;
+            nao.onclick = cancelar;
+            fundo.addEventListener('mousedown', (e) => { if (e.target === fundo) cancelar(); });
+            // em ações perigosas o foco começa em "Cancelar" (evita apagar por um Enter sem querer)
+            (campo || (cfg.perigo ? nao : sim)).focus();
+            if (campo) campo.select();
+        });
+    }
+
+    // Deduz o nome do botão e se a ação é perigosa a partir da frase.
+    function confirmar(texto, opcoes) {
+        const frase = String(texto == null ? '' : texto);
+        const verbo = (frase.match(/^\s*(Excluir|Apagar|Remover|Encerrar|Reabrir|Pausar|Desativar|Enviar|Abrir|Liberar|Reenviar|Sair)/i) || [])[1];
+        const perigo = /^(excluir|apagar|remover|desativar|pausar|encerrar)/i.test(verbo || '');
+        const cfg = Object.assign({
+            titulo: perigo ? 'Tem certeza?' : 'Confirmar',
+            texto: frase,
+            sim: verbo ? verbo.charAt(0).toUpperCase() + verbo.slice(1).toLowerCase() : 'Confirmar',
+            perigo,
+        }, opcoes || {});
+        return dialogo(cfg);
+    }
+    function perguntar(texto, padrao, opcoes) {
+        return dialogo(Object.assign({ titulo: 'Responder', texto: String(texto || ''), campo: true, padrao: padrao == null ? '' : String(padrao), sim: 'OK' }, opcoes || {}));
+    }
+
+    // ------------------------------------------------------------------
     // Botão flutuante de acessibilidade, para as páginas públicas (quem só está visitando).
     // Abre o mesmo cartão do Perfil. Na primeira visita aparece uma dica curta, uma vez só.
     // Nada disso fala com o servidor: é só este arquivo e o CSS que a página já carrega.
@@ -383,7 +472,7 @@
     }
     window.alert = mostrarAviso;
 
-    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu, botaoFlutuante, aviso: mostrarAviso, ouvir: { carregar: carregarOuvir, suportado: temVoz } };
+    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu, botaoFlutuante, confirmar, perguntar, aviso: mostrarAviso, ouvir: { carregar: carregarOuvir, suportado: temVoz } };
 
     // ------------------------------------------------------------------
     // Ajustes de leitura (depois que a página existe)

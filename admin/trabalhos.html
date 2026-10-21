@@ -362,7 +362,7 @@
         };
 
         window.reabrirTrabalho = async (trabalhoId) => {
-            if (!confirm('Reabrir este trabalho? A nota e o comentário serão apagados e o aluno volta a ver "aguardando correção".')) return;
+            if (!(await PibiexA11y.confirmar('Reabrir este trabalho? A nota e o comentário serão apagados e o aluno volta a ver "aguardando correção".'))) return;
             const resultado = await chamarCorrigirTrabalho('reabrir', { trabalhoId });
             if (!resultado) return;
             const achado = achar(trabalhoId);

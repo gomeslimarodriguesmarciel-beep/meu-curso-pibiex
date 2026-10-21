@@ -469,7 +469,7 @@
         };
 
         window.apagar = async (escopo, mensagemId) => {
-            if (!confirm('Apagar esta mensagem? Ela vira "mensagem apagada" para todo mundo.')) return;
+            if (!(await PibiexA11y.confirmar('Apagar esta mensagem? Ela vira "mensagem apagada" para todo mundo.'))) return;
             const acao = escopo === 'turma' ? 'apagar' : 'apagar_privado';
             const r = await chamar({ acao, mensagemId });
             if (r.erro) { alert(r.erro); return; }
@@ -478,7 +478,7 @@
 
         // Moderação: some de vez, e vale para mensagem de qualquer pessoa.
         window.excluirModeracao = async (mensagemId) => {
-            if (!confirm('Remover esta mensagem do chat da turma? Isso apaga de vez, sem deixar o aviso de "mensagem apagada".')) return;
+            if (!(await PibiexA11y.confirmar('Remover esta mensagem do chat da turma? Isso apaga de vez, sem deixar o aviso de "mensagem apagada".'))) return;
             const r = await chamar({ acao: 'excluir', mensagemId });
             if (r.erro) { alert(r.erro); return; }
             carregarTurma();
@@ -703,7 +703,7 @@
         };
 
         window.lerConversa = async (conversaId) => {
-            if (!confirm('Abrir esta conversa? O acesso fica registrado com data e hora.')) return;
+            if (!(await PibiexA11y.confirmar('Abrir esta conversa? O acesso fica registrado com data e hora.'))) return;
 
             const r = await chamar({ acao: 'ler_conversa', conversaId });
             if (r.erro) { alert(r.erro); return; }

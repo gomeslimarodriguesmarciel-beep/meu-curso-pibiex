@@ -351,7 +351,7 @@
         }, 15000);
 
         window.encerrarChamada = async (chamadaId) => {
-            if (!confirm('Encerrar essa chamada agora? Quem ainda não registrou não vai mais conseguir.')) return;
+            if (!(await PibiexA11y.confirmar('Encerrar essa chamada agora? Quem ainda não registrou não vai mais conseguir.'))) return;
             const resultado = await chamar('gerenciar-chamadas', { acao: 'encerrar', chamadaId });
             if (resultado) { await Promise.all([carregarAtivas(), carregarHistorico()]); desenharAbas(); }
         };
@@ -431,7 +431,7 @@
         document.getElementById('busca-historico').addEventListener('input', () => { MOSTRAR = 20; desenharHistorico(); });
 
         window.reabrirParaFaltantes = async (chamadaId, alunosIds) => {
-            const minutos = prompt('Reabrir por quantos minutos?', '5');
+            const minutos = await PibiexA11y.perguntar('Reabrir por quantos minutos?', '5');
             if (!minutos) return;
             const resultado = await chamar('gerenciar-chamadas', { acao: 'reabrir', chamadaId, duracaoMinutos: minutos, alunosIds });
             if (!resultado) return;
