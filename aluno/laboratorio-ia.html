@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link rel="stylesheet" href="/fonts/inter.css">
     <script src="/vendor/supabase/supabase.js"></script>
     <script src="/simulacao.js"></script>
@@ -23,6 +24,7 @@
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Laboratório de IA</h1>
             <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Problemas práticos para resolver usando ferramentas de IA. Envie um texto e/ou um link com sua solução.</p>
 
+            <div id="abas-laboratorio" class="mb-4"></div>
             <div id="lista-laboratorio" class="space-y-4">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
@@ -47,8 +49,29 @@
         const ROTULO_DIFICULDADE = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' };
         const COR_DIFICULDADE = { facil: '#15803D', medio: '#8A6D1E', dificil: '#B91C1C' };
 
-        function renderizar(labs, enviosPorLab) {
+        const L = window.PibiexLista;
+        let LABS = [], ENVIOS = {}, ABA = null, ABERTO = null;
+
+        function renderizar(labsNovos, enviosNovos) {
+            if (labsNovos) { LABS = labsNovos; ENVIOS = enviosNovos || {}; }
+            const enviosPorLab = ENVIOS;
             const container = document.getElementById('lista-laboratorio');
+            let labs = LABS;
+
+            if (labs && labs.length) {
+                const nFazer = labs.filter((l) => !enviosPorLab[l.id]).length;
+                if (ABA === null) { ABA = nFazer ? 'afazer' : 'enviados'; const p = labs.slice().reverse().find((l) => ABA === 'afazer' ? !enviosPorLab[l.id] : enviosPorLab[l.id]); ABERTO = ABA === 'afazer' && p ? p.id : null; }
+                L.abas(document.getElementById('abas-laboratorio'), [
+                    { id: 'afazer', rotulo: 'A fazer', n: nFazer, alerta: nFazer > 0 },
+                    { id: 'enviados', rotulo: 'Enviados', n: labs.length - nFazer },
+                    { id: 'todos', rotulo: 'Todos', n: labs.length },
+                ], ABA, (id) => { ABA = id; ABERTO = null; renderizar(); });
+                labs = labs.filter((l) => ABA === 'todos' || (ABA === 'afazer' ? !enviosPorLab[l.id] : !!enviosPorLab[l.id])).slice().reverse();
+                if (!labs.length) {
+                    container.innerHTML = `<div class="vazio-lista"><b>${ABA === 'afazer' ? 'Tudo em dia' : 'Nada por aqui'}</b>${ABA === 'afazer' ? 'Você não tem problemas pendentes no laboratório.' : 'Os problemas que você enviar aparecem aqui.'}</div>`;
+                    return;
+                }
+            }
 
             if (!labs || labs.length === 0) {
                 container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum problema publicado ainda.</p>`;
@@ -60,11 +83,17 @@
                 const corDif = COR_DIFICULDADE[lab.dificuldade] || 'var(--pibiex-texto-suave)';
 
                 return `
-                    <div class="bg-white rounded-lg p-5 border" style="border-color: var(--pibiex-borda);">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <p class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(lab.titulo)}</p>
-                            ${lab.dificuldade ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: ${corDif};">${escaparHtml(ROTULO_DIFICULDADE[lab.dificuldade] || lab.dificuldade)}</span>` : ''}
-                        </div>
+                    <details class="cx" data-id="${escaparHtml(lab.id)}" ${ABERTO === lab.id ? 'open' : ''}>
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${escaparHtml(lab.titulo)}</span>
+                                <span class="flex flex-wrap gap-1.5 mt-2">
+                                    ${envio ? '<span class="chip azul">Enviado</span>' : '<span class="chip ambar">A fazer</span>'}
+                                    ${lab.dificuldade ? `<span class="chip ${lab.dificuldade === 'facil' ? 'verde' : lab.dificuldade === 'dificil' ? 'vermelho' : 'ambar'}">${escaparHtml(ROTULO_DIFICULDADE[lab.dificuldade] || lab.dificuldade)}</span>` : ''}
+                                </span>
+                            </span>
+                        </summary>
+                        <div class="cx-corpo">
                         <p class="text-sm mb-2" style="color: var(--pibiex-texto-suave);">${escaparHtml(lab.problema)}</p>
                         ${lab.instrucoes ? `<p class="text-xs mb-4 italic" style="color: var(--pibiex-texto-suave);">${escaparHtml(lab.instrucoes)}</p>` : ''}
 
@@ -89,9 +118,14 @@
                             </div>
                             <p id="msg-${lab.id}" class="text-xs hidden"></p>
                         </div>
-                    </div>
+                        </div>
+                    </details>
                 `;
             }).join('');
+
+            container.querySelectorAll('details.cx').forEach((det) => {
+                det.addEventListener('toggle', () => { if (det.open) ABERTO = det.dataset.id; else if (ABERTO === det.dataset.id) ABERTO = null; });
+            });
         }
 
         window.enviarResposta = async (laboratorioId) => {

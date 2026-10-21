@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link rel="stylesheet" href="/fonts/inter.css">
     <script src="/vendor/supabase/supabase.js"></script>
     <script src="/simulacao.js"></script>
@@ -23,7 +24,17 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">Conteúdo dos módulos</h1>
             <p class="text-gray-500 mb-6">Slides, PDFs, vídeos e links de cada módulo do curso.</p>
 
-            <div id="lista-modulos" class="space-y-6">
+            <div id="barra-conteudo" class="hidden mb-5">
+                <div class="flex flex-wrap items-center gap-3 mb-3">
+                    <input id="busca-conteudo" type="search" class="caixa-busca" style="flex:1;min-width:220px" placeholder="Buscar material pelo título" aria-label="Buscar material pelo título" autocomplete="off">
+                    <button type="button" id="expandir-tudo" class="border bg-white text-sm font-bold px-4 py-2.5 rounded-xl" style="border-color: var(--pibiex-borda);">Abrir todos</button>
+                    <button type="button" id="recolher-tudo" class="border bg-white text-sm font-bold px-4 py-2.5 rounded-xl" style="border-color: var(--pibiex-borda);">Fechar todos</button>
+                </div>
+                <div id="abas-tipos"></div>
+            </div>
+            <div id="sem-resultado" class="vazio-lista hidden"><b>Nada encontrado</b>Mude a busca ou o tipo.</div>
+
+            <div id="lista-modulos" class="space-y-3">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
@@ -81,56 +92,109 @@
             pdf: 'pdf', slide: 'slide', video: 'video', link: 'link', documento: 'documento',
         };
 
+        const L = window.PibiexLista;
+        const TIPOS = { pdf: 'PDF', slide: 'Slide', video: 'Vídeo', link: 'Link', documento: 'Documento' };
+        let MODULOS = [];
+        let FILTRO_TIPO = 'todos';
+
         function renderizarConteudo(modulos) {
             const container = document.getElementById('lista-modulos');
+            MODULOS = modulos || [];
+            document.getElementById('barra-conteudo').classList.toggle('hidden', MODULOS.length === 0);
 
-            if (!modulos || modulos.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum módulo cadastrado ainda.</p>';
+            if (MODULOS.length === 0) {
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum módulo cadastrado ainda</b>Quando o professor publicar, o material aparece aqui.</div>';
                 return;
             }
 
-            container.innerHTML = modulos.map((modulo) => {
-                const itensHtml = (modulo.conteudos || []).length === 0
-                    ? '<p class="text-gray-400 text-sm px-5 pb-4">Nenhum conteúdo neste módulo ainda.</p>'
-                    : modulo.conteudos.map(item => {
+            // abre só o módulo mais recente que já tem material
+            const comMaterial = MODULOS.filter((m) => (m.conteudos || []).length);
+            const aberto = (comMaterial.length ? comMaterial[comMaterial.length - 1] : MODULOS[MODULOS.length - 1]).id;
+
+            container.innerHTML = MODULOS.map((modulo) => {
+                const itens = modulo.conteudos || [];
+                const itensHtml = itens.length === 0
+                    ? '<p class="text-sm px-5 py-4" style="color: var(--pibiex-texto-suave);">Nenhum conteúdo neste módulo ainda.</p>'
+                    : itens.map((item) => {
                         ITENS[item.id] = item;
                         const miolo = `
                             <div class="shrink-0" style="color: var(--pibiex-texto-suave);">${icone(ICONE_POR_TIPO[item.tipo] || 'documento', 26)}</div>
                             <div class="flex-1 min-w-0">
                                 <p class="font-bold text-gray-800 text-sm group-hover:text-blue-700">${escaparHtml(item.titulo)}</p>
-                                ${item.descricao ? `<p class="text-gray-500 text-xs truncate">${escaparHtml(item.descricao)}</p>` : ''}
+                                ${item.descricao ? `<p class="text-gray-600 text-xs truncate">${escaparHtml(item.descricao)}</p>` : ''}
                             </div>`;
+                        const dados = `data-item data-tipo="${escaparHtml(item.tipo)}" data-texto="${escaparHtml(((item.titulo || '') + ' ' + (item.descricao || '')).toLowerCase())}"`;
 
                         // Material em arquivo: abre no leitor da própria plataforma.
                         if (item.arquivo_caminho) {
                             const tamanho = item.arquivo_tamanho ? ` · ${formatarTamanho(item.arquivo_tamanho)}` : '';
                             return `
-                                <button type="button" onclick="abrirMaterial('${item.id}')"
+                                <button type="button" ${dados} onclick="abrirMaterial('${item.id}')"
                                         class="w-full text-left flex items-center gap-4 px-5 py-3 border-t border-gray-100 hover:bg-blue-50/50 transition group">
                                     ${miolo}
-                                    <span class="text-blue-600 group-hover:text-blue-800 text-sm font-semibold shrink-0">Ler agora<span class="text-gray-400 font-normal text-xs">${tamanho}</span></span>
+                                    <span class="text-blue-700 group-hover:text-blue-900 text-sm font-semibold shrink-0">Ler agora<span class="text-gray-500 font-normal text-xs">${tamanho}</span></span>
                                 </button>`;
                         }
 
                         return `
-                            <a href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener"
+                            <a ${dados} href="${escaparHtml(urlSegura(item.url))}" target="_blank" rel="noopener"
                                class="flex items-center gap-4 px-5 py-3 border-t border-gray-100 hover:bg-blue-50/50 transition group">
                                 ${miolo}
-                                <span class="text-gray-300 group-hover:text-blue-500 text-sm shrink-0">Abrir →</span>
+                                <span class="text-gray-500 group-hover:text-blue-600 text-sm shrink-0">Abrir &rarr;</span>
                             </a>`;
                     }).join('');
 
+                const porTipo = {};
+                itens.forEach((i) => { porTipo[i.tipo] = (porTipo[i.tipo] || 0) + 1; });
+                const chips = Object.keys(TIPOS).filter((t) => porTipo[t]).map((t) => `<span class="chip cinza">${porTipo[t]} ${TIPOS[t]}</span>`).join('');
+
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="px-5 py-4 bg-blue-950">
-                            <p class="text-white font-black">${escaparHtml(modulo.titulo)}</p>
-                            ${modulo.descricao ? `<p class="text-blue-200 text-xs mt-0.5">${escaparHtml(modulo.descricao)}</p>` : ''}
-                        </div>
-                        ${itensHtml}
-                    </div>
-                `;
+                    <details class="cx" data-modulo="${escaparHtml(modulo.id)}" data-titulo="${escaparHtml((modulo.titulo || '').toLowerCase())}" ${modulo.id === aberto ? 'open' : ''}>
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${escaparHtml(modulo.titulo)}</span>
+                                ${modulo.descricao ? `<span class="cx-sub block">${escaparHtml(modulo.descricao)}</span>` : ''}
+                                <span class="flex flex-wrap gap-1.5 mt-2"><span class="chip ${itens.length ? 'azul' : 'cinza'}">${itens.length} ${itens.length === 1 ? 'material' : 'materiais'}</span>${chips}</span>
+                            </span>
+                        </summary>
+                        <div>${itensHtml}</div>
+                    </details>`;
             }).join('');
+
+            desenharAbasTipos();
+            aplicarFiltro();
         }
+
+        function desenharAbasTipos() {
+            const todos = MODULOS.flatMap((m) => m.conteudos || []);
+            const itens = [{ id: 'todos', rotulo: 'Todos', n: todos.length }]
+                .concat(Object.keys(TIPOS).map((t) => ({ id: t, rotulo: TIPOS[t], n: todos.filter((i) => i.tipo === t).length })).filter((t) => t.n > 0));
+            if (!itens.some((i) => i.id === FILTRO_TIPO)) FILTRO_TIPO = 'todos';
+            L.abas(document.getElementById('abas-tipos'), itens, FILTRO_TIPO, (id) => { FILTRO_TIPO = id; desenharAbasTipos(); aplicarFiltro(); });
+        }
+
+        function aplicarFiltro() {
+            const termo = document.getElementById('busca-conteudo').value.trim().toLowerCase();
+            const filtrando = FILTRO_TIPO !== 'todos' || !!termo;
+            let algum = false;
+            document.querySelectorAll('#lista-modulos details.cx').forEach((det) => {
+                const moduloCasa = !!termo && det.dataset.titulo.includes(termo);
+                let visiveis = 0;
+                det.querySelectorAll('[data-item]').forEach((linha) => {
+                    const ok = (FILTRO_TIPO === 'todos' || linha.dataset.tipo === FILTRO_TIPO) && (!termo || moduloCasa || linha.dataset.texto.includes(termo));
+                    linha.hidden = !ok;
+                    if (ok) visiveis++;
+                });
+                const mostrar = !filtrando || visiveis > 0 || (moduloCasa && FILTRO_TIPO === 'todos');
+                det.hidden = !mostrar;
+                if (mostrar) algum = true;
+                if (filtrando && mostrar && visiveis > 0) det.open = true;
+            });
+            document.getElementById('sem-resultado').classList.toggle('hidden', !filtrando || algum);
+        }
+        document.getElementById('busca-conteudo').addEventListener('input', aplicarFiltro);
+        document.getElementById('expandir-tudo').addEventListener('click', () => document.querySelectorAll('#lista-modulos details.cx').forEach((d) => { d.open = true; }));
+        document.getElementById('recolher-tudo').addEventListener('click', () => document.querySelectorAll('#lista-modulos details.cx').forEach((d) => { d.open = false; }));
 
         async function carregarConteudo(dadosAluno) {
             const { data: modulos, error } = await window.supabaseClient

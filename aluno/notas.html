@@ -90,6 +90,7 @@
                 </div>
             </div>
 
+            <input id="busca-nota" type="search" class="caixa-busca mt-6" placeholder="Buscar nas minhas notas" aria-label="Buscar nas minhas notas" autocomplete="off" style="max-width:420px">
             <div id="grade-notas" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
@@ -239,7 +240,14 @@
                 return;
             }
 
-            grade.innerHTML = notas.map((n) => `
+            const termo = document.getElementById('busca-nota').value.trim().toLowerCase();
+            const visiveis = notas.filter((n) => !termo || `${n.titulo || ''} ${(n.conteudo || '').replace(/<[^>]*>/g, ' ')}`.toLowerCase().includes(termo));
+            if (visiveis.length === 0) {
+                grade.innerHTML = '<div class="vazio-lista col-span-full"><b>Nenhuma nota encontrada</b>Tente outras palavras.</div>';
+                return;
+            }
+
+            grade.innerHTML = visiveis.map((n) => `
                 <div class="cartao-nota bg-white rounded-lg border p-4 flex flex-col" style="border-color: var(--pibiex-borda);">
                     ${n.titulo ? `<p class="font-semibold text-[14px] mb-1.5" style="color: var(--pibiex-texto);">${escaparHtml(n.titulo)}</p>` : ''}
                     <div class="nota-conteudo text-[13.5px] leading-relaxed flex-1 mb-3" style="color: var(--pibiex-texto);">${n.conteudo}</div>
@@ -253,6 +261,8 @@
                 </div>
             `).join('');
         }
+
+        document.getElementById('busca-nota').addEventListener('input', renderizarNotas);
 
         window.editarNota = (id) => {
             const nota = notas.find((n) => n.id === id);
