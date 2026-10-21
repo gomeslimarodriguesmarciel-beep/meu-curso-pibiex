@@ -493,7 +493,7 @@
                         <div class="h-2 rounded-full bg-gray-100 overflow-hidden mt-1.5"><div class="h-full rounded-full" style="width:${Math.min(100, pct)}%;background:${cor}"></div></div>
                     </div>
                     <div class="text-right shrink-0">
-                        <p class="text-sm font-black text-gray-900">${esc(r.horas_conquistadas)}h <span class="text-gray-500 font-semibold">/ ${esc(r.horas_possiveis)}h</span></p>
+                        <p class="text-sm font-black text-gray-900">${esc(r.horas_conquistadas)}h</p>
                         <p class="text-xs font-bold" style="color:${cor}">${pct}%</p>
                     </div>
                 </div>`;
@@ -530,7 +530,7 @@
             doc.setFont('helvetica', 'normal');
             [...RESUMO].sort((a, b) => (a.nome_completo || '').localeCompare(b.nome_completo || '', 'pt-BR')).forEach((r) => {
                 doc.text(String(r.nome_completo), margem, y, { maxWidth: 270 });
-                doc.text(`${r.horas_conquistadas}h / ${r.horas_possiveis}h`, 340, y);
+                doc.text(`${r.horas_conquistadas}h`, 340, y);
                 doc.text(`${pctDe(r)}%`, 420, y);
                 y += 18;
                 if (y > 760) { doc.addPage(); y = margem; }
