@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/fonts/inter.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
         :root {
@@ -29,6 +29,7 @@
         .clausula + .clausula { margin-top: 1.75rem; padding-top: 1.75rem; border-top: 1px solid var(--pibiex-borda); }
         .clausula p + p { margin-top: .6rem; }
         .clausula ul { margin-top: .5rem; padding-left: 1.1rem; }
+        .clausula ul + p, .clausula p + ul { margin-top: .75rem; }
         .clausula li { list-style: disc; margin-top: .35rem; }
         .clausula li::marker { color: var(--pibiex-dourado-profundo); }
     </style>
@@ -53,90 +54,124 @@
 
                 <header class="mb-7 pb-6" style="border-bottom: 1px solid var(--pibiex-borda);">
                     <p class="text-[11px] font-black uppercase tracking-[0.14em]" style="color: var(--pibiex-dourado-profundo);">Proteção de dados pessoais</p>
-                    <h1 class="text-2xl md:text-[26px] font-black mt-2" style="color: var(--pibiex-texto);">Política de Privacidade — PIBIEX 2026</h1>
+                    <h1 class="text-2xl md:text-[26px] font-black mt-2" style="color: var(--pibiex-texto);">Política de Privacidade — PIBIEX Digital</h1>
                     <p class="text-[14px] leading-relaxed mt-3" style="color: var(--pibiex-texto-suave);">
-                        Este documento explica, em linguagem direta, quais dados pessoais a plataforma PIBIEX 2026 coleta, para que servem, com quem são compartilhados e quais direitos você (ou, no caso de aluno menor de idade, seu responsável legal) tem sobre eles, nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).
+                        Este documento explica, em linguagem direta, quais dados pessoais a plataforma PIBIEX Digital coleta, para que servem, com quem passam, por quanto tempo ficam guardados e quais direitos você (ou, no caso de aluno menor de idade, seu responsável legal) tem sobre eles, nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).
                     </p>
-                    <p class="text-[12px] font-semibold mt-3" style="color: var(--pibiex-texto-suave);">Última atualização: 13 de agosto de 2026.</p>
+                    <p class="text-[12px] font-semibold mt-3" style="color: var(--pibiex-texto-suave);">Última atualização: 21 de outubro de 2026.</p>
                 </header>
 
                 <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">1. Quem trata os seus dados</h2>
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">1. Quem é o responsável pelos seus dados</h2>
                     <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>Os dados coletados pela plataforma são tratados pelo professor coordenador do curso, responsável pelo PIBIEX 2026 nesta turma, no âmbito do programa de extensão da UNITINS. É ele quem decide o que é coletado, para quê, e é a pessoa a ser contatada para qualquer dúvida ou solicitação relacionada aos seus dados (veja a seção 8).</p>
+                        <p>O responsável pela plataforma e pelas decisões sobre os seus dados pessoais (o “controlador”, na linguagem da LGPD) é <strong style="color: var(--pibiex-texto);">Marciel Gomes Lima Rodrigues</strong>, que desenvolveu e mantém o PIBIEX Digital como projeto independente. A plataforma é usada no curso de extensão em Inteligência Artificial em Ponte Alta do Tocantins e <strong>não é um site oficial da UNITINS</strong>.</p>
+                        <p>É ele também quem atende os pedidos sobre dados pessoais (encarregado de dados). Para falar sobre qualquer assunto desta política, procure o professor responsável pela turma, pessoalmente ou pelo chat privado da própria plataforma.</p>
                     </div>
                 </section>
 
                 <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">2. Quais dados coletamos e por quê</h2>
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">2. Quais dados coletamos e para quê</h2>
                     <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p><strong style="color: var(--pibiex-texto);">2.1. Dados de cadastro.</strong> Nome completo, data de nascimento e, quando informado, e-mail. Usamos isso para identificar você como aluno matriculado, gerar seu usuário de acesso automaticamente e, se houver e-mail cadastrado, enviar sua senha e permitir a recuperação de acesso.</p>
-                        <p><strong style="color: var(--pibiex-texto);">2.2. Dados de acesso.</strong> Usuário, senha (armazenada de forma criptografada — nunca em texto legível, nem mesmo para o professor) e um token de sessão gerado a cada login. Usamos isso para autenticar quem está usando a plataforma.</p>
-                        <p><strong style="color: var(--pibiex-texto);">2.3. Endereço IP e navegador.</strong> Registrados no momento do login e no momento em que você aceita o Termo de Uso e Responsabilidade. Serve como evidência técnica de quem realizou aquela ação, e para bloquear tentativas de acesso indevidas (excesso de tentativas de senha, por exemplo).</p>
-                        <p><strong style="color: var(--pibiex-texto);">2.4. Conteúdo que você produz na plataforma.</strong> Trabalhos e atividades enviados, respostas de desafios semanais e do laboratório, mensagens no chat da turma e em conversas privadas, projetos e comentários publicados na Galeria, e as mensagens trocadas com o assistente de inteligência artificial. Esse conteúdo é a própria razão de ser do curso — é o que permite ao professor acompanhar e corrigir o seu aprendizado.</p>
-                    </div>
-                </section>
-
-                <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">3. Com quem compartilhamos dados</h2>
-                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p><strong style="color: var(--pibiex-texto);">3.1.</strong> Não vendemos, alugamos ou usamos seus dados para publicidade. O compartilhamento existe apenas com prestadores de serviço estritamente necessários para a plataforma funcionar, nos limites abaixo:</p>
+                        <p>Coletamos só o que a plataforma precisa para funcionar. Não pedimos CPF, endereço, telefone nem qualquer dado sensível (como saúde, religião, orientação sexual ou origem racial) — e pedimos que você também não escreva esse tipo de informação, sua ou de outras pessoas, em campos livres.</p>
                         <ul style="color: var(--pibiex-texto-suave);">
-                            <li><strong style="color: var(--pibiex-texto);">Supabase</strong> (hospedagem do banco de dados e da infraestrutura da plataforma) — hospeda todos os dados descritos na seção 2.</li>
-                            <li><strong style="color: var(--pibiex-texto);">Resend</strong> (envio de e-mail) — recebe seu e-mail e o conteúdo das mensagens automáticas enviadas pela plataforma (ex.: senha de acesso), somente quando você tem e-mail cadastrado.</li>
-                            <li><strong style="color: var(--pibiex-texto);">Google reCAPTCHA</strong> — usado na tela de login para diferenciar humanos de programas automatizados; processa dados técnicos do seu navegador no momento do login, conforme a política de privacidade do próprio Google.</li>
-                            <li><strong style="color: var(--pibiex-texto);">Google Gemini</strong> (inteligência artificial) — as mensagens que você envia ao assistente de IA da plataforma são processadas por esse serviço para gerar a resposta. Não enviamos a ele seu nome, e-mail ou qualquer outro dado de cadastro — apenas o conteúdo da conversa.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Cadastro do aluno:</strong> nome completo, data de nascimento (guardada cifrada) e, se informado, e-mail. Serve para identificar o aluno matriculado, gerar o usuário, enviar a senha provisória e permitir recuperar o acesso.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Acesso:</strong> usuário e senha (a senha é guardada de forma criptografada, nunca em texto legível) e um código de sessão a cada login.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Endereço IP e navegador:</strong> registrados no login, nas tentativas de login, na recuperação de senha e no aceite do Termo de Uso. Servem como prova técnica de quem fez a ação e para bloquear tentativas indevidas de entrar.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Trabalho no curso:</strong> respostas e arquivos de atividades, desafios semanais e laboratório, presenças nas chamadas, notas pessoais, mensagens do chat da turma e do chat privado (com anexos), projetos, curtidas e comentários da Galeria, e conversas com o assistente de inteligência artificial. É a razão de ser do curso: permite acompanhar, corrigir e certificar o aprendizado.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Enquetes:</strong> nas enquetes <em>anônimas</em>, o voto não fica ligado ao aluno (só se registra que a participação aconteceu, sem dizer o que foi respondido). Nas enquetes <em>identificadas</em>, o professor vê quem respondeu o quê, e a tela avisa isso antes de votar.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Foto de perfil (opcional):</strong> a foto fica disponível por link a quem tiver o endereço dela; não a envie se não quiser que ela possa ser aberta assim.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Avisos lidos:</strong> quando o aluno marca um aviso como lido, guardamos isso só para esconder o aviso para ele.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Equipe:</strong> nome, e-mail, cargo, usuário, senha criptografada e foto opcional das contas de professor e administrador.</li>
                         </ul>
-                        <p><strong style="color: var(--pibiex-texto);">3.2.</strong> Fora esses prestadores, e as situações excepcionais de revisão de conversas já previstas no Termo de Uso e Responsabilidade (cláusula 3), seus dados não são repassados a mais ninguém.</p>
+                        <p><strong style="color: var(--pibiex-texto);">Preferências de acessibilidade</strong> (contraste, tamanho do texto, movimento e leitura em voz) ficam <strong>só no seu aparelho</strong>; não são enviadas a nenhum servidor.</p>
                     </div>
                 </section>
 
                 <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">4. Por quanto tempo guardamos seus dados</h2>
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">3. Com quem os dados passam e onde ficam</h2>
                     <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>Mantemos seus dados enquanto você estiver matriculado no curso, para que a plataforma continue funcionando normalmente. Ao término do curso ou a pedido seu (ou do seu responsável legal), o professor pode excluir definitivamente seu cadastro pelo painel administrativo — essa exclusão apaga, de uma vez, todos os dados ligados a ele: cadastro, trabalhos enviados, mensagens, conversas com a IA, envios de desafios e laboratório, projetos na Galeria e o termo de uso assinado. Essa ação não pode ser desfeita.</p>
-                    </div>
-                </section>
-
-                <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">5. Como protegemos seus dados</h2>
-                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>Toda comunicação com a plataforma é feita por conexão criptografada (HTTPS). Sua senha nunca é guardada em texto legível. O acesso ao painel do professor é restrito à equipe autorizada, com login próprio. Adotamos limites técnicos contra tentativas automatizadas de invasão e de envio em massa (ex.: bloqueio após tentativas de senha incorretas, limites de mensagens por minuto no chat e na Galeria).</p>
-                    </div>
-                </section>
-
-                <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">6. Alunos menores de idade</h2>
-                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>Como grande parte dos alunos do PIBIEX é menor de idade, tratamos esses dados com o cuidado adicional previsto na LGPD para crianças e adolescentes, sempre no melhor interesse do aluno e restrito ao que é necessário para o funcionamento do curso. Pais e responsáveis legais podem, a qualquer momento, solicitar ao professor informações sobre quais dados de um aluno menor de idade estão cadastrados, como estão sendo usados, ou pedir a correção ou exclusão desses dados.</p>
-                    </div>
-                </section>
-
-                <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">7. Seus direitos</h2>
-                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>A LGPD garante a você (ou ao seu responsável legal, se for menor de idade) o direito de, a qualquer momento e mediante solicitação simples ao professor:</p>
+                        <p>Não vendemos, alugamos nem usamos dados para publicidade ou para criar perfis comerciais. Alguns serviços de terceiros são necessários para a plataforma existir; vários ficam fora do Brasil, o que é uma transferência internacional de dados feita para prestar o serviço:</p>
                         <ul style="color: var(--pibiex-texto-suave);">
-                            <li>confirmar se tratamos algum dado seu, e ter acesso a ele;</li>
-                            <li>corrigir dados incompletos, desatualizados ou incorretos;</li>
-                            <li>pedir a exclusão dos seus dados, salvo o que precisar ser mantido por obrigação legal;</li>
-                            <li>saber com quais terceiros seus dados são compartilhados (veja a seção 3);</li>
-                            <li>revogar, a qualquer momento, o consentimento dado — o que pode significar a perda de acesso à plataforma, já que alguns dados são indispensáveis para seu funcionamento.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Supabase</strong> (banco de dados, arquivos e funções do servidor): região do Canadá. Guarda tudo o que está na seção 2.</li>
+                            <li><strong style="color: var(--pibiex-texto);">GitHub Pages</strong> (hospedagem das páginas do site): Estados Unidos. Recebe o endereço IP de quem abre o site, como qualquer hospedagem.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Resend</strong> (envio de e-mails): Estados Unidos. Recebe o e-mail do destinatário e o texto das mensagens automáticas (como a senha provisória), só quando há e-mail cadastrado.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Google Gemini</strong> (assistente de inteligência artificial): só recebe o texto da conversa, sem nome nem dados de cadastro. Por isso, não escreva dados pessoais no assistente.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Google reCAPTCHA</strong> (tela de login): confere se quem entra é uma pessoa; processa dados técnicos do navegador, conforme a política do Google. As letras do site não vêm mais do Google: ficam no próprio site.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Vozes online (opcional):</strong> a leitura em voz alta usa a voz do seu navegador. Algumas vozes naturais (de Microsoft ou Google) geram o áudio no serviço do fabricante e, nesse caso, o texto lido sai do seu aparelho. A tela indica quais vozes são “online” e quais funcionam “neste aparelho”.</li>
+                        </ul>
+                        <p>Fora esses serviços, e a revisão de conversas prevista na seção 6, os dados não são repassados a mais ninguém, a não ser por obrigação legal.</p>
+                    </div>
+                </section>
+
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">4. Por quanto tempo guardamos</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <ul style="color: var(--pibiex-texto-suave);">
+                            <li><strong style="color: var(--pibiex-texto);">Cadastro, trabalhos, mensagens, notas, conversas com a IA, galeria:</strong> enquanto o aluno estiver matriculado. Quando o cadastro é excluído (ao fim do curso ou a pedido), tudo o que está ligado a ele é apagado de uma vez e isso não pode ser desfeito.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Termo de Uso assinado:</strong> enquanto o cadastro existir, como prova do aceite.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Sessões de login vencidas e recuperações de senha:</strong> apagadas automaticamente depois de 30 dias.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Tentativas de login (com IP):</strong> apagadas automaticamente depois de 90 dias.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Registros de acesso usados no painel e no ranking, e registros de “ver como aluno”:</strong> apagados automaticamente depois de 365 dias.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Respostas de enquetes anônimas:</strong> como não ficam ligadas a ninguém, não dá para separar as de um aluno; permanecem sem identificação.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Cópias de segurança (backup):</strong> o responsável pode gerar cópias dos dados para evitar perdas. O acesso a elas é restrito e dados excluídos deixam de constar nas cópias geradas depois da exclusão.</li>
                         </ul>
                     </div>
                 </section>
 
                 <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">8. Como falar com a gente</h2>
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">5. Alunos menores de idade</h2>
                     <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>Qualquer dúvida ou solicitação sobre seus dados pessoais — acesso, correção, exclusão, ou qualquer outra prevista na seção 7 — pode ser feita diretamente ao professor responsável pela turma.</p>
+                        <p>Grande parte dos alunos é menor de idade. Por isso, tratamos os dados deles sempre no melhor interesse do aluno e só no que o curso exige, como a LGPD determina para crianças e adolescentes. Não usamos dados de menores para publicidade, nem os repassamos para fins comerciais.</p>
+                        <p>Pais e responsáveis legais podem, a qualquer momento, pedir informações sobre quais dados de um aluno menor estão cadastrados e como são usados, pedir a correção deles ou pedir a exclusão do cadastro.</p>
                     </div>
                 </section>
 
                 <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">9. Alterações nesta política</h2>
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">6. Transparência: conversas privadas, “ver como aluno” e acessos da equipe</h2>
                     <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>Esta política pode ser atualizada para refletir mudanças na plataforma ou na legislação. A data no topo deste documento sempre indica a versão mais recente.</p>
+                        <ul style="color: var(--pibiex-texto-suave);">
+                            <li><strong style="color: var(--pibiex-texto);">Chat privado:</strong> as conversas são entre as pessoas envolvidas. A equipe só pode lê-las de forma pontual e motivada (por exemplo, para apurar denúncia de abuso), como já descrito no Termo de Uso, e cada leitura fica registrada.</li>
+                            <li><strong style="color: var(--pibiex-texto);">“Ver como aluno”:</strong> o professor pode abrir a tela de um aluno apenas para observar, sem escrever nem enviar nada em nome dele, e isso não conta como acesso do aluno. Cada uso fica registrado (quem viu a tela de quem e quando) e sai automaticamente depois de 365 dias. Também existe um modo de demonstração, que não mostra dado pessoal de ninguém.</li>
+                            <li><strong style="color: var(--pibiex-texto);">Contas da equipe:</strong> só quem tem “acesso total” vê senhas provisórias, baixa o backup e usa o “ver como aluno”.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">7. Como protegemos seus dados</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p>Toda a comunicação é feita por conexão criptografada (HTTPS). Senhas são guardadas de forma criptografada e a data de nascimento fica cifrada no banco. O banco de dados não pode ser lido diretamente pela internet: o acesso passa por funções do servidor que conferem quem está pedindo e só devolvem o que aquela pessoa pode ver. Arquivos de alunos e materiais do curso ficam em armazenamento privado. Há limites contra tentativas automáticas de entrar e contra envio em massa de mensagens. Os acessos e as medidas são revistos a cada mudança importante na plataforma.</p>
+                    </div>
+                </section>
+
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">8. Seus direitos</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p>A LGPD garante a você (ou ao seu responsável legal, se for menor de idade) o direito de pedir, a qualquer momento e de forma simples:</p>
+                        <ul style="color: var(--pibiex-texto-suave);">
+                            <li>confirmar se tratamos dados seus e ter acesso a eles;</li>
+                            <li>corrigir dados incompletos, errados ou desatualizados;</li>
+                            <li>pedir a exclusão dos dados, salvo o que precisar ser mantido por obrigação legal;</li>
+                            <li>saber com quem os dados são compartilhados (seção 3);</li>
+                            <li>pedir a portabilidade dos dados e a anonimização ou o bloqueio do que for desnecessário;</li>
+                            <li>retirar o consentimento que tenha dado (por exemplo, para a foto de perfil), o que pode limitar o uso de alguns recursos;</li>
+                            <li>reclamar à Autoridade Nacional de Proteção de Dados (ANPD) se achar que seus dados não foram tratados como deveriam.</li>
+                        </ul>
+                        <p>Respondemos aos pedidos o quanto antes, e no máximo em 15 dias para a confirmação e o acesso completo aos dados. Para fazer um pedido, use o contato da seção 1.</p>
+                    </div>
+                </section>
+
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">9. Se algo der errado</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p>Se houver um incidente de segurança que possa trazer risco ou dano relevante aos titulares, comunicaremos as pessoas afetadas e a ANPD em prazo razoável, dizendo o que aconteceu, quais dados foram atingidos e o que está sendo feito.</p>
+                    </div>
+                </section>
+
+                <section class="clausula">
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">10. Mudanças nesta política</h2>
+                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                        <p>Esta política pode ser atualizada quando a plataforma ou a lei mudarem. A data no topo mostra sempre a versão mais recente.</p>
                     </div>
                 </section>
 

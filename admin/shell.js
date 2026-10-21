@@ -28,7 +28,7 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
 (function injetarIdentidadeVisualEquipe() {
     const linkFonte = document.createElement('link');
     linkFonte.rel = 'stylesheet';
-    linkFonte.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap';
+    linkFonte.href = '/fonts/inter.css';
     document.head.appendChild(linkFonte);
 
     const estilo = document.createElement('style');
