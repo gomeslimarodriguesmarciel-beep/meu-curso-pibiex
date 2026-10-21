@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -24,14 +25,17 @@
 
             <div id="seletor-turma" class="mb-6"></div>
 
-            <div class="flex flex-wrap items-center gap-2 mb-5">
-                <button id="aba-desafios" onclick="trocarAba('desafios')" class="px-4 py-2 rounded-full text-sm font-bold transition">Desafios e correção</button>
-                <button id="aba-ranking" onclick="trocarAba('ranking')" class="px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2">Ranking</button>
-            </div>
+            <div id="abas-principais" class="mb-6"></div>
 
             <!-- ===== Desafios e correção ===== -->
             <section id="painel-desafios">
-                <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <input id="busca-desafio" type="search" class="caixa-busca" style="flex:1;min-width:200px" placeholder="Buscar desafio pelo título" aria-label="Buscar desafio pelo título" autocomplete="off">
+                    <button type="button" id="btn-novo-desafio" aria-expanded="false" aria-controls="form-novo" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Novo desafio</button>
+                </div>
+                <div id="abas-desafios-filtro" class="mb-4"></div>
+
+                <form id="form-novo" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 space-y-3">
                     <div class="flex flex-wrap gap-3">
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
@@ -60,22 +64,23 @@
                         <input type="checkbox" id="novo-ativo" checked class="rounded border-gray-300">
                         Visível para os alunos
                     </label>
-                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo desafio</button>
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Publicar desafio</button>
+                    <button type="button" id="btn-cancelar-desafio" class="ml-2 text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
                 </form>
 
-                <div id="lista-desafios" class="space-y-4">
+                <div id="lista-desafios" class="space-y-3">
                     <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
                 </div>
             </section>
 
             <!-- ===== Ranking ===== -->
             <section id="painel-ranking" class="hidden">
-                <div class="flex flex-wrap items-center gap-2 mb-4">
-                    <button id="sub-aba-semana" onclick="trocarSubAbaRanking('semana')" class="px-4 py-1.5 rounded-full text-xs font-bold transition">Semana</button>
-                    <button id="sub-aba-geral" onclick="trocarSubAbaRanking('geral')" class="px-4 py-1.5 rounded-full text-xs font-bold transition">Geral</button>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div id="abas-ranking"></div>
+                    <input id="busca-ranking" type="search" class="caixa-busca" style="max-width:240px" placeholder="Buscar aluno" aria-label="Buscar aluno no ranking" autocomplete="off">
                 </div>
-                <div id="tabela-ranking" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <p class="text-gray-400 text-sm p-5">Carregando ranking...</p>
+                <div id="tabela-ranking">
+                    <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
                 </div>
             </section>
         </main>
@@ -123,6 +128,7 @@
                 return;
             }
             renderizarDesafios(resultado.desafios || []);
+            pintarAbas();
         }
 
         function linhaEnvio(e, desafio) {
@@ -172,20 +178,55 @@
             `;
         }
 
+        const L = window.PibiexLista;
+        let DESAFIOS = [];
+        let FILTRO = 'todos';          // 'todos' | 'corrigir' | 'ativos' | 'inativos'
+        let BUSCA = '';
+        const ABERTOS = new Set();
+        let PRIMEIRA_VEZ = true;
+
         function renderizarDesafios(desafios) {
+            if (desafios) DESAFIOS = desafios;
             const container = document.getElementById('lista-desafios');
 
-            if (desafios.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum desafio criado ainda.</p>';
+            if (DESAFIOS.length === 0) {
+                document.getElementById('abas-desafios-filtro').innerHTML = '';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum desafio criado ainda</b>Clique em "+ Novo desafio" para publicar o primeiro.</div>';
                 return;
             }
 
-            container.innerHTML = desafios.map((d) => {
+            // Primeira vez: já abre o desafio com mais envios esperando correção.
+            if (PRIMEIRA_VEZ) {
+                const alvo = DESAFIOS.slice().sort((x, y) => (y.pendentes || 0) - (x.pendentes || 0))[0];
+                if (alvo && alvo.pendentes > 0) ABERTOS.add(alvo.id);
+                PRIMEIRA_VEZ = false;
+            }
+
+            const termo = BUSCA.trim().toLowerCase();
+            const base = DESAFIOS.filter((d) => !termo || (d.titulo || '').toLowerCase().includes(termo));
+            const criterios = {
+                todos: () => true,
+                corrigir: (d) => (d.pendentes || 0) > 0,
+                ativos: (d) => !!d.ativo,
+                inativos: (d) => !d.ativo,
+            };
+            const n = (k) => base.filter(criterios[k]).length;
+            L.abas(document.getElementById('abas-desafios-filtro'), [
+                { id: 'todos', rotulo: 'Todos', n: base.length },
+                { id: 'corrigir', rotulo: 'Com envios para corrigir', n: n('corrigir'), alerta: n('corrigir') > 0 },
+                { id: 'ativos', rotulo: 'Visíveis', n: n('ativos') },
+                { id: 'inativos', rotulo: 'Ocultos', n: n('inativos') },
+            ], FILTRO, (id) => { FILTRO = id; renderizarDesafios(); });
+
+            const lista = base.filter(criterios[FILTRO]);
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhum desafio encontrado</b>Mude a busca ou o filtro.</div>'; return; }
+
+            container.innerHTML = lista.map((d) => {
                 if (idEmEdicao === d.id) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-titulo-${d.id}" value="${escaparHtml(d.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <textarea id="edit-descricao-${d.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(d.descricao)}</textarea>
+                            <input id="edit-titulo-${d.id}" value="${L.esc(d.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-descricao-${d.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${L.esc(d.descricao)}</textarea>
                             <div class="flex items-center gap-3 flex-wrap">
                                 <input id="edit-semana-${d.id}" type="number" min="1" value="${d.semana ?? ''}" placeholder="Semana" class="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm">
                                 <input id="edit-pontos-${d.id}" type="number" min="1" max="1000" value="${d.pontos}" placeholder="Pontos" class="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm">
@@ -199,46 +240,62 @@
                                 <button onclick="salvarDesafio('${d.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                                 <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
 
                 const envios = d.envios || [];
                 // Pendentes primeiro: é o que o professor precisa ver logo ao abrir.
                 const ordenados = envios.slice().sort((a, b) => (a.avaliado === b.avaliado ? 0 : a.avaliado ? 1 : -1));
                 const enviosHtml = ordenados.length === 0
-                    ? '<p class="text-xs text-gray-400 px-5 pb-4">Nenhum envio ainda.</p>'
-                    : ordenados.map(e => linhaEnvio(e, d)).join('');
+                    ? '<p class="text-xs text-gray-500 px-5 py-4">Nenhum envio ainda.</p>'
+                    : ordenados.map((e) => linhaEnvio(e, d)).join('');
+                const pend = d.pendentes || 0;
 
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="p-5">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                        ${d.semana ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">Semana ${d.semana}</span>` : ''}
-                                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">${d.pontos} pts</span>
-                                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(d.titulo)}</p>
-                                        ${!d.ativo ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inativo</span>' : ''}
-                                        ${d.pendentes > 0 ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-600">${d.pendentes} para corrigir</span>` : ''}
-                                    </div>
-                                    <p class="text-sm text-gray-600">${escaparHtml(d.descricao)}</p>
-                                    ${d.data_fim ? `<p class="text-xs text-gray-400 mt-1">Prazo: ${dataCurta(d.data_fim)}</p>` : ''}
-                                </div>
-                                <div class="flex gap-2 shrink-0">
-                                    <button onclick="editarDesafio('${d.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                    <button onclick="excluirDesafio('${d.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
+                    <details class="cx" data-id="${L.esc(d.id)}" ${ABERTOS.has(d.id) ? 'open' : ''}>
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${L.esc(d.titulo)}</span>
+                                <span class="flex flex-wrap gap-1.5 mt-2">
+                                    ${d.semana ? `<span class="chip azul">Semana ${L.esc(d.semana)}</span>` : ''}
+                                    <span class="chip ambar">${L.esc(d.pontos)} pts</span>
+                                    ${d.data_fim ? `<span class="chip cinza">Prazo ${L.esc(dataCurta(d.data_fim))}</span>` : ''}
+                                    ${!d.ativo ? '<span class="chip cinza">Oculto dos alunos</span>' : ''}
+                                    <span class="chip ${pend ? 'vermelho' : envios.length ? 'verde' : 'cinza'}">${pend ? `${pend} para corrigir` : envios.length ? 'Tudo corrigido' : 'Sem envios'}</span>
+                                    ${envios.length ? `<span class="chip cinza">${envios.length} ${envios.length === 1 ? 'envio' : 'envios'}</span>` : ''}
+                                </span>
+                            </span>
+                        </summary>
+                        <div>
+                            <div class="px-5 py-4">
+                                <p class="text-sm text-gray-700 whitespace-pre-wrap">${L.esc(d.descricao)}</p>
+                                <div class="flex gap-2 mt-3">
+                                    <button onclick="editarDesafio('${d.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Editar</button>
+                                    <button onclick="excluirDesafio('${d.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir</button>
                                 </div>
                             </div>
+                            <div class="bg-gray-50 px-5 py-2 border-t border-gray-100">
+                                <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
+                            </div>
+                            ${enviosHtml}
                         </div>
-                        <div class="bg-gray-50 px-5 py-2 border-t border-gray-100">
-                            <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
-                        </div>
-                        ${enviosHtml}
-                    </div>
-                `;
+                    </details>`;
             }).join('');
+
+            container.querySelectorAll('details.cx').forEach((det) => {
+                det.addEventListener('toggle', () => { if (det.open) ABERTOS.add(det.dataset.id); else ABERTOS.delete(det.dataset.id); });
+            });
         }
+
+        document.getElementById('busca-desafio').addEventListener('input', (e) => { BUSCA = e.target.value; renderizarDesafios(); });
+
+        function mostrarFormulario(mostrar) {
+            document.getElementById('form-novo').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-novo-desafio').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-titulo').focus();
+        }
+        document.getElementById('btn-novo-desafio').addEventListener('click', () => mostrarFormulario(document.getElementById('form-novo').classList.contains('hidden')));
+        document.getElementById('btn-cancelar-desafio').addEventListener('click', () => { document.getElementById('form-novo').reset(); mostrarFormulario(false); });
 
         document.getElementById('form-novo').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -256,6 +313,7 @@
                 document.getElementById('form-novo').reset();
                 document.getElementById('novo-pontos').value = 10;
                 document.getElementById('novo-ativo').checked = true;
+                mostrarFormulario(false);
                 carregarDesafios();
             }
         });
@@ -304,7 +362,7 @@
         async function carregarRanking() {
             if (!TURMA_ATUAL) return;
             const tabela = document.getElementById('tabela-ranking');
-            tabela.innerHTML = '<p class="text-gray-400 text-sm p-5">Carregando ranking...</p>';
+            tabela.innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
 
             const resultado = await chamarGerenciarDesafios('ranking', { turmaId: TURMA_ATUAL });
             if (!resultado) { tabela.innerHTML = '<p class="text-red-500 text-sm p-5">Erro ao carregar o ranking.</p>'; return; }
@@ -317,11 +375,22 @@
             const tabela = document.getElementById('tabela-ranking');
             if (!ULTIMO_RANKING) return;
 
-            const linhas = SUB_ABA_RANKING === 'semana' ? ULTIMO_RANKING.semana : ULTIMO_RANKING.geral;
-            const semNinguem = linhas.every(l => l.pontos === 0);
+            L.abas(document.getElementById('abas-ranking'), [
+                { id: 'semana', rotulo: 'Esta semana', n: (ULTIMO_RANKING.semana || []).length },
+                { id: 'geral', rotulo: 'Geral', n: (ULTIMO_RANKING.geral || []).length },
+            ], SUB_ABA_RANKING, (id) => { SUB_ABA_RANKING = id; renderizarRanking(); });
 
+            const todas = SUB_ABA_RANKING === 'semana' ? ULTIMO_RANKING.semana : ULTIMO_RANKING.geral;
+            const semNinguem = todas.every((l) => l.pontos === 0);
+            const termo = document.getElementById('busca-ranking').value.trim().toLowerCase();
+            const linhas = todas.filter((l) => !termo || (l.nome || '').toLowerCase().includes(termo));
+
+            if (todas.length === 0) {
+                tabela.innerHTML = '<div class="vazio-lista"><b>Nenhum aluno nesta turma ainda</b></div>';
+                return;
+            }
             if (linhas.length === 0) {
-                tabela.innerHTML = '<p class="text-gray-400 text-sm p-5">Nenhum aluno nesta turma ainda.</p>';
+                tabela.innerHTML = '<div class="vazio-lista"><b>Nenhum aluno com esse nome</b></div>';
                 return;
             }
 
@@ -329,46 +398,32 @@
             const corPosicao = { 1: 'background:#FEF3C7;color:#92400E', 2: 'background:#E5E7EB;color:#374151', 3: 'background:#FFEDD5;color:#9A3412' };
 
             tabela.innerHTML = `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 ${semNinguem ? '<p class="text-xs text-amber-700 bg-amber-50 px-5 py-2">Ninguém pontuou ainda nesta visão.</p>' : ''}
                 <div class="divide-y divide-gray-100">
-                    ${linhas.map(l => `
-                        <div class="px-5 py-3 flex items-center justify-between gap-3 ${l.pontos === 0 ? 'opacity-50' : ''}">
+                    ${linhas.map((l) => `
+                        <div class="px-5 py-3 flex items-center justify-between gap-3 ${l.pontos === 0 ? 'opacity-60' : ''}">
                             <div class="flex items-center gap-3 min-w-0">
                                 <span class="w-8 h-8 rounded-full inline-flex items-center justify-center text-xs font-black text-gray-600 bg-gray-100 shrink-0" style="${corPosicao[l.posicao] || ''}">${l.posicao}º</span>
-                                <p class="text-sm font-semibold text-gray-800 truncate">${escaparHtml(l.nome)}</p>
+                                <p class="text-sm font-semibold text-gray-800 truncate">${L.esc(l.nome)}</p>
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="text-sm font-black text-gray-800">${l.pontos} pts</p>
-                                <p class="text-[11px] text-gray-400">${l.desafiosFeitos} ${l.desafiosFeitos === 1 ? 'desafio' : 'desafios'}</p>
+                                <p class="text-[11px] text-gray-500">${l.desafiosFeitos} ${l.desafiosFeitos === 1 ? 'desafio' : 'desafios'}</p>
                             </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+                        </div>`).join('')}
+                </div></div>`;
         }
-
-        window.trocarSubAbaRanking = (sub) => {
-            SUB_ABA_RANKING = sub;
-            pintarSubAbasRanking();
-            renderizarRanking();
-        };
-
-        function pintarSubAbasRanking() {
-            const ativo = 'background: #111827; color: #fff;';
-            const inativo = 'background: #fff; color: #374151; border: 1px solid #E5E7EB;';
-            document.getElementById('sub-aba-semana').style.cssText = SUB_ABA_RANKING === 'semana' ? ativo : inativo;
-            document.getElementById('sub-aba-geral').style.cssText = SUB_ABA_RANKING === 'geral' ? ativo : inativo;
-        }
+        document.getElementById('busca-ranking').addEventListener('input', renderizarRanking);
 
         // ============================================================
         // Abas principais
         // ============================================================
         function pintarAbas() {
-            for (const [id, nome] of [['aba-desafios', 'desafios'], ['aba-ranking', 'ranking']]) {
-                const b = document.getElementById(id);
-                b.className = 'px-4 py-2 rounded-full text-sm font-bold transition ' +
-                    (ABA === nome ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50');
-            }
+            L.abas(document.getElementById('abas-principais'), [
+                { id: 'desafios', rotulo: 'Desafios e correção', n: DESAFIOS.length, alerta: DESAFIOS.some((d) => (d.pendentes || 0) > 0) },
+                { id: 'ranking', rotulo: 'Ranking', n: ULTIMO_RANKING ? (ULTIMO_RANKING.geral || []).length : '' },
+            ], ABA, (id) => trocarAba(id));
         }
 
         window.trocarAba = (aba) => {
@@ -386,11 +441,10 @@
             if (!sessao) return;
             TOKEN_EQUIPE = sessao.token;
             pintarAbas();
-            pintarSubAbasRanking();
 
             TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
                 TURMA_ATUAL = turmaId;
-                idEmEdicao = null;
+                idEmEdicao = null; ABERTOS.clear(); PRIMEIRA_VEZ = true;
                 if (ABA === 'desafios') carregarDesafios();
                 else carregarRanking();
             });

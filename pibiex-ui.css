@@ -13,6 +13,7 @@
 
 /* ---------------------------------------------------------------- base */
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
 body { text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
 
 /* Foco visível em tudo que se navega pelo teclado (antes dependia de cada página). */
@@ -215,6 +216,7 @@ html.a11y-contraste .a11y-segmentos, html.a11y-contraste .a11y-segmentos button 
 .aba .n { font-size: 11px; min-width: 20px; text-align: center; padding: 1px 6px; border-radius: 999px; background: #F3F4F6; color: #374151; font-weight: 800; }
 .aba[aria-selected="true"] .n { background: rgba(255,255,255,.22); color: #fff; }
 .aba .n.alerta { background: #FEF3C7; color: #92400E; }
+.aba .n:empty { display: none; }
 .aba[aria-selected="true"] .n.alerta { background: #FBBF24; color: #111827; }
 
 .cx { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; overflow: hidden; }

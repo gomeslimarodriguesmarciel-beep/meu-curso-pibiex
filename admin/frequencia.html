@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <script src="/vendor/jspdf/jspdf.umd.min.js"></script>
@@ -21,81 +22,103 @@
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">Frequência</h1>
-            <p class="text-gray-500 mb-6">
+            <p class="text-gray-500 mb-5">
                 Abra uma chamada por tempo limitado durante a aula. Cada chamada vale um número
                 de horas — a soma das que o aluno registrar presença vira a base para o certificado.
             </p>
 
-            <div class="mb-6">
-                <label class="block text-xs font-bold text-gray-500 mb-1">Turma</label>
-                <select id="seletor-turma-freq" class="border border-gray-200 rounded-lg px-3 py-2 text-sm min-w-[260px]"></select>
+            <div class="mb-5">
+                <label for="seletor-turma-freq" class="block text-xs font-bold text-gray-500 mb-1">Turma</label>
+                <select id="seletor-turma-freq" class="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white min-w-[260px]"></select>
             </div>
 
-            <!-- ================= NOVA CHAMADA ================= -->
-            <form id="form-chamada" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
-                <p class="text-xs font-bold text-gray-500 mb-3">Abrir nova chamada</p>
-                <div class="flex flex-wrap gap-3 mb-3">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Título (opcional)</label>
-                        <input id="chamada-titulo" placeholder="ex: Aula de prompts — 18/08" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    </div>
-                    <div class="w-40">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Vale quantas horas</label>
-                        <input id="chamada-horas" type="number" min="0.5" step="0.5" value="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    </div>
-                    <div class="w-48">
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Disponível por (minutos)</label>
-                        <input id="chamada-duracao" type="number" min="1" max="240" value="10" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    </div>
+            <div id="abas-freq" class="mb-6"></div>
+
+            <!-- ================= ABA: AGORA ================= -->
+            <section id="aba-agora">
+                <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+                    <h2 class="text-sm font-black text-gray-800">Chamadas ativas agora</h2>
+                    <button type="button" id="btn-nova-chamada" aria-expanded="false" aria-controls="form-chamada"
+                            class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Abrir nova chamada</button>
                 </div>
 
-                <div class="mb-3">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Quem vê essa chamada</label>
-                    <div class="flex gap-4 text-sm mb-2">
-                        <label class="flex items-center gap-1.5"><input type="radio" name="quem" value="turma" checked> Toda a turma</label>
-                        <label class="flex items-center gap-1.5"><input type="radio" name="quem" value="especificos"> Alunos específicos</label>
+                <form id="form-chamada" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+                    <p class="text-xs font-bold text-gray-500 mb-3">Nova chamada</p>
+                    <div class="flex flex-wrap gap-3 mb-3">
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="chamada-titulo" class="block text-xs font-bold text-gray-500 mb-1">Título (opcional)</label>
+                            <input id="chamada-titulo" placeholder="ex: Aula de prompts — 18/08" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                        <div class="w-40">
+                            <label for="chamada-horas" class="block text-xs font-bold text-gray-500 mb-1">Vale quantas horas</label>
+                            <input id="chamada-horas" type="number" min="0.5" step="0.5" value="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                        <div class="w-48">
+                            <label for="chamada-duracao" class="block text-xs font-bold text-gray-500 mb-1">Disponível por (minutos)</label>
+                            <input id="chamada-duracao" type="number" min="1" max="240" value="10" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                        </div>
                     </div>
-                    <div id="lista-alunos-especificos" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1 text-sm"></div>
-                </div>
 
-                <p id="msg-chamada" class="hidden text-sm font-bold p-2 rounded mb-2"></p>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">
-                    Abrir chamada
-                </button>
-            </form>
+                    <div class="mb-3">
+                        <p class="block text-xs font-bold text-gray-500 mb-1">Quem vê essa chamada</p>
+                        <div class="flex gap-4 text-sm mb-2">
+                            <label class="flex items-center gap-1.5"><input type="radio" name="quem" value="turma" checked> Toda a turma</label>
+                            <label class="flex items-center gap-1.5"><input type="radio" name="quem" value="especificos"> Alunos específicos</label>
+                        </div>
+                        <div id="bloco-especificos" class="hidden">
+                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                                <input id="busca-especificos" type="search" class="caixa-busca" style="max-width:260px" placeholder="Buscar aluno" aria-label="Buscar aluno">
+                                <button type="button" id="marcar-todos" class="text-xs font-bold text-blue-700 hover:underline">Marcar todos</button>
+                                <button type="button" id="limpar-todos" class="text-xs font-bold text-gray-600 hover:underline">Limpar</button>
+                                <span id="contagem-especificos" class="text-xs text-gray-500"></span>
+                            </div>
+                            <div id="lista-alunos-especificos" class="bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1 text-sm"></div>
+                        </div>
+                    </div>
 
-            <!-- ================= ATIVAS ================= -->
-            <div class="mb-8">
-                <p class="text-xs font-bold text-gray-500 mb-3">Chamadas ativas agora</p>
+                    <p id="msg-chamada" class="hidden text-sm font-bold p-2 rounded mb-2"></p>
+                    <div class="flex items-center gap-2">
+                        <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Abrir chamada</button>
+                        <button type="button" id="cancelar-chamada" class="text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
+                    </div>
+                </form>
+
                 <div id="lista-ativas" class="space-y-3">
                     <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
                 </div>
-            </div>
+            </section>
 
-            <!-- ================= RESUMO DE HORAS ================= -->
-            <div class="mb-8">
-                <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs font-bold text-gray-500">Resumo de horas da turma</p>
-                    <button id="btn-pdf-resumo" class="text-xs font-bold text-blue-700 hover:underline">Baixar PDF</button>
-                </div>
-                <div id="tabela-resumo" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
-                </div>
-            </div>
-
-            <!-- ================= HISTÓRICO ================= -->
-            <div>
-                <p class="text-xs font-bold text-gray-500 mb-3">Histórico de chamadas</p>
+            <!-- ================= ABA: HISTÓRICO ================= -->
+            <section id="aba-historico" hidden>
+                <input id="busca-historico" type="search" class="caixa-busca mb-4" placeholder="Buscar chamada pelo título ou pela data (ex.: 18/08)" aria-label="Buscar chamada">
                 <div id="lista-historico" class="space-y-3">
                     <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
                 </div>
-            </div>
+            </section>
+
+            <!-- ================= ABA: HORAS POR ALUNO ================= -->
+            <section id="aba-resumo" hidden>
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <input id="busca-resumo" type="search" class="caixa-busca" style="flex:1;min-width:200px" placeholder="Buscar aluno" aria-label="Buscar aluno">
+                    <select id="ordem-resumo" class="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white" aria-label="Ordenar">
+                        <option value="nome">Nome (A a Z)</option>
+                        <option value="menor">Menor frequência primeiro</option>
+                        <option value="maior">Maior frequência primeiro</option>
+                    </select>
+                    <button id="btn-pdf-resumo" class="inline-flex items-center gap-1.5 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-bold px-4 py-2.5 rounded-xl">Baixar PDF</button>
+                </div>
+                <div id="resumo-geral" class="flex flex-wrap gap-2 mb-3"></div>
+                <div id="filtros-resumo" class="mb-4"></div>
+                <div id="tabela-resumo">
+                    <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- ================= MODAL: DETALHE DA CHAMADA ================= -->
     <div id="modal-detalhe" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="detalhe-titulo">
             <div class="p-5 border-b border-gray-100 flex justify-between items-start">
                 <div>
                     <h2 id="detalhe-titulo" class="text-lg font-black text-gray-900"></h2>
@@ -103,6 +126,7 @@
                 </div>
                 <button onclick="fecharDetalhe()" class="text-gray-400 hover:text-gray-900 font-bold text-lg shrink-0" aria-label="Fechar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:-3px"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
             </div>
+            <div class="px-5 pt-4"><div id="abas-detalhe"></div></div>
             <div id="detalhe-lista" class="p-5 overflow-y-auto space-y-1.5 text-sm"></div>
         </div>
     </div>
@@ -112,12 +136,12 @@
         let TOKEN_EQUIPE = null;
         let turmaAtual = null;
         let alunosDaTurma = [];
-
-        function escaparHtml(texto) {
-            const div = document.createElement('div');
-            div.innerText = texto ?? '';
-            return div.innerHTML;
-        }
+        let ABA = 'agora';                 // 'agora' | 'historico' | 'resumo'
+        let ATIVAS = [], HISTORICO = [], RESUMO = [];
+        let FILTRO_RESUMO = 'todos';
+        let MOSTRAR = 20;                  // quantas chamadas do histórico aparecem
+        const L = window.PibiexLista;
+        const esc = L.esc;
 
         function formatarDataHora(iso) {
             return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -131,15 +155,33 @@
             return `${min}m ${String(seg).padStart(2, '0')}s`;
         }
 
-        async function chamar(funcao, extra) {
+        async function chamar(funcao, extra, silencioso) {
             const { data, error } = await window.supabaseClient.functions.invoke(funcao, {
                 body: { tokenEquipe: TOKEN_EQUIPE, ...(extra || {}) },
             });
             if (error || !data || data.erro) {
-                alert((data && data.erro) || 'Erro ao executar a ação. Tente novamente.');
+                if (!silencioso) alert((data && data.erro) || 'Erro ao executar a ação. Tente novamente.');
                 return null;
             }
             return data;
+        }
+
+        // ---------------- abas ----------------
+        function desenharAbas() {
+            L.abas(document.getElementById('abas-freq'), [
+                { id: 'agora', rotulo: 'Agora', n: ATIVAS.length, alerta: ATIVAS.length > 0 },
+                { id: 'historico', rotulo: 'Histórico', n: HISTORICO.length },
+                { id: 'resumo', rotulo: 'Horas por aluno', n: RESUMO.length },
+            ], ABA, (id) => { ABA = id; mostrarAba(); });
+            mostrarAba();
+        }
+        function mostrarAba() {
+            ['agora', 'historico', 'resumo'].forEach((a) => { document.getElementById('aba-' + a).hidden = a !== ABA; });
+            document.querySelectorAll('#abas-freq .aba').forEach((b) => {
+                const sel = b.dataset.aba === ABA;
+                b.setAttribute('aria-selected', String(sel));
+                b.tabIndex = sel ? 0 : -1;
+            });
         }
 
         // ---------------- turmas ----------------
@@ -152,7 +194,7 @@
                 seletor.innerHTML = '<option value="">Nenhuma turma cadastrada</option>';
                 return;
             }
-            seletor.innerHTML = data.turmas.map((t) => `<option value="${t.id}">${escaparHtml(t.nome)}${t.ativa ? '' : ' (pausada)'}</option>`).join('');
+            seletor.innerHTML = data.turmas.map((t) => `<option value="${esc(t.id)}">${esc(t.nome)}${t.ativa ? '' : ' (pausada)'}</option>`).join('');
             turmaAtual = data.turmas[0].id;
             await carregarAlunosDaTurma();
             carregarTudo();
@@ -175,30 +217,52 @@
         function renderizarCheckboxAlunos() {
             const container = document.getElementById('lista-alunos-especificos');
             if (alunosDaTurma.length === 0) {
-                container.innerHTML = '<p class="text-gray-400">Não foi possível carregar a lista de alunos — use "Toda a turma".</p>';
+                container.innerHTML = '<p class="text-gray-500">Não foi possível carregar a lista de alunos — use "Toda a turma".</p>';
                 return;
             }
-            container.innerHTML = alunosDaTurma.map((a) => `
+            const termo = document.getElementById('busca-especificos').value.trim().toLowerCase();
+            const marcados = new Set([...container.querySelectorAll('.check-aluno-especifico:checked')].map((c) => c.value));
+            const lista = alunosDaTurma.filter((a) => !termo || (a.nomeCompleto || a.nome_completo || '').toLowerCase().includes(termo));
+            container.innerHTML = lista.map((a) => `
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" class="check-aluno-especifico" value="${a.id}">
-                    ${escaparHtml(a.nomeCompleto || a.nome_completo)}
-                </label>
-            `).join('');
+                    <input type="checkbox" class="check-aluno-especifico" value="${esc(a.id)}" ${marcados.has(a.id) ? 'checked' : ''}>
+                    ${esc(a.nomeCompleto || a.nome_completo)}
+                </label>`).join('') || '<p class="text-gray-500">Nenhum aluno com esse nome.</p>';
+            atualizarContagem();
         }
+        // os marcados continuam marcados mesmo quando a busca esconde o nome
+        const ESCOLHIDOS = new Set();
+        function atualizarContagem() {
+            document.querySelectorAll('.check-aluno-especifico').forEach((c) => {
+                if (ESCOLHIDOS.has(c.value)) c.checked = true;
+                c.onchange = () => { if (c.checked) ESCOLHIDOS.add(c.value); else ESCOLHIDOS.delete(c.value); atualizarContagem(); };
+            });
+            document.getElementById('contagem-especificos').textContent = ESCOLHIDOS.size ? `${ESCOLHIDOS.size} escolhido(s)` : '';
+        }
+        document.getElementById('busca-especificos').addEventListener('input', renderizarCheckboxAlunos);
+        document.getElementById('marcar-todos').addEventListener('click', () => { alunosDaTurma.forEach((a) => ESCOLHIDOS.add(a.id)); renderizarCheckboxAlunos(); });
+        document.getElementById('limpar-todos').addEventListener('click', () => { ESCOLHIDOS.clear(); renderizarCheckboxAlunos(); });
 
         document.querySelectorAll('input[name="quem"]').forEach((r) => {
             r.addEventListener('change', () => {
-                document.getElementById('lista-alunos-especificos').classList.toggle('hidden', document.querySelector('input[name="quem"]:checked').value !== 'especificos');
+                document.getElementById('bloco-especificos').classList.toggle('hidden', document.querySelector('input[name="quem"]:checked').value !== 'especificos');
             });
         });
 
         function carregarTudo() {
-            carregarAtivas();
-            carregarHistorico();
-            carregarResumo();
+            ESCOLHIDOS.clear();
+            Promise.all([carregarAtivas(), carregarHistorico(), carregarResumo()]).then(desenharAbas);
         }
 
-        // ---------------- criar chamada ----------------
+        // ---------------- nova chamada ----------------
+        function mostrarFormulario(mostrar) {
+            document.getElementById('form-chamada').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-nova-chamada').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('chamada-titulo').focus();
+        }
+        document.getElementById('btn-nova-chamada').addEventListener('click', () => mostrarFormulario(document.getElementById('form-chamada').classList.contains('hidden')));
+        document.getElementById('cancelar-chamada').addEventListener('click', () => mostrarFormulario(false));
+
         document.getElementById('form-chamada').addEventListener('submit', async (e) => {
             e.preventDefault();
             const msg = document.getElementById('msg-chamada');
@@ -211,7 +275,7 @@
 
             let alunosIds;
             if (quem === 'especificos') {
-                alunosIds = [...document.querySelectorAll('.check-aluno-especifico:checked')].map((c) => c.value);
+                alunosIds = [...ESCOLHIDOS];
                 if (alunosIds.length === 0) {
                     msg.innerText = 'Marque pelo menos um aluno.';
                     msg.className = 'text-sm font-bold p-2 rounded mb-2 bg-red-50 text-red-600';
@@ -223,100 +287,148 @@
             const resultado = await chamar('gerenciar-chamadas', { acao: 'criar', turmaId: turmaAtual, titulo, horas, duracaoMinutos, alunosIds });
             if (!resultado) return;
 
-            msg.innerHTML = `Chamada aberta para ${resultado.totalElegiveis} aluno(s), disponível por ${duracaoMinutos} minuto(s).
-                <br>Anuncie o PIN em sala: <span class="text-lg tracking-[0.2em] font-black">${escaparHtml(resultado.chamada.pin)}</span>`;
+            msg.innerHTML = `Chamada aberta para ${resultado.totalElegiveis} aluno(s), disponível por ${esc(duracaoMinutos)} minuto(s).
+                <br>Anuncie o PIN em sala: <span class="text-lg tracking-[0.2em] font-black">${esc(resultado.chamada.pin)}</span>`;
             msg.className = 'text-sm font-bold p-2 rounded mb-2 bg-green-50 text-green-700';
             msg.classList.remove('hidden');
             document.getElementById('form-chamada').reset();
-            document.getElementById('lista-alunos-especificos').classList.add('hidden');
-            carregarAtivas();
+            ESCOLHIDOS.clear();
+            document.getElementById('bloco-especificos').classList.add('hidden');
+            await carregarAtivas();
+            desenharAbas();
         });
 
         // ---------------- ativas ----------------
         let temporizadorAtivas = null;
 
         async function carregarAtivas() {
-            const resultado = await chamar('gerenciar-chamadas', { acao: 'listar_ativas' });
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'listar_ativas' }, true);
             const container = document.getElementById('lista-ativas');
             if (!resultado) { container.innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar.</p>'; return; }
 
-            const chamadas = (resultado.chamadas || []).filter((c) => !turmaAtual || c.turma_id === turmaAtual);
-            if (chamadas.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-5 border border-gray-100">Nenhuma chamada ativa no momento.</p>';
+            ATIVAS = (resultado.chamadas || []).filter((c) => !turmaAtual || c.turma_id === turmaAtual);
+            if (ATIVAS.length === 0) {
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhuma chamada ativa agora</b>Use "+ Abrir nova chamada" quando a aula começar.</div>';
             } else {
-                container.innerHTML = chamadas.map((c) => `
-                    <div class="bg-white rounded-2xl border border-green-100 shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap">
-                        <div class="min-w-0">
-                            <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')} <span class="text-green-600 font-bold text-xs"><span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 mr-1 align-middle"></span>ativa</span></p>
-                            <p class="text-xs text-gray-500">${c.horas}h · ${c.totalRegistrados}/${c.totalElegiveis} registraram · fecha em <span class="contador" data-expira="${c.expira_em}">${tempoRestante(c.expira_em)}</span></p>
-                            <p class="text-xs text-gray-500 mt-0.5">PIN: <span class="font-black tracking-[0.15em] text-gray-800">${escaparHtml(c.pin)}</span></p>
+                container.innerHTML = ATIVAS.map((c) => {
+                    const pct = c.totalElegiveis ? Math.round((c.totalRegistrados / c.totalElegiveis) * 100) : 0;
+                    return `
+                    <div class="bg-white rounded-2xl border-2 border-green-200 shadow-sm p-4">
+                        <div class="flex items-start justify-between gap-3 flex-wrap">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-sm">${esc(c.titulo || 'Chamada')} <span class="chip verde ml-1">ativa</span></p>
+                                <p class="text-xs text-gray-500 mt-0.5">${esc(c.horas)}h · fecha em <span class="contador font-bold text-gray-800" data-expira="${esc(c.expira_em)}">${tempoRestante(c.expira_em)}</span></p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-bold uppercase text-gray-500">PIN</p>
+                                <p class="font-black tracking-[0.2em] text-2xl text-gray-900 leading-none">${esc(c.pin)}</p>
+                            </div>
                         </div>
-                        <div class="flex gap-2 shrink-0">
-                            <button onclick="verDetalhe('${c.id}')" class="text-xs font-bold text-blue-700 hover:underline">Ver quem registrou</button>
-                            <button onclick="encerrarChamada('${c.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-lg">Encerrar agora</button>
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between text-xs text-gray-600 mb-1"><span><b>${c.totalRegistrados}</b> de ${c.totalElegiveis} registraram</span><span>${pct}%</span></div>
+                            <div class="h-2 rounded-full bg-gray-100 overflow-hidden"><div class="h-full rounded-full bg-green-500" style="width:${pct}%"></div></div>
                         </div>
-                    </div>
-                `).join('');
+                        <div class="flex gap-2 mt-3 flex-wrap">
+                            <button onclick="verDetalhe('${esc(c.id)}')" class="border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Ver quem registrou</button>
+                            <button onclick="encerrarChamada('${esc(c.id)}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-3 py-2 rounded-lg">Encerrar agora</button>
+                        </div>
+                    </div>`;
+                }).join('');
             }
 
             if (temporizadorAtivas) clearInterval(temporizadorAtivas);
             temporizadorAtivas = setInterval(() => {
-                document.querySelectorAll('.contador').forEach((el) => {
-                    el.innerText = tempoRestante(el.dataset.expira);
-                });
+                document.querySelectorAll('.contador').forEach((el) => { el.innerText = tempoRestante(el.dataset.expira); });
             }, 1000);
         }
+
+        // enquanto há chamada aberta, o número de quem registrou se atualiza sozinho
+        setInterval(async () => {
+            if (document.hidden || !TOKEN_EQUIPE || !turmaAtual || !ATIVAS.length) return;
+            await carregarAtivas();
+            const rotulo = document.querySelector('#abas-freq [data-aba="agora"] .n');
+            if (rotulo) rotulo.textContent = ATIVAS.length;
+        }, 15000);
 
         window.encerrarChamada = async (chamadaId) => {
             if (!confirm('Encerrar essa chamada agora? Quem ainda não registrou não vai mais conseguir.')) return;
             const resultado = await chamar('gerenciar-chamadas', { acao: 'encerrar', chamadaId });
-            if (resultado) { carregarAtivas(); carregarHistorico(); }
+            if (resultado) { await Promise.all([carregarAtivas(), carregarHistorico()]); desenharAbas(); }
         };
 
+        // ---------------- detalhe ----------------
+        let DETALHE = null, ABA_DETALHE = 'todos';
         window.verDetalhe = async (chamadaId) => {
             const resultado = await chamar('gerenciar-chamadas', { acao: 'detalhe', chamadaId });
             if (!resultado) return;
+            DETALHE = resultado; ABA_DETALHE = 'todos';
             const c = resultado.chamada;
             document.getElementById('detalhe-titulo').innerText = c.titulo || 'Chamada';
             document.getElementById('detalhe-sub').innerText = `${c.horas}h · aberta em ${formatarDataHora(c.criado_em)}`;
-            document.getElementById('detalhe-lista').innerHTML = resultado.alunos.map((a) => `
-                <div class="flex items-center justify-between py-1.5 border-b border-gray-50 gap-2">
-                    <span class="min-w-0 truncate">${escaparHtml(a.nomeCompleto)}</span>
-                    ${a.presente
-                        ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700 shrink-0">Presente · ${formatarDataHora(a.registradoEm)}</span>`
-                        : `<span class="flex items-center gap-2 shrink-0">
-                             <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Ausente</span>
-                             <button onclick="reabrirParaFaltantes('${c.id}', ['${a.id}'])" class="text-[10.5px] font-bold text-amber-700 hover:underline">Reabrir só p/ ele(a)</button>
-                           </span>`}
-                </div>
-            `).join('');
+            desenharDetalhe();
             document.getElementById('modal-detalhe').classList.remove('hidden');
         };
+        function desenharDetalhe() {
+            const todos = DETALHE.alunos || [];
+            const presentes = todos.filter((a) => a.presente);
+            const ausentes = todos.filter((a) => !a.presente);
+            L.abas(document.getElementById('abas-detalhe'), [
+                { id: 'todos', rotulo: 'Todos', n: todos.length },
+                { id: 'presentes', rotulo: 'Presentes', n: presentes.length },
+                { id: 'ausentes', rotulo: 'Ausentes', n: ausentes.length, alerta: ausentes.length > 0 },
+            ], ABA_DETALHE, (id) => { ABA_DETALHE = id; desenharDetalhe(); });
+            const c = DETALHE.chamada;
+            const lista = ABA_DETALHE === 'presentes' ? presentes : ABA_DETALHE === 'ausentes' ? ausentes : todos;
+            document.getElementById('detalhe-lista').innerHTML = lista.map((a) => `
+                <div class="flex items-center justify-between py-1.5 border-b border-gray-50 gap-2">
+                    <span class="min-w-0 truncate">${esc(a.nomeCompleto)}</span>
+                    ${a.presente
+                        ? `<span class="chip verde shrink-0">Presente · ${formatarDataHora(a.registradoEm)}</span>`
+                        : `<span class="flex items-center gap-2 shrink-0">
+                             <span class="chip cinza">Ausente</span>
+                             <button onclick="reabrirParaFaltantes('${esc(c.id)}', ['${esc(a.id)}'])" class="text-[10.5px] font-bold text-amber-700 hover:underline">Reabrir só p/ ele(a)</button>
+                           </span>`}
+                </div>`).join('') || '<p class="text-sm text-gray-500 text-center py-4">Ninguém nesta lista.</p>';
+        }
         window.fecharDetalhe = () => document.getElementById('modal-detalhe').classList.add('hidden');
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharDetalhe(); });
 
         // ---------------- histórico ----------------
         async function carregarHistorico() {
-            const resultado = await chamar('gerenciar-chamadas', { acao: 'listar_historico', turmaId: turmaAtual });
-            const container = document.getElementById('lista-historico');
-            if (!resultado) { container.innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar.</p>'; return; }
-
-            if ((resultado.chamadas || []).length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-5 border border-gray-100">Nenhuma chamada encerrada ainda.</p>';
-                return;
-            }
-            container.innerHTML = resultado.chamadas.map((c) => `
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap">
-                    <div class="min-w-0">
-                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(c.titulo || 'Chamada')}</p>
-                        <p class="text-xs text-gray-500">${c.horas}h · ${c.totalRegistrados}/${c.totalElegiveis} presentes · ${formatarDataHora(c.criado_em)}</p>
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                        <button onclick="verDetalhe('${c.id}')" class="text-xs font-bold text-blue-700 hover:underline">Ver detalhe</button>
-                        <button onclick="reabrirParaFaltantes('${c.id}')" class="text-xs font-bold text-amber-700 hover:underline">Reabrir p/ quem faltou</button>
-                    </div>
-                </div>
-            `).join('');
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'listar_historico', turmaId: turmaAtual }, true);
+            if (!resultado) { document.getElementById('lista-historico').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar.</p>'; return; }
+            HISTORICO = resultado.chamadas || [];
+            desenharHistorico();
         }
+
+        function desenharHistorico() {
+            const container = document.getElementById('lista-historico');
+            const termo = document.getElementById('busca-historico').value.trim().toLowerCase();
+            if (!HISTORICO.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhuma chamada encerrada ainda</b>As chamadas que terminarem aparecem aqui.</div>'; return; }
+            const lista = HISTORICO.filter((c) => !termo || (c.titulo || 'chamada').toLowerCase().includes(termo) || formatarDataHora(c.criado_em).includes(termo));
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhuma chamada encontrada</b>Tente outro trecho do título ou da data.</div>'; return; }
+            const visiveis = lista.slice(0, MOSTRAR);
+            container.innerHTML = visiveis.map((c) => {
+                const pct = c.totalElegiveis ? Math.round((c.totalRegistrados / c.totalElegiveis) * 100) : 0;
+                return `
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                    <div class="flex items-start justify-between gap-3 flex-wrap">
+                        <div class="min-w-0">
+                            <p class="font-bold text-gray-800 text-sm">${esc(c.titulo || 'Chamada')}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">${esc(formatarDataHora(c.criado_em))} · vale ${esc(c.horas)}h</p>
+                        </div>
+                        <span class="chip ${pct >= 75 ? 'verde' : pct >= 50 ? 'ambar' : 'vermelho'}">${c.totalRegistrados}/${c.totalElegiveis} presentes · ${pct}%</span>
+                    </div>
+                    <div class="flex gap-2 mt-3 flex-wrap">
+                        <button onclick="verDetalhe('${esc(c.id)}')" class="border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Ver detalhe</button>
+                        <button onclick="reabrirParaFaltantes('${esc(c.id)}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-3 py-2 rounded-lg">Reabrir p/ quem faltou</button>
+                    </div>
+                </div>`;
+            }).join('') + (lista.length > MOSTRAR ? `<div class="text-center pt-2"><button id="mais-historico" class="border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-bold px-5 py-2.5 rounded-xl">Mostrar mais (${lista.length - MOSTRAR})</button></div>` : '');
+            const mais = document.getElementById('mais-historico');
+            if (mais) mais.onclick = () => { MOSTRAR += 20; desenharHistorico(); };
+        }
+        document.getElementById('busca-historico').addEventListener('input', () => { MOSTRAR = 20; desenharHistorico(); });
 
         window.reabrirParaFaltantes = async (chamadaId, alunosIds) => {
             const minutos = prompt('Reabrir por quantos minutos?', '5');
@@ -325,50 +437,73 @@
             if (!resultado) return;
             alert(alunosIds ? `Reaberta para ${resultado.totalAlunos} aluno(s) escolhido(s).` : 'Reaberta para quem ainda não registrou.');
             fecharDetalhe();
-            carregarAtivas();
-            carregarHistorico();
+            ABA = 'agora';
+            await Promise.all([carregarAtivas(), carregarHistorico()]);
+            desenharAbas();
         };
 
         // ---------------- resumo de horas ----------------
-        let resumoAtual = [];
         let nomeTurmaAtual = '';
+        const pctDe = (r) => (r.horas_possiveis > 0 ? Math.round((r.horas_conquistadas / r.horas_possiveis) * 100) : 0);
 
         async function carregarResumo() {
-            const resultado = await chamar('gerenciar-chamadas', { acao: 'resumo_horas', turmaId: turmaAtual });
-            const container = document.getElementById('tabela-resumo');
-            if (!resultado) { container.innerHTML = '<p class="text-red-500 text-sm p-5">Erro ao carregar.</p>'; return; }
-
-            resumoAtual = resultado.resumo || [];
+            const resultado = await chamar('gerenciar-chamadas', { acao: 'resumo_horas', turmaId: turmaAtual }, true);
+            if (!resultado) { document.getElementById('tabela-resumo').innerHTML = '<p class="text-red-500 text-sm p-5">Erro ao carregar.</p>'; return; }
+            RESUMO = resultado.resumo || [];
             nomeTurmaAtual = document.getElementById('seletor-turma-freq').selectedOptions[0]?.text || '';
-
-            if (resumoAtual.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm p-5">Nenhum aluno ativo nessa turma.</p>';
-                return;
-            }
-
-            container.innerHTML = `
-                <table class="w-full text-sm">
-                    <thead><tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-100">
-                        <th class="p-3 font-bold">Aluno</th>
-                        <th class="p-3 font-bold text-right">Horas</th>
-                        <th class="p-3 font-bold text-right">Frequência</th>
-                    </tr></thead>
-                    <tbody>
-                        ${resumoAtual.map((r) => {
-                            const pct = r.horas_possiveis > 0 ? Math.round((r.horas_conquistadas / r.horas_possiveis) * 100) : 0;
-                            return `<tr class="border-b border-gray-50">
-                                <td class="p-3">${escaparHtml(r.nome_completo)}</td>
-                                <td class="p-3 text-right font-bold">${r.horas_conquistadas}h <span class="text-gray-400 font-normal">/ ${r.horas_possiveis}h</span></td>
-                                <td class="p-3 text-right">${pct}%</td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
+            desenharResumo();
         }
 
+        function desenharResumo() {
+            const container = document.getElementById('tabela-resumo');
+            if (!RESUMO.length) {
+                document.getElementById('resumo-geral').innerHTML = '';
+                document.getElementById('filtros-resumo').innerHTML = '';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum aluno ativo nessa turma</b></div>';
+                return;
+            }
+            const termo = document.getElementById('busca-resumo').value.trim().toLowerCase();
+            const base = RESUMO.filter((r) => !termo || (r.nome_completo || '').toLowerCase().includes(termo));
+            const abaixo = base.filter((r) => pctDe(r) < 75);
+            const zero = base.filter((r) => !(r.horas_conquistadas > 0));
+
+            const media = Math.round(RESUMO.reduce((n, r) => n + pctDe(r), 0) / RESUMO.length);
+            document.getElementById('resumo-geral').innerHTML =
+                `<span class="chip cinza" style="font-size:12.5px;padding:6px 12px">${RESUMO.length} alunos</span>
+                 <span class="chip ${media >= 75 ? 'verde' : media >= 50 ? 'ambar' : 'vermelho'}" style="font-size:12.5px;padding:6px 12px">Média da turma: ${media}%</span>`;
+
+            L.abas(document.getElementById('filtros-resumo'), [
+                { id: 'todos', rotulo: 'Todos', n: base.length },
+                { id: 'abaixo', rotulo: 'Abaixo de 75%', n: abaixo.length, alerta: abaixo.length > 0 },
+                { id: 'zero', rotulo: 'Sem nenhuma presença', n: zero.length },
+            ], FILTRO_RESUMO, (id) => { FILTRO_RESUMO = id; desenharResumo(); });
+
+            let lista = FILTRO_RESUMO === 'abaixo' ? abaixo : FILTRO_RESUMO === 'zero' ? zero : base;
+            const ordem = document.getElementById('ordem-resumo').value;
+            lista = [...lista].sort((a, b) => ordem === 'menor' ? pctDe(a) - pctDe(b) : ordem === 'maior' ? pctDe(b) - pctDe(a) : (a.nome_completo || '').localeCompare(b.nome_completo || '', 'pt-BR'));
+
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhum aluno encontrado</b>Mude a busca ou o filtro.</div>'; return; }
+            container.innerHTML = `<div class="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">${lista.map((r) => {
+                const pct = pctDe(r);
+                const cor = pct >= 75 ? '#16A34A' : pct >= 50 ? '#F59E0B' : '#DC2626';
+                return `<div class="p-4 flex items-center gap-3">
+                    <span class="avatar-ini" aria-hidden="true">${esc(L.iniciais(r.nome_completo))}</span>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-bold text-gray-800 truncate">${esc(r.nome_completo)}</p>
+                        <div class="h-2 rounded-full bg-gray-100 overflow-hidden mt-1.5"><div class="h-full rounded-full" style="width:${Math.min(100, pct)}%;background:${cor}"></div></div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <p class="text-sm font-black text-gray-900">${esc(r.horas_conquistadas)}h <span class="text-gray-500 font-semibold">/ ${esc(r.horas_possiveis)}h</span></p>
+                        <p class="text-xs font-bold" style="color:${cor}">${pct}%</p>
+                    </div>
+                </div>`;
+            }).join('')}</div>`;
+        }
+        document.getElementById('busca-resumo').addEventListener('input', desenharResumo);
+        document.getElementById('ordem-resumo').addEventListener('change', desenharResumo);
+
         document.getElementById('btn-pdf-resumo').addEventListener('click', () => {
-            if (resumoAtual.length === 0) { alert('Nada para exportar ainda.'); return; }
+            if (RESUMO.length === 0) { alert('Nada para exportar ainda.'); return; }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'pt', format: 'a4' });
             const margem = 56;
@@ -393,11 +528,10 @@
             y += 16;
 
             doc.setFont('helvetica', 'normal');
-            resumoAtual.forEach((r) => {
-                const pct = r.horas_possiveis > 0 ? Math.round((r.horas_conquistadas / r.horas_possiveis) * 100) : 0;
+            [...RESUMO].sort((a, b) => (a.nome_completo || '').localeCompare(b.nome_completo || '', 'pt-BR')).forEach((r) => {
                 doc.text(String(r.nome_completo), margem, y, { maxWidth: 270 });
                 doc.text(`${r.horas_conquistadas}h / ${r.horas_possiveis}h`, 340, y);
-                doc.text(`${pct}%`, 420, y);
+                doc.text(`${pctDe(r)}%`, 420, y);
                 y += 18;
                 if (y > 760) { doc.addPage(); y = margem; }
             });
