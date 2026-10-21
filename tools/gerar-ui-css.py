@@ -9,10 +9,19 @@ for f in glob.glob("*.html") + glob.glob("aluno/*") + glob.glob("admin/*") + glo
 tam = sorted(tam, key=float)
 
 def esc(v): return v.replace(".", "\\.")
+# Tamanhos pequenos demais para ler com conforto sobem um pouco, em todas as páginas.
+# (O "texto maior" da acessibilidade parte destes valores já corrigidos.)
+MINIMOS = {"9.5": 11.5, "10": 11.5, "10.5": 12, "11": 12.5, "11.5": 12.5}
+base_texto = ""
+for v, novo_tam in MINIMOS.items():
+    if v in tam:
+        base_texto += f"html .text-\\[{esc(v)}px\\] {{ font-size: {novo_tam}px; }}\n"
+
 regras_texto = ""
 for nivel, fator in ((1, 1.125), (2, 1.25)):
     for v in tam:
-        regras_texto += f"html.a11y-texto-{nivel} .text-\\[{esc(v)}px\\] {{ font-size: {round(float(v) * fator, 2)}px; }}\n"
+        base = MINIMOS.get(v, float(v))
+        regras_texto += f"html.a11y-texto-{nivel} .text-\\[{esc(v)}px\\] {{ font-size: {round(base * fator, 2)}px; }}\n"
 
 css = r"""/* /pibiex-ui.css
  *
@@ -68,6 +77,13 @@ html.a11y-sem-movimento *, html.a11y-sem-movimento *::before, html.a11y-sem-movi
 html.a11y-texto-1 { font-size: 112.5%; }
 html.a11y-texto-2 { font-size: 125%; }
 html.a11y-texto-1 body, html.a11y-texto-2 body { line-height: 1.55; }
+""" + base_texto + r"""
+/* Letras claras com pouca opacidade sobre fundo azul: sobem para ler melhor (contraste mínimo 4,5:1). */
+html body .text-white\/50 { color: rgb(255 255 255 / .75); } html body .text-white\/60 { color: rgb(255 255 255 / .82); }
+html body .text-white\/70 { color: rgb(255 255 255 / .86); } html body .text-white\/80 { color: rgb(255 255 255 / .9); }
+html body .text-blue-100\/30 { color: rgb(219 234 254 / .6); } html body .text-blue-100\/50 { color: rgb(219 234 254 / .8); }
+html body .text-blue-100\/60 { color: rgb(219 234 254 / .85); } html body .text-blue-100\/70 { color: rgb(219 234 254 / .9); }
+html body .text-blue-100\/80 { color: rgb(219 234 254 / .92); } html body .text-blue-100\/85 { color: rgb(219 234 254 / .95); }
 """ + regras_texto + r"""
 /* ---------------------------------------------------------------- alto contraste */
 html.a11y-contraste {

@@ -52,11 +52,23 @@ html.a11y-sem-movimento *, html.a11y-sem-movimento *::before, html.a11y-sem-movi
 html.a11y-texto-1 { font-size: 112.5%; }
 html.a11y-texto-2 { font-size: 125%; }
 html.a11y-texto-1 body, html.a11y-texto-2 body { line-height: 1.55; }
-html.a11y-texto-1 .text-\[9\.5px\] { font-size: 10.69px; }
-html.a11y-texto-1 .text-\[10px\] { font-size: 11.25px; }
-html.a11y-texto-1 .text-\[10\.5px\] { font-size: 11.81px; }
-html.a11y-texto-1 .text-\[11px\] { font-size: 12.38px; }
-html.a11y-texto-1 .text-\[11\.5px\] { font-size: 12.94px; }
+html .text-\[9\.5px\] { font-size: 11.5px; }
+html .text-\[10px\] { font-size: 11.5px; }
+html .text-\[10\.5px\] { font-size: 12px; }
+html .text-\[11px\] { font-size: 12.5px; }
+html .text-\[11\.5px\] { font-size: 12.5px; }
+
+/* Letras claras com pouca opacidade sobre fundo azul: sobem para ler melhor (contraste mínimo 4,5:1). */
+html body .text-white\/50 { color: rgb(255 255 255 / .75); } html body .text-white\/60 { color: rgb(255 255 255 / .82); }
+html body .text-white\/70 { color: rgb(255 255 255 / .86); } html body .text-white\/80 { color: rgb(255 255 255 / .9); }
+html body .text-blue-100\/30 { color: rgb(219 234 254 / .6); } html body .text-blue-100\/50 { color: rgb(219 234 254 / .8); }
+html body .text-blue-100\/60 { color: rgb(219 234 254 / .85); } html body .text-blue-100\/70 { color: rgb(219 234 254 / .9); }
+html body .text-blue-100\/80 { color: rgb(219 234 254 / .92); } html body .text-blue-100\/85 { color: rgb(219 234 254 / .95); }
+html.a11y-texto-1 .text-\[9\.5px\] { font-size: 12.94px; }
+html.a11y-texto-1 .text-\[10px\] { font-size: 12.94px; }
+html.a11y-texto-1 .text-\[10\.5px\] { font-size: 13.5px; }
+html.a11y-texto-1 .text-\[11px\] { font-size: 14.06px; }
+html.a11y-texto-1 .text-\[11\.5px\] { font-size: 14.06px; }
 html.a11y-texto-1 .text-\[12px\] { font-size: 13.5px; }
 html.a11y-texto-1 .text-\[12\.5px\] { font-size: 14.06px; }
 html.a11y-texto-1 .text-\[13px\] { font-size: 14.62px; }
@@ -69,11 +81,11 @@ html.a11y-texto-1 .text-\[19px\] { font-size: 21.38px; }
 html.a11y-texto-1 .text-\[26px\] { font-size: 29.25px; }
 html.a11y-texto-1 .text-\[38px\] { font-size: 42.75px; }
 html.a11y-texto-1 .text-\[40px\] { font-size: 45.0px; }
-html.a11y-texto-2 .text-\[9\.5px\] { font-size: 11.88px; }
-html.a11y-texto-2 .text-\[10px\] { font-size: 12.5px; }
-html.a11y-texto-2 .text-\[10\.5px\] { font-size: 13.12px; }
-html.a11y-texto-2 .text-\[11px\] { font-size: 13.75px; }
-html.a11y-texto-2 .text-\[11\.5px\] { font-size: 14.38px; }
+html.a11y-texto-2 .text-\[9\.5px\] { font-size: 14.38px; }
+html.a11y-texto-2 .text-\[10px\] { font-size: 14.38px; }
+html.a11y-texto-2 .text-\[10\.5px\] { font-size: 15.0px; }
+html.a11y-texto-2 .text-\[11px\] { font-size: 15.62px; }
+html.a11y-texto-2 .text-\[11\.5px\] { font-size: 15.62px; }
 html.a11y-texto-2 .text-\[12px\] { font-size: 15.0px; }
 html.a11y-texto-2 .text-\[12\.5px\] { font-size: 15.62px; }
 html.a11y-texto-2 .text-\[13px\] { font-size: 16.25px; }
