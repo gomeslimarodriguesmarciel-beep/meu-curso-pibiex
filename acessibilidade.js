@@ -8,6 +8,7 @@
 //    que só têm placeholder.
 //  - PibiexA11y.montarPainel(elemento): desenha o cartão "Aparência e acessibilidade"
 //    (usado em Perfil). PibiexA11y.itemDoMenu(): interruptor rápido para o menu da conta.
+//    PibiexA11y.botaoFlutuante(): botão fixo com o mesmo cartão, para as páginas públicas.
 //
 // Carregado no <head> para a preferência valer antes de a página aparecer (sem "piscar").
 
@@ -127,6 +128,9 @@
             aplicar(ler());
             desenhar();
         };
+        // se o cartão for desenhado de novo no mesmo lugar (botão flutuante), não acumula ouvintes
+        if (el.__a11yDesenhar) document.removeEventListener('pibiex:a11y', el.__a11yDesenhar);
+        el.__a11yDesenhar = desenhar;
         document.addEventListener('pibiex:a11y', desenhar);
         desenhar();
     }
@@ -148,6 +152,82 @@
         document.addEventListener('pibiex:a11y', desenhar);
         desenhar();
         return botao;
+    }
+
+    // ------------------------------------------------------------------
+    // Botão flutuante de acessibilidade, para as páginas públicas (quem só está visitando).
+    // Abre o mesmo cartão do Perfil. Na primeira visita aparece uma dica curta, uma vez só.
+    // Nada disso fala com o servidor: é só este arquivo e o CSS que a página já carrega.
+    // ------------------------------------------------------------------
+    function botaoFlutuante() {
+        if (document.getElementById('a11y-fab')) return;
+        const CHAVE_DICA = 'pibiex_a11y_dica';
+
+        const fab = document.createElement('button');
+        fab.type = 'button';
+        fab.id = 'a11y-fab';
+        fab.className = 'a11y-fab';
+        fab.setAttribute('aria-label', 'Opções de acessibilidade: contraste, tamanho do texto e movimento');
+        fab.setAttribute('aria-expanded', 'false');
+        fab.setAttribute('aria-controls', 'a11y-pop');
+        fab.title = 'Acessibilidade';
+        fab.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="7.5" r="1.3" fill="currentColor" stroke="none"/><path d="M7 10.5l5 1 5-1M12 11.5V15m0 0-2.5 4M12 15l2.5 4"/></svg>';
+
+        const pop = document.createElement('div');
+        pop.id = 'a11y-pop';
+        pop.className = 'a11y-pop';
+        pop.hidden = true;
+        pop.setAttribute('role', 'dialog');
+        pop.setAttribute('aria-label', 'Acessibilidade');
+        const conteudo = document.createElement('div');
+        const fechar = document.createElement('button');
+        fechar.type = 'button';
+        fechar.className = 'a11y-pop-fechar';
+        fechar.setAttribute('aria-label', 'Fechar opções de acessibilidade');
+        fechar.textContent = '×';
+        pop.append(fechar, conteudo);
+
+        let dica = null;
+        function esconderDica(lembrar) {
+            if (dica) { dica.remove(); dica = null; }
+            if (lembrar) { try { localStorage.setItem(CHAVE_DICA, '1'); } catch (e) { /* ok */ } }
+        }
+
+        function abrir() {
+            esconderDica(true);
+            montarPainel(conteudo);
+            pop.hidden = false;
+            fab.setAttribute('aria-expanded', 'true');
+            const primeiro = pop.querySelector('.a11y-chave') || pop.querySelector('button');
+            if (primeiro) primeiro.focus();
+        }
+        function fecharPainel(devolverFoco) {
+            pop.hidden = true;
+            fab.setAttribute('aria-expanded', 'false');
+            if (devolverFoco) fab.focus();
+        }
+        fab.onclick = () => (pop.hidden ? abrir() : fecharPainel(true));
+        fechar.onclick = () => fecharPainel(true);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) fecharPainel(true); });
+        document.addEventListener('mousedown', (e) => { if (!pop.hidden && !pop.contains(e.target) && !fab.contains(e.target)) fecharPainel(false); });
+
+        document.body.append(pop, fab);
+
+        // Dica da primeira visita (só se a pessoa ainda não mexeu nas preferências).
+        let jaViu = false, jaEscolheu = false;
+        try { jaViu = localStorage.getItem(CHAVE_DICA) === '1'; jaEscolheu = !!localStorage.getItem(CHAVE); } catch (e) { /* ok */ }
+        if (!jaViu && !jaEscolheu) {
+            setTimeout(() => {
+                if (!pop.hidden) return;
+                dica = document.createElement('div');
+                dica.className = 'a11y-dica';
+                dica.setAttribute('role', 'status');
+                dica.innerHTML = 'Precisa de letras maiores ou mais contraste? <u>Toque aqui</u>.<button type="button" aria-label="Dispensar dica">×</button>';
+                dica.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') esconderDica(true); else abrir(); });
+                document.body.appendChild(dica);
+                setTimeout(() => { if (dica) esconderDica(true); }, 12000);
+            }, 2500);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -181,7 +261,7 @@
     }
     window.alert = mostrarAviso;
 
-    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu, aviso: mostrarAviso };
+    window.PibiexA11y = { estado, mudar, montarPainel, itemDoMenu, botaoFlutuante, aviso: mostrarAviso };
 
     // ------------------------------------------------------------------
     // Ajustes de leitura (depois que a página existe)

@@ -233,6 +233,29 @@ html.a11y-contraste .aba .n, html.a11y-contraste .chip { border: 1px solid #1118
 html.a11y-contraste .aba[aria-selected="true"] .n { background: #fff; color: #000; }
 html.a11y-contraste .cx-sub, html.a11y-contraste .cx-previa, html.a11y-contraste .item-atv .m { color: #111827; }
 
+/* ---------------------------------------------------------------- botão flutuante de acessibilidade (páginas públicas) */
+.a11y-fab { position: fixed; left: 16px; bottom: 16px; z-index: 2147482000; width: 52px; height: 52px; border-radius: 50%; border: 2px solid #fff; cursor: pointer;
+            background: #0B1B4A; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(2,6,23,.35); transition: transform .15s; }
+.a11y-fab:hover { transform: scale(1.06); }
+.a11y-fab:focus-visible { outline: 3px solid #A3E635; outline-offset: 3px; }
+.a11y-fab[aria-expanded="true"] { background: #1E3A8A; }
+.a11y-dica { position: fixed; left: 16px; bottom: 80px; z-index: 2147482000; max-width: min(300px, calc(100vw - 32px)); background: #fff; color: #111827; border-radius: 14px; padding: 12px 36px 12px 14px;
+             font: 600 13px/1.4 'Inter', system-ui, sans-serif; box-shadow: 0 12px 32px rgba(2,6,23,.3); border: 1.5px solid #CBD5E1; animation: a11y-sobe .3s ease; }
+.a11y-dica::after { content: ""; position: absolute; left: 22px; bottom: -8px; width: 14px; height: 14px; background: #fff; border-right: 1.5px solid #CBD5E1; border-bottom: 1.5px solid #CBD5E1; transform: rotate(45deg); }
+.a11y-dica button { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 18px; line-height: 1; color: #6B7280; cursor: pointer; padding: 2px 4px; }
+.a11y-dica button:hover { color: #111827; }
+.a11y-pop { position: fixed; left: 16px; bottom: 80px; z-index: 2147482001; width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 110px); overflow-y: auto; border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(2,6,23,.45); animation: a11y-sobe .2s ease; background: #fff; }
+.a11y-pop[hidden], .a11y-dica[hidden] { display: none; }
+.a11y-pop .a11y-card { box-shadow: none; margin: 0; }
+.a11y-pop-fechar { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: #F1F5F9; color: #111827; font-size: 20px; line-height: 1; cursor: pointer; z-index: 1; }
+.a11y-pop-fechar:hover { background: #E2E8F0; }
+@keyframes a11y-sobe { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (max-width: 520px) { .a11y-pop { left: 8px; right: 8px; width: auto; bottom: 76px; } .a11y-fab { left: 12px; bottom: 12px; } .a11y-dica { left: 12px; } }
+@media (prefers-reduced-motion: reduce) { .a11y-pop, .a11y-dica { animation: none; } }
+html.a11y-contraste .a11y-fab { background: #000; border-color: #fff; outline: 2px solid #000; }
+html.a11y-contraste .a11y-dica, html.a11y-contraste .a11y-pop { border: 2px solid #000; }
+
 """
 open("pibiex-ui.css", "w", encoding="utf-8", newline="\n").write(css)
 print(len(css), "bytes;", len(tam), "tamanhos px")
