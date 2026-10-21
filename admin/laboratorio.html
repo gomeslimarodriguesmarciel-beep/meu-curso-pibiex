@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -22,7 +23,13 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">Laboratório de IA</h1>
             <p class="text-gray-500 mb-6">Crie problemas práticos e acompanhe as soluções enviadas pelos alunos.</p>
 
-            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <input id="busca-lab" type="search" class="caixa-busca" style="flex:1;min-width:200px" placeholder="Buscar problema pelo título" aria-label="Buscar problema pelo título" autocomplete="off">
+                <button type="button" id="btn-novo-lab" aria-expanded="false" aria-controls="form-novo" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Novo problema</button>
+            </div>
+            <div id="abas-lab" class="mb-4"></div>
+
+            <form id="form-novo" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 space-y-3">
                 <div class="flex flex-wrap gap-3">
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
@@ -49,10 +56,11 @@
                     <input type="checkbox" id="novo-ativo" checked class="rounded border-gray-300">
                     Visível para os alunos
                 </label>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo problema</button>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Publicar problema</button>
+                <button type="button" id="btn-cancelar-lab" class="ml-2 text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
             </form>
 
-            <div id="lista-laboratorio" class="space-y-4">
+            <div id="lista-laboratorio" class="space-y-3">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
@@ -103,23 +111,50 @@
             renderizarLaboratorio(resultado.laboratorios || []);
         }
 
+        const L = window.PibiexLista;
+        let LABS = [];
+        let FILTRO = 'todos';          // 'todos' | 'envios' | 'ativos' | 'inativos'
+        let BUSCA = '';
+        const ABERTOS = new Set();
+
         function renderizarLaboratorio(laboratorios) {
+            if (laboratorios) LABS = laboratorios;
             const container = document.getElementById('lista-laboratorio');
 
-            if (laboratorios.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum problema criado ainda.</p>';
+            if (LABS.length === 0) {
+                document.getElementById('abas-lab').innerHTML = '';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum problema criado ainda</b>Clique em "+ Novo problema" para publicar o primeiro.</div>';
                 return;
             }
 
-            container.innerHTML = laboratorios.map((lab) => {
+            const termo = BUSCA.trim().toLowerCase();
+            const base = LABS.filter((l) => !termo || (l.titulo || '').toLowerCase().includes(termo));
+            const criterios = {
+                todos: () => true,
+                envios: (l) => (l.envios || []).length > 0,
+                ativos: (l) => !!l.ativo,
+                inativos: (l) => !l.ativo,
+            };
+            const n = (k) => base.filter(criterios[k]).length;
+            L.abas(document.getElementById('abas-lab'), [
+                { id: 'todos', rotulo: 'Todos', n: base.length },
+                { id: 'envios', rotulo: 'Com envios', n: n('envios') },
+                { id: 'ativos', rotulo: 'Visíveis', n: n('ativos') },
+                { id: 'inativos', rotulo: 'Ocultos', n: n('inativos') },
+            ], FILTRO, (id) => { FILTRO = id; renderizarLaboratorio(); });
+
+            const lista = base.filter(criterios[FILTRO]);
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhum problema encontrado</b>Mude a busca ou o filtro.</div>'; return; }
+
+            container.innerHTML = lista.map((lab) => {
                 if (idEmEdicao === lab.id) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-titulo-${lab.id}" value="${escaparHtml(lab.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <textarea id="edit-problema-${lab.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(lab.problema)}</textarea>
-                            <textarea id="edit-instrucoes-${lab.id}" rows="2" placeholder="Instruções (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(lab.instrucoes || '')}</textarea>
+                            <input id="edit-titulo-${lab.id}" value="${L.esc(lab.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold" aria-label="Título">
+                            <textarea id="edit-problema-${lab.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Problema">${L.esc(lab.problema)}</textarea>
+                            <textarea id="edit-instrucoes-${lab.id}" rows="2" placeholder="Instruções (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Instruções">${L.esc(lab.instrucoes || '')}</textarea>
                             <div class="flex items-center gap-3 flex-wrap">
-                                <select id="edit-dificuldade-${lab.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">${opcoesDificuldade(lab.dificuldade)}</select>
+                                <select id="edit-dificuldade-${lab.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Dificuldade">${opcoesDificuldade(lab.dificuldade)}</select>
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" id="edit-ativo-${lab.id}" class="rounded border-gray-300" ${lab.ativo ? 'checked' : ''}>
                                     Visível para os alunos
@@ -129,53 +164,67 @@
                                 <button onclick="salvarLaboratorio('${lab.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                                 <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
 
                 const envios = lab.envios || [];
                 const enviosHtml = envios.length === 0
-                    ? '<p class="text-xs text-gray-400 px-5 pb-4">Nenhum envio ainda.</p>'
-                    : envios.map(e => `
-                        <div class="px-5 py-2.5 border-t border-gray-100">
+                    ? '<p class="text-xs text-gray-500 px-5 py-4">Nenhum envio ainda.</p>'
+                    : envios.map((e) => `
+                        <div class="px-5 py-3 border-t border-gray-100">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-gray-800">${escaparHtml(e.alunoNome)}</p>
-                                    <p class="text-[11px] text-gray-400">${formatarData(e.enviado_em)}</p>
+                                    <p class="text-sm font-semibold text-gray-800">${L.esc(e.alunoNome)}</p>
+                                    <p class="text-[11px] text-gray-500">${L.esc(formatarData(e.enviado_em))}</p>
                                 </div>
-                                ${e.arquivo_url ? `<a href="${escaparHtml(urlSegura(e.arquivo_url))}" target="_blank" rel="noopener" class="text-blue-600 text-xs font-semibold hover:underline shrink-0">Abrir link →</a>` : ''}
+                                ${e.arquivo_url ? `<a href="${L.esc(urlSegura(e.arquivo_url))}" target="_blank" rel="noopener" class="text-blue-700 text-xs font-semibold hover:underline shrink-0">Abrir arquivo &rarr;</a>` : ''}
                             </div>
-                            ${e.resposta_texto ? `<p class="text-xs text-gray-600 bg-gray-50 rounded-lg p-2.5 mt-2 whitespace-pre-wrap">${escaparHtml(e.resposta_texto)}</p>` : ''}
-                        </div>
-                    `).join('');
+                            ${e.resposta_texto ? `<p class="text-xs text-gray-700 bg-gray-50 rounded-lg p-2.5 mt-2 whitespace-pre-wrap">${L.esc(e.resposta_texto)}</p>` : ''}
+                        </div>`).join('');
 
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="p-5">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(lab.titulo)}</p>
-                                        ${lab.dificuldade ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${COR_DIFICULDADE[lab.dificuldade] || 'bg-gray-100 text-gray-500'}">${ROTULO_DIFICULDADE[lab.dificuldade] || escaparHtml(lab.dificuldade)}</span>` : ''}
-                                        ${!lab.ativo ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inativo</span>' : ''}
-                                    </div>
-                                    <p class="text-sm text-gray-600">${escaparHtml(lab.problema)}</p>
-                                    ${lab.instrucoes ? `<p class="text-xs text-gray-500 italic mt-1">${escaparHtml(lab.instrucoes)}</p>` : ''}
-                                </div>
-                                <div class="flex gap-2 shrink-0">
-                                    <button onclick="editarLaboratorio('${lab.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                    <button onclick="excluirLaboratorio('${lab.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
+                    <details class="cx" data-id="${L.esc(lab.id)}" ${ABERTOS.has(lab.id) ? 'open' : ''}>
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${L.esc(lab.titulo)}</span>
+                                <span class="flex flex-wrap gap-1.5 mt-2">
+                                    ${lab.dificuldade ? `<span class="chip ${lab.dificuldade === 'facil' ? 'verde' : lab.dificuldade === 'dificil' ? 'vermelho' : 'ambar'}">${L.esc(ROTULO_DIFICULDADE[lab.dificuldade] || lab.dificuldade)}</span>` : ''}
+                                    ${!lab.ativo ? '<span class="chip cinza">Oculto dos alunos</span>' : ''}
+                                    <span class="chip ${envios.length ? 'azul' : 'cinza'}">${envios.length ? `${envios.length} ${envios.length === 1 ? 'envio' : 'envios'}` : 'Sem envios'}</span>
+                                </span>
+                            </span>
+                        </summary>
+                        <div>
+                            <div class="px-5 py-4">
+                                <p class="text-sm text-gray-700 whitespace-pre-wrap">${L.esc(lab.problema)}</p>
+                                ${lab.instrucoes ? `<p class="text-xs text-gray-600 italic mt-2 whitespace-pre-wrap">${L.esc(lab.instrucoes)}</p>` : ''}
+                                <div class="flex gap-2 mt-3">
+                                    <button onclick="editarLaboratorio('${lab.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Editar</button>
+                                    <button onclick="excluirLaboratorio('${lab.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir</button>
                                 </div>
                             </div>
+                            <div class="bg-gray-50 px-5 py-2 border-t border-gray-100">
+                                <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
+                            </div>
+                            ${enviosHtml}
                         </div>
-                        <div class="bg-gray-50 px-5 py-2 border-t border-gray-100">
-                            <p class="text-xs font-bold text-gray-500 uppercase">Envios (${envios.length})</p>
-                        </div>
-                        ${enviosHtml}
-                    </div>
-                `;
+                    </details>`;
             }).join('');
+
+            container.querySelectorAll('details.cx').forEach((det) => {
+                det.addEventListener('toggle', () => { if (det.open) ABERTOS.add(det.dataset.id); else ABERTOS.delete(det.dataset.id); });
+            });
         }
+
+        document.getElementById('busca-lab').addEventListener('input', (e) => { BUSCA = e.target.value; renderizarLaboratorio(); });
+
+        function mostrarFormulario(mostrar) {
+            document.getElementById('form-novo').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-novo-lab').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-titulo').focus();
+        }
+        document.getElementById('btn-novo-lab').addEventListener('click', () => mostrarFormulario(document.getElementById('form-novo').classList.contains('hidden')));
+        document.getElementById('btn-cancelar-lab').addEventListener('click', () => { document.getElementById('form-novo').reset(); mostrarFormulario(false); });
 
         document.getElementById('form-novo').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -190,6 +239,7 @@
             if (resultado) {
                 document.getElementById('form-novo').reset();
                 document.getElementById('novo-ativo').checked = true;
+                mostrarFormulario(false);
                 carregarLaboratorio();
             }
         });

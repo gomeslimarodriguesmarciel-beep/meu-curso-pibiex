@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -24,24 +25,33 @@
 
             <div id="seletor-turma" class="mb-6"></div>
 
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <input id="busca-cronograma" type="search" class="caixa-busca hidden" style="flex:1;min-width:220px" placeholder="Buscar módulo ou aula pelo título" aria-label="Buscar módulo ou aula" autocomplete="off">
+                <button type="button" id="btn-novo-modulo" aria-expanded="false" aria-controls="form-novo-modulo" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm ml-auto">+ Novo módulo</button>
+            </div>
+
             <!-- Formulário: novo módulo -->
-            <form id="form-novo-modulo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 flex flex-wrap gap-3 items-end">
+            <form id="form-novo-modulo" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 flex flex-wrap gap-3 items-end">
                 <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Título do módulo</label>
+                    <label for="novo-modulo-titulo" class="block text-xs font-bold text-gray-500 mb-1">Título do módulo</label>
                     <input id="novo-modulo-titulo" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                 </div>
                 <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Descrição (opcional)</label>
+                    <label for="novo-modulo-descricao" class="block text-xs font-bold text-gray-500 mb-1">Descrição (opcional)</label>
                     <input id="novo-modulo-descricao" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                 </div>
                 <div class="w-24">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Ordem</label>
+                    <label for="novo-modulo-ordem" class="block text-xs font-bold text-gray-500 mb-1">Ordem</label>
                     <input id="novo-modulo-ordem" type="number" value="0" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                 </div>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo módulo</button>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Criar módulo</button>
+                <button type="button" id="cancelar-novo-modulo" class="text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
             </form>
 
-            <div id="lista-modulos" class="space-y-6">
+            <div id="abas-aulas" class="mb-5 hidden"></div>
+            <div id="sem-resultado" class="vazio-lista hidden"><b>Nada encontrado</b>Mude a busca ou o filtro.</div>
+
+            <div id="lista-modulos" class="space-y-3">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
@@ -86,99 +96,191 @@
             renderizarModulos(modulos || []);
         }
 
+        const L = window.PibiexLista;
+        const ABERTOS = new Set();
+        const FORM_AULA = new Set();
+        let PRIMEIRA_VEZ = true;
+        let FILTRO = 'todas';          // 'todas' | 'proximas' | 'realizadas' | 'semdata'
+        let MODULOS_ATUAIS = [];
+        const esc = L.esc;
+        const hojeISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+        const faseDe = (aula) => !aula.data_aula ? 'semdata' : (aula.data_aula < hojeISO() ? 'realizadas' : 'proximas');
+
         function renderizarModulos(modulos) {
             const container = document.getElementById('lista-modulos');
+            MODULOS_ATUAIS = modulos;
+            const tem = modulos.length > 0;
+            document.getElementById('busca-cronograma').classList.toggle('hidden', !tem);
+            document.getElementById('abas-aulas').classList.toggle('hidden', !tem);
 
-            if (modulos.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum módulo ainda. Crie o primeiro acima.</p>';
+            if (!tem) {
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum módulo ainda</b>Clique em "+ Novo módulo" para criar o primeiro.</div>';
                 return;
+            }
+
+            // a próxima aula de todas (para destacar e abrir o módulo dela)
+            const hoje = hojeISO();
+            let proxima = null;
+            modulos.forEach((m) => (m.aulas || []).forEach((a) => {
+                if (a.data_aula && a.data_aula >= hoje && (!proxima || a.data_aula < proxima.data_aula)) proxima = { ...a, moduloId: m.id };
+            }));
+            if (PRIMEIRA_VEZ) {
+                ABERTOS.add(proxima ? proxima.moduloId : modulos[modulos.length - 1].id);
+                PRIMEIRA_VEZ = false;
             }
 
             container.innerHTML = modulos.map((modulo) => {
                 const editandoModulo = idEmEdicao && idEmEdicao.tipo === 'modulo' && idEmEdicao.id === modulo.id;
+                const aulas = modulo.aulas || [];
+                const emEdicao = editandoModulo || aulas.some((a) => idEmEdicao && idEmEdicao.tipo === 'aula' && idEmEdicao.id === a.id);
+                const datas = aulas.map((a) => a.data_aula).filter(Boolean).sort();
+                const intervalo = datas.length ? (datas[0] === datas[datas.length - 1] ? formatarData(datas[0]) : `${formatarData(datas[0])} a ${formatarData(datas[datas.length - 1])}`) : '';
 
-                const cabecalho = editandoModulo ? `
-                    <div class="p-4 space-y-2 bg-gray-50">
-                        <input id="edit-modulo-titulo-${modulo.id}" value="${escaparHtml(modulo.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                        <input id="edit-modulo-descricao-${modulo.id}" value="${escaparHtml(modulo.descricao || '')}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                const acoesModulo = editandoModulo ? `
+                    <div class="px-5 py-4 space-y-2 bg-gray-50 border-b border-gray-100">
+                        <input id="edit-modulo-titulo-${modulo.id}" value="${esc(modulo.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold" aria-label="Título do módulo">
+                        <input id="edit-modulo-descricao-${modulo.id}" value="${esc(modulo.descricao || '')}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Descrição do módulo">
                         <div class="flex gap-2">
-                            <input id="edit-modulo-ordem-${modulo.id}" type="number" value="${modulo.ordem}" class="w-20 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <input id="edit-modulo-ordem-${modulo.id}" type="number" value="${modulo.ordem}" class="w-20 border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Ordem">
                             <button onclick="salvarModulo('${modulo.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                             <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
                         </div>
-                    </div>
-                ` : `
-                    <div class="px-5 py-4 bg-gray-900 flex justify-between items-start">
-                        <div>
-                            <p class="text-white font-black">${escaparHtml(modulo.titulo)}</p>
-                            ${modulo.descricao ? `<p class="text-gray-300 text-xs mt-0.5">${escaparHtml(modulo.descricao)}</p>` : ''}
-                        </div>
-                        <div class="flex gap-2 shrink-0">
-                            <button onclick="editarModulo('${modulo.id}')" class="text-gray-300 hover:text-white text-xs" aria-label="Editar">${icone('editar')}</button>
-                            <button onclick="excluirModulo('${modulo.id}')" class="text-gray-300 hover:text-red-400 text-xs" aria-label="Excluir">${icone('excluir')}</button>
-                        </div>
-                    </div>
-                `;
+                    </div>` : `
+                    <div class="px-5 py-3 flex flex-wrap gap-2 border-b border-gray-100">
+                        <button onclick="editarModulo('${modulo.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Editar módulo</button>
+                        <button onclick="excluirModulo('${modulo.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir módulo</button>
+                    </div>`;
 
-                const aulasHtml = (modulo.aulas || []).map((aula) => {
+                const aulasHtml = aulas.map((aula) => {
                     const editandoAula = idEmEdicao && idEmEdicao.tipo === 'aula' && idEmEdicao.id === aula.id;
 
                     if (editandoAula) {
                         return `
                             <div class="px-5 py-3 border-t border-gray-100 bg-gray-50 space-y-2">
-                                <input id="edit-aula-titulo-${aula.id}" value="${escaparHtml(aula.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                <input id="edit-aula-titulo-${aula.id}" value="${esc(aula.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" aria-label="Título da aula">
                                 <div class="flex gap-2 flex-wrap">
-                                    <input id="edit-aula-data-${aula.id}" type="date" value="${aula.data_aula || ''}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                    <input id="edit-aula-inicio-${aula.id}" type="time" value="${(aula.horario_inicio || '').slice(0,5)}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                    <input id="edit-aula-fim-${aula.id}" type="time" value="${(aula.horario_fim || '').slice(0,5)}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                                    <input id="edit-aula-ordem-${aula.id}" type="number" value="${aula.ordem}" class="w-16 border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                                    <input id="edit-aula-data-${aula.id}" type="date" value="${aula.data_aula || ''}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" aria-label="Data">
+                                    <input id="edit-aula-inicio-${aula.id}" type="time" value="${(aula.horario_inicio || '').slice(0, 5)}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" aria-label="Início">
+                                    <input id="edit-aula-fim-${aula.id}" type="time" value="${(aula.horario_fim || '').slice(0, 5)}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm" aria-label="Fim">
+                                    <input id="edit-aula-ordem-${aula.id}" type="number" value="${aula.ordem}" class="w-16 border border-gray-200 rounded-lg px-3 py-1.5 text-sm" aria-label="Ordem">
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="salvarAula('${aula.id}', '${modulo.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Salvar</button>
                                     <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-lg">Cancelar</button>
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                     }
 
+                    const fase = faseDe(aula);
+                    const ehProxima = proxima && proxima.id === aula.id;
                     return `
-                        <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-4">
-                                <div class="bg-blue-50 text-blue-700 font-black rounded-lg px-3 py-1.5 text-center shrink-0 text-xs w-24">
+                        <div data-item data-fase="${fase}" data-texto="${esc((aula.titulo || '').toLowerCase())}" class="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3 ${fase === 'realizadas' ? 'opacity-75' : ''}">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="${fase === 'realizadas' ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-700'} font-black rounded-lg px-3 py-1.5 text-center shrink-0 text-xs w-24">
                                     ${formatarData(aula.data_aula) || 'Sem data'}
                                 </div>
-                                <div>
-                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(aula.titulo)}</p>
-                                    ${aula.horario_inicio ? `<p class="text-gray-500 text-xs">${aula.horario_inicio.slice(0,5)}${aula.horario_fim ? ' às ' + aula.horario_fim.slice(0,5) : ''}</p>` : ''}
+                                <div class="min-w-0">
+                                    <p class="font-bold text-gray-800 text-sm flex items-center gap-2 flex-wrap">${esc(aula.titulo)}
+                                        ${ehProxima ? '<span class="chip verde">Próxima aula</span>' : (fase === 'realizadas' ? '<span class="chip cinza">Realizada</span>' : '')}</p>
+                                    ${aula.horario_inicio ? `<p class="text-gray-500 text-xs">${aula.horario_inicio.slice(0, 5)}${aula.horario_fim ? ' às ' + aula.horario_fim.slice(0, 5) : ''}</p>` : ''}
                                 </div>
                             </div>
                             <div class="flex gap-2 shrink-0">
-                                <button onclick="editarAula('${aula.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                <button onclick="excluirAula('${aula.id}', '${modulo.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
+                                <button onclick="editarAula('${aula.id}')" class="text-gray-500 hover:text-gray-800 p-1.5" aria-label="Editar aula">${icone('editar')}</button>
+                                <button onclick="excluirAula('${aula.id}', '${modulo.id}')" class="text-gray-500 hover:text-red-600 p-1.5" aria-label="Excluir aula">${icone('excluir')}</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }).join('');
 
                 const formNovaAula = `
                     <form onsubmit="return criarAula(event, '${modulo.id}')" class="px-5 py-3 border-t border-gray-100 bg-gray-50 flex flex-wrap gap-2 items-end">
-                        <input required placeholder="Título da aula" id="nova-aula-titulo-${modulo.id}" class="flex-1 min-w-[140px] border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                        <input type="date" id="nova-aula-data-${modulo.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                        <input type="time" id="nova-aula-inicio-${modulo.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                        <input type="time" id="nova-aula-fim-${modulo.id}" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
-                        <button type="submit" class="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">+ Aula</button>
-                    </form>
-                `;
+                        <input required placeholder="Título da aula" id="nova-aula-titulo-${modulo.id}" aria-label="Título da aula" class="flex-1 min-w-[140px] border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                        <input type="date" id="nova-aula-data-${modulo.id}" aria-label="Data" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                        <input type="time" id="nova-aula-inicio-${modulo.id}" aria-label="Início" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                        <input type="time" id="nova-aula-fim-${modulo.id}" aria-label="Fim" class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                        <button type="submit" class="bg-gray-900 text-white text-xs font-bold px-4 py-2 rounded-lg">Criar aula</button>
+                    </form>`;
 
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        ${cabecalho}
-                        ${aulasHtml || '<p class="text-gray-400 text-sm px-5 py-4">Nenhuma aula neste módulo ainda.</p>'}
-                        ${formNovaAula}
-                    </div>
-                `;
+                    <details class="cx" data-modulo="${esc(modulo.id)}" data-titulo="${esc((modulo.titulo || '').toLowerCase())}" ${(ABERTOS.has(modulo.id) || emEdicao || FORM_AULA.has(modulo.id)) ? 'open' : ''}>
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${esc(modulo.titulo)}</span>
+                                ${modulo.descricao ? `<span class="cx-sub block">${esc(modulo.descricao)}</span>` : ''}
+                                <span class="flex flex-wrap gap-1.5 mt-2">
+                                    <span class="chip ${aulas.length ? 'azul' : 'cinza'}">${aulas.length} ${aulas.length === 1 ? 'aula' : 'aulas'}</span>
+                                    ${intervalo ? `<span class="chip cinza">${esc(intervalo)}</span>` : ''}
+                                    ${proxima && proxima.moduloId === modulo.id ? '<span class="chip verde">Tem a próxima aula</span>' : ''}
+                                </span>
+                            </span>
+                        </summary>
+                        <div>
+                            ${acoesModulo}
+                            ${aulasHtml || '<p class="text-gray-500 text-sm px-5 py-4">Nenhuma aula neste módulo ainda.</p>'}
+                            <div class="px-5 py-3 border-t border-gray-100">
+                                <button type="button" onclick="alternarFormAula('${modulo.id}')" aria-expanded="${FORM_AULA.has(modulo.id)}" class="bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold px-4 py-2 rounded-lg">+ Adicionar aula</button>
+                            </div>
+                            <div id="form-aula-${modulo.id}" class="${FORM_AULA.has(modulo.id) ? '' : 'hidden'}">${formNovaAula}</div>
+                        </div>
+                    </details>`;
             }).join('');
+
+            container.querySelectorAll('details.cx').forEach((d) => {
+                d.addEventListener('toggle', () => { if (d.open) ABERTOS.add(d.dataset.modulo); else ABERTOS.delete(d.dataset.modulo); });
+            });
+            desenharAbas();
+            aplicarFiltro();
         }
+
+        window.alternarFormAula = (moduloId) => {
+            const caixa = document.getElementById(`form-aula-${moduloId}`);
+            const abrir = caixa.classList.contains('hidden');
+            caixa.classList.toggle('hidden', !abrir);
+            if (abrir) FORM_AULA.add(moduloId); else FORM_AULA.delete(moduloId);
+            const botao = caixa.previousElementSibling && caixa.previousElementSibling.querySelector('button');
+            if (botao) botao.setAttribute('aria-expanded', String(abrir));
+            if (abrir) { const t = document.getElementById(`nova-aula-titulo-${moduloId}`); if (t) t.focus(); }
+        };
+
+        function desenharAbas() {
+            const todas = MODULOS_ATUAIS.flatMap((m) => m.aulas || []);
+            const n = (f) => todas.filter((a) => faseDe(a) === f).length;
+            L.abas(document.getElementById('abas-aulas'), [
+                { id: 'todas', rotulo: 'Todas as aulas', n: todas.length },
+                { id: 'proximas', rotulo: 'Próximas', n: n('proximas') },
+                { id: 'realizadas', rotulo: 'Realizadas', n: n('realizadas') },
+                { id: 'semdata', rotulo: 'Sem data', n: n('semdata') },
+            ], FILTRO, (id) => { FILTRO = id; desenharAbas(); aplicarFiltro(); });
+        }
+
+        function aplicarFiltro() {
+            const termo = document.getElementById('busca-cronograma').value.trim().toLowerCase();
+            const filtrando = FILTRO !== 'todas' || !!termo;
+            let algum = false;
+            document.querySelectorAll('#lista-modulos details.cx[data-modulo]').forEach((det) => {
+                const moduloCasa = !!termo && det.dataset.titulo.includes(termo);
+                let visiveis = 0;
+                det.querySelectorAll('[data-item]').forEach((linha) => {
+                    const ok = (FILTRO === 'todas' || linha.dataset.fase === FILTRO) && (!termo || moduloCasa || linha.dataset.texto.includes(termo));
+                    linha.hidden = !ok;
+                    if (ok) visiveis++;
+                });
+                const mostrar = !filtrando || visiveis > 0 || (moduloCasa && FILTRO === 'todas');
+                det.hidden = !mostrar;
+                if (mostrar) algum = true;
+                if (filtrando && mostrar && visiveis > 0) det.open = true;
+            });
+            document.getElementById('sem-resultado').classList.toggle('hidden', !filtrando || algum);
+        }
+        document.getElementById('busca-cronograma').addEventListener('input', aplicarFiltro);
+
+        function mostrarFormModulo(mostrar) {
+            document.getElementById('form-novo-modulo').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-novo-modulo').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-modulo-titulo').focus();
+        }
+        document.getElementById('btn-novo-modulo').addEventListener('click', () => mostrarFormModulo(document.getElementById('form-novo-modulo').classList.contains('hidden')));
+        document.getElementById('cancelar-novo-modulo').addEventListener('click', () => { document.getElementById('form-novo-modulo').reset(); mostrarFormModulo(false); });
 
         // ---------- Módulos: criar / editar / excluir ----------
         document.getElementById('form-novo-modulo').addEventListener('submit', async (e) => {
@@ -192,6 +294,7 @@
             if (resultado) {
                 document.getElementById('form-novo-modulo').reset();
                 document.getElementById('novo-modulo-ordem').value = '0';
+                mostrarFormModulo(false);
                 carregarModulos();
             }
         });
@@ -225,7 +328,7 @@
             if (!titulo) return false;
 
             const resultado = await chamarGerenciarCronograma('criar_aula', { moduloId, titulo, dataAula, horarioInicio, horarioFim });
-            if (resultado) carregarModulos();
+            if (resultado) { FORM_AULA.delete(moduloId); ABERTOS.add(moduloId); carregarModulos(); }
             return false;
         };
 
@@ -256,13 +359,14 @@
 
             TURMA_ATUAL = await montarSeletorTurma('seletor-turma', (turmaId) => {
                 TURMA_ATUAL = turmaId;
+                ABERTOS.clear(); FORM_AULA.clear(); PRIMEIRA_VEZ = true;
                 document.getElementById('lista-modulos').innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
                 carregarModulos();
             });
 
             if (!TURMA_ATUAL) {
                 document.getElementById('lista-modulos').innerHTML = '';
-                document.getElementById('form-novo-modulo').classList.add('hidden');
+                document.getElementById('btn-novo-modulo').classList.add('hidden');
                 return;
             }
 

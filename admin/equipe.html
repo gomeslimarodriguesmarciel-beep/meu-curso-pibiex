@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -30,7 +31,10 @@
                 Sua conta não tem acesso total, então não pode gerenciar a equipe.
             </div>
 
-            <div id="secao-backup" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+            <div id="abas-equipe" class="mb-6"></div>
+
+            <section id="aba-backup" hidden>
+            <div id="secao-backup" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <p class="text-xs font-bold text-gray-500 mb-1">Backup do banco de dados</p>
                 <p class="text-sm text-gray-500 mb-3">
                     Baixa um arquivo com todos os dados da plataforma (alunos, trabalhos, mensagens,
@@ -42,8 +46,14 @@
                     Baixar backup completo
                 </button>
             </div>
+            </section>
 
-            <form id="form-nova" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+            <section id="aba-contas">
+            <div class="flex justify-end mb-4">
+                <button type="button" id="btn-nova-conta" aria-expanded="false" aria-controls="form-nova" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Nova conta</button>
+            </div>
+
+            <form id="form-nova" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
                 <p class="text-xs font-bold text-gray-500 mb-3">Nova conta</p>
                 <div class="flex flex-wrap gap-3">
                     <div class="flex-1 min-w-[200px]">
@@ -72,13 +82,15 @@
                 <p class="text-xs text-gray-400 mt-2">Um usuário e senha provisória são gerados automaticamente e enviados por e-mail.</p>
                 <p id="msg-nova" class="hidden text-sm font-bold p-2 rounded mt-2"></p>
                 <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm mt-3">
-                    + Criar conta
+                    Criar conta
                 </button>
+                <button type="button" id="cancelar-nova-conta" class="ml-2 text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2 mt-3">Cancelar</button>
             </form>
 
             <div id="lista-equipe" class="space-y-3">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
+            </section>
         </main>
     </div>
 
@@ -98,30 +110,54 @@
             return data;
         }
 
+        const L = window.PibiexLista;
+        let ABA = 'contas';
+        let TOTAL_CONTAS = 0;
+
+        function desenharAbas() {
+            L.abas(document.getElementById('abas-equipe'), [
+                { id: 'contas', rotulo: 'Contas', n: TOTAL_CONTAS },
+                { id: 'backup', rotulo: 'Backup', n: '' },
+            ], ABA, (id) => { ABA = id; desenharAbas(); });
+            document.getElementById('aba-contas').hidden = ABA !== 'contas';
+            document.getElementById('aba-backup').hidden = ABA !== 'backup';
+        }
+
+        function mostrarFormConta(mostrar) {
+            document.getElementById('form-nova').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-nova-conta').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-nome').focus();
+        }
+        document.getElementById('btn-nova-conta').addEventListener('click', () => mostrarFormConta(document.getElementById('form-nova').classList.contains('hidden')));
+        document.getElementById('cancelar-nova-conta').addEventListener('click', () => { document.getElementById('form-nova').reset(); mostrarFormConta(false); });
+        desenharAbas();
+
         async function carregarEquipe() {
             const resultado = await chamarGerenciarEquipe('listar', {});
             if (!resultado) {
                 document.getElementById('lista-equipe').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar a equipe.</p>';
                 return;
             }
+            TOTAL_CONTAS = (resultado.equipe || []).length;
             renderizarEquipe(resultado.equipe || []);
+            desenharAbas();
         }
 
         function renderizarEquipe(equipe) {
             const container = document.getElementById('lista-equipe');
 
             if (equipe.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma conta cadastrada ainda.</p>';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhuma conta cadastrada ainda</b>Use "+ Nova conta" para convidar alguém da equipe.</div>';
                 return;
             }
 
             container.innerHTML = equipe.map((m) => {
                 const seloAcesso = m.nivel_acesso === 'total'
-                    ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-700">Acesso total</span>'
-                    : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Acesso restrito</span>';
+                    ? '<span class="chip vermelho">Acesso total</span>'
+                    : '<span class="chip cinza">Acesso restrito</span>';
                 const seloStatus = m.ativo
                     ? ''
-                    : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Desativada</span>';
+                    : '<span class="chip ambar">Desativada</span>';
                 const souEu = m.id === MEU_ID;
 
                 return `
@@ -172,6 +208,7 @@
                 msg.className = `text-sm font-bold p-2 rounded mt-2 ${resultado.emailEnviado ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-800'}`;
                 msg.classList.remove('hidden');
                 carregarEquipe();
+                setTimeout(() => mostrarFormConta(false), 6000);
             }
         });
 
@@ -234,8 +271,9 @@
 
             if (sessao.dados.nivelAcesso !== 'total') {
                 document.getElementById('aviso-sem-permissao').classList.remove('hidden');
-                document.getElementById('secao-backup').classList.add('hidden');
-                document.getElementById('form-nova').classList.add('hidden');
+                document.getElementById('abas-equipe').classList.add('hidden');
+                document.getElementById('aba-backup').hidden = true;
+                document.getElementById('aba-contas').hidden = true;
                 document.getElementById('lista-equipe').innerHTML = '';
                 return;
             }

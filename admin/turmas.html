@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -25,7 +26,12 @@
                 param de conseguir entrar até serem movidos para uma turma ativa.
             </p>
 
-            <form id="form-nova" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div id="abas-turmas"></div>
+                <button type="button" id="btn-nova-turma" aria-expanded="false" aria-controls="form-nova" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Nova turma</button>
+            </div>
+
+            <form id="form-nova" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
                 <div class="flex flex-wrap gap-3 items-end">
                     <div class="flex-1 min-w-[240px]">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Nome da turma</label>
@@ -38,8 +44,9 @@
                                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                     </div>
                     <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">
-                        + Nova turma
+                        Criar turma
                     </button>
+                    <button type="button" id="cancelar-nova-turma" class="text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
                 </div>
             </form>
 
@@ -89,60 +96,80 @@
             return partes.join(' · ');
         }
 
+        const L = window.PibiexLista;
+        let TURMAS = [];
+        let FILTRO = 'todas';          // 'todas' | 'ativas' | 'pausadas'
+
         function renderizarTurmas(turmas) {
+            if (turmas) TURMAS = turmas;
             const container = document.getElementById('lista-turmas');
 
-            if (turmas.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma turma criada ainda.</p>';
+            if (TURMAS.length === 0) {
+                document.getElementById('abas-turmas').innerHTML = '';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhuma turma criada ainda</b>Clique em "+ Nova turma" para criar a primeira.</div>';
                 return;
             }
 
-            container.innerHTML = turmas.map((t) => {
+            const ativas = TURMAS.filter((t) => t.ativa).length;
+            L.abas(document.getElementById('abas-turmas'), [
+                { id: 'todas', rotulo: 'Todas', n: TURMAS.length },
+                { id: 'ativas', rotulo: 'Ativas', n: ativas },
+                { id: 'pausadas', rotulo: 'Pausadas', n: TURMAS.length - ativas },
+            ], FILTRO, (id) => { FILTRO = id; renderizarTurmas(); });
+
+            const lista = TURMAS.filter((t) => FILTRO === 'todas' || (FILTRO === 'ativas' ? t.ativa : !t.ativa));
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhuma turma nesta aba</b></div>'; return; }
+
+            container.innerHTML = lista.map((t) => {
                 const v = t.vinculos || { alunos: 0, modulos: 0, avisos: 0, mensagens: 0 };
                 const vazia = v.alunos === 0 && v.modulos === 0 && v.avisos === 0 && v.mensagens === 0;
 
                 if (idEmEdicao === t.id) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-nome-${t.id}" value="${escaparHtml(t.nome)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <input id="edit-nome-${t.id}" value="${L.esc(t.nome)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold" aria-label="Nome da turma">
                             <div class="flex gap-2 flex-wrap">
-                                <input id="edit-ano-${t.id}" type="number" min="2020" max="2100" value="${t.ano ?? ''}" class="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <input id="edit-ano-${t.id}" type="number" min="2020" max="2100" value="${t.ano ?? ''}" class="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Ano">
                                 <button onclick="salvarTurma('${t.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                                 <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
 
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${t.ativa ? '' : 'opacity-75'}">
-                        <div class="flex items-start justify-between gap-4">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${t.ativa ? '' : 'bg-amber-50/30'}">
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
                             <div class="min-w-0">
-                                <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(t.nome)}</p>
-                                    ${t.ativa
-                                        ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-50 text-green-700">Ativa</span>'
-                                        : '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Pausada · alunos sem acesso</span>'}
-                                    ${t.ano ? `<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">${t.ano}</span>` : ''}
+                                <p class="font-bold text-gray-800 text-sm">${L.esc(t.nome)}</p>
+                                <div class="flex flex-wrap gap-1.5 mt-2">
+                                    ${t.ativa ? '<span class="chip verde">Ativa</span>' : '<span class="chip ambar">Pausada · alunos sem acesso</span>'}
+                                    ${t.ano ? `<span class="chip cinza">${L.esc(t.ano)}</span>` : ''}
+                                    <span class="chip ${v.alunos ? 'azul' : 'cinza'}">${v.alunos} ${v.alunos === 1 ? 'aluno' : 'alunos'}</span>
+                                    ${v.modulos ? `<span class="chip cinza">${v.modulos} ${v.modulos === 1 ? 'módulo' : 'módulos'}</span>` : ''}
+                                    ${v.avisos ? `<span class="chip cinza">${v.avisos} ${v.avisos === 1 ? 'aviso' : 'avisos'}</span>` : ''}
+                                    ${v.mensagens ? `<span class="chip cinza">${v.mensagens} ${v.mensagens === 1 ? 'mensagem' : 'mensagens'}</span>` : ''}
                                 </div>
-                                <p class="text-xs text-gray-500">${resumoVinculos(v)}</p>
                             </div>
-                            <div class="flex gap-2 shrink-0">
-                                <button onclick="editarTurma('${t.id}')" title="Renomear" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                <button onclick="excluirTurma('${t.id}')" title="${vazia ? 'Excluir turma' : 'Só é possível excluir turma vazia'}"
-                                        class="text-xs ${vazia ? 'text-gray-400 hover:text-red-600' : 'text-gray-200 cursor-not-allowed'}" aria-label="Excluir">${icone('excluir')}</button>
+                            <div class="flex flex-wrap gap-2 shrink-0">
+                                ${t.ativa
+                                    ? `<button onclick="pausarTurma('${t.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-sm font-bold px-3.5 py-2 rounded-lg">Pausar turma</button>`
+                                    : `<button onclick="reativarTurma('${t.id}')" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-3.5 py-2 rounded-lg">Reativar turma</button>`}
+                                <button onclick="editarTurma('${t.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Renomear</button>
+                                <button onclick="excluirTurma('${t.id}')" ${vazia ? '' : 'disabled'} title="${vazia ? 'Excluir turma' : 'Só é possível excluir turma vazia'}"
+                                        class="inline-flex items-center gap-1.5 text-sm font-bold px-3 py-2 rounded-lg ${vazia ? 'text-red-700 bg-red-50 hover:bg-red-100' : 'text-gray-400 bg-gray-50 cursor-not-allowed'}">${icone('excluir')} Excluir</button>
                             </div>
                         </div>
-
-                        <div class="mt-3 pt-3 border-t border-gray-100">
-                            ${t.ativa
-                                ? `<button onclick="pausarTurma('${t.id}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-4 py-2 rounded-lg">Pausar turma</button>`
-                                : `<button onclick="reativarTurma('${t.id}')" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2 rounded-lg">Reativar turma</button>`}
-                        </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
+
+        function mostrarFormTurma(mostrar) {
+            document.getElementById('form-nova').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-nova-turma').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-nome').focus();
+        }
+        document.getElementById('btn-nova-turma').addEventListener('click', () => mostrarFormTurma(document.getElementById('form-nova').classList.contains('hidden')));
+        document.getElementById('cancelar-nova-turma').addEventListener('click', () => { document.getElementById('form-nova').reset(); document.getElementById('novo-ano').value = new Date().getFullYear(); mostrarFormTurma(false); });
 
         document.getElementById('form-nova').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -154,6 +181,8 @@
             const resultado = await chamarGerenciarTurmas('criar', { nome, ano });
             if (resultado) {
                 document.getElementById('form-nova').reset();
+                document.getElementById('novo-ano').value = new Date().getFullYear();
+                mostrarFormTurma(false);
                 carregarTurmas();
             }
         });
