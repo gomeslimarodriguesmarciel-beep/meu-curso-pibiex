@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -22,7 +23,13 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">Banco de Prompts</h1>
             <p class="text-gray-500 mb-6">Cadastre prompts prontos para os alunos copiarem. Prompts não públicos ficam ocultos na área do aluno.</p>
 
-            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <input id="busca-prompt" type="search" class="caixa-busca" style="flex:1;min-width:200px" placeholder="Buscar prompt pelo título ou conteúdo" aria-label="Buscar prompt pelo título ou conteúdo" autocomplete="off">
+                <button type="button" id="btn-novo-prompt" aria-expanded="false" aria-controls="form-novo" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Novo prompt</button>
+            </div>
+            <div id="abas-prompts" class="mb-4"></div>
+
+            <form id="form-novo" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 space-y-3">
                 <div class="flex flex-wrap gap-3">
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
@@ -41,7 +48,8 @@
                     <input type="checkbox" id="novo-publico" checked class="rounded border-gray-300">
                     Visível para os alunos
                 </label>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo prompt</button>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Publicar prompt</button>
+                <button type="button" id="btn-cancelar-prompt" class="ml-2 text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
             </form>
 
             <div id="lista-prompts" class="space-y-3">
@@ -81,21 +89,41 @@
             renderizarPrompts(resultado.prompts || []);
         }
 
+        const L = window.PibiexLista;
+        let PROMPTS = [];
+        let FILTRO = 'todos';          // 'todos' | 'oculto' | nome da categoria
+        const ABERTOS = new Set();
+
         function renderizarPrompts(prompts) {
+            if (prompts) PROMPTS = prompts;
             const container = document.getElementById('lista-prompts');
 
-            if (prompts.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum prompt cadastrado ainda.</p>';
+            if (PROMPTS.length === 0) {
+                document.getElementById('abas-prompts').innerHTML = '';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum prompt cadastrado ainda</b>Clique em "+ Novo prompt" para cadastrar o primeiro.</div>';
                 return;
             }
 
-            container.innerHTML = prompts.map((p) => {
+            const termo = document.getElementById('busca-prompt').value.trim().toLowerCase();
+            const base = PROMPTS.filter((p) => !termo || (p.titulo || '').toLowerCase().includes(termo) || (p.conteudo || '').toLowerCase().includes(termo));
+            const categorias = [...new Set(PROMPTS.map((p) => p.categoria).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            if (FILTRO !== 'todos' && FILTRO !== 'oculto' && !categorias.includes(FILTRO)) FILTRO = 'todos';
+            const ocultos = base.filter((p) => !p.publico).length;
+            L.abas(document.getElementById('abas-prompts'), [{ id: 'todos', rotulo: 'Todos', n: base.length }]
+                .concat(categorias.map((c) => ({ id: c, rotulo: c, n: base.filter((p) => p.categoria === c).length })))
+                .concat(ocultos ? [{ id: 'oculto', rotulo: 'Ocultos', n: ocultos }] : []),
+                FILTRO, (id) => { FILTRO = id; renderizarPrompts(); });
+
+            const lista = base.filter((p) => FILTRO === 'todos' || (FILTRO === 'oculto' ? !p.publico : p.categoria === FILTRO));
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhum prompt encontrado</b>Mude a busca ou a categoria.</div>'; return; }
+
+            container.innerHTML = lista.map((p) => {
                 if (idEmEdicao === p.id) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-titulo-${p.id}" value="${escaparHtml(p.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <input id="edit-categoria-${p.id}" value="${escaparHtml(p.categoria)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                            <textarea id="edit-conteudo-${p.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono">${escaparHtml(p.conteudo)}</textarea>
+                            <input id="edit-titulo-${p.id}" value="${L.esc(p.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold" aria-label="Título">
+                            <input id="edit-categoria-${p.id}" value="${L.esc(p.categoria)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Categoria">
+                            <textarea id="edit-conteudo-${p.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono" aria-label="Conteúdo">${L.esc(p.conteudo)}</textarea>
                             <label class="flex items-center gap-2 text-sm text-gray-700">
                                 <input type="checkbox" id="edit-publico-${p.id}" class="rounded border-gray-300" ${p.publico ? 'checked' : ''}>
                                 Visível para os alunos
@@ -104,30 +132,51 @@
                                 <button onclick="salvarPrompt('${p.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                                 <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
-
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(p.titulo)}</p>
-                                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">${escaparHtml(p.categoria)}</span>
-                                    ${!p.publico ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Oculto</span>' : ''}
-                                </div>
-                                <p class="text-xs text-gray-600 font-mono whitespace-pre-wrap bg-gray-50 rounded-lg p-2.5 mt-2">${escaparHtml(p.conteudo)}</p>
-                            </div>
-                            <div class="flex gap-2 shrink-0">
-                                <button onclick="editarPrompt('${p.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                <button onclick="excluirPrompt('${p.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
+                    <details class="cx" data-id="${L.esc(p.id)}" ${ABERTOS.has(p.id) ? 'open' : ''}>
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${L.esc(p.titulo)}</span>
+                                <span class="flex flex-wrap gap-1.5 mt-1.5">
+                                    <span class="chip azul">${L.esc(p.categoria)}</span>
+                                    ${!p.publico ? '<span class="chip cinza">Oculto dos alunos</span>' : ''}
+                                </span>
+                                <span class="cx-previa font-mono">${L.esc(p.conteudo)}</span>
+                            </span>
+                        </summary>
+                        <div class="cx-corpo">
+                            <p class="text-xs text-gray-800 font-mono whitespace-pre-wrap bg-gray-50 rounded-lg p-3">${L.esc(p.conteudo)}</p>
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <button onclick="copiarPrompt('${p.id}', this)" class="border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-bold px-3 py-2 rounded-lg">Copiar texto</button>
+                                <button onclick="editarPrompt('${p.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Editar</button>
+                                <button onclick="excluirPrompt('${p.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir</button>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </details>`;
             }).join('');
+
+            container.querySelectorAll('details.cx').forEach((det) => {
+                det.addEventListener('toggle', () => { if (det.open) ABERTOS.add(det.dataset.id); else ABERTOS.delete(det.dataset.id); });
+            });
         }
+
+        window.copiarPrompt = (id, botao) => {
+            const p = PROMPTS.find((x) => x.id === id);
+            if (!p) return;
+            navigator.clipboard.writeText(p.conteudo).then(() => { botao.textContent = 'Copiado!'; setTimeout(() => { botao.textContent = 'Copiar texto'; }, 1500); });
+        };
+        document.getElementById('busca-prompt').addEventListener('input', () => renderizarPrompts());
+
+        function mostrarFormulario(mostrar) {
+            document.getElementById('form-novo').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-novo-prompt').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-titulo').focus();
+        }
+        document.getElementById('btn-novo-prompt').addEventListener('click', () => mostrarFormulario(document.getElementById('form-novo').classList.contains('hidden')));
+        document.getElementById('btn-cancelar-prompt').addEventListener('click', () => { document.getElementById('form-novo').reset(); mostrarFormulario(false); });
+
 
         document.getElementById('form-novo').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -141,6 +190,7 @@
             if (resultado) {
                 document.getElementById('form-novo').reset();
                 document.getElementById('novo-publico').checked = true;
+                mostrarFormulario(false);
                 carregarPrompts();
             }
         });

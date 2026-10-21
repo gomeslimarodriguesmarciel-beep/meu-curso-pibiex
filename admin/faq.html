@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -22,7 +23,13 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">Gerenciar FAQ</h1>
             <p class="text-gray-500 mb-6">Perguntas e respostas exibidas na área do aluno. Itens inativos ficam ocultos.</p>
 
-            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <input id="busca-faq" type="search" class="caixa-busca" style="flex:1;min-width:200px" placeholder="Buscar pergunta ou resposta" aria-label="Buscar pergunta ou resposta" autocomplete="off">
+                <button type="button" id="btn-nova-pergunta" aria-expanded="false" aria-controls="form-novo" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Nova pergunta</button>
+            </div>
+            <div id="abas-faq" class="mb-4"></div>
+
+            <form id="form-novo" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">Pergunta</label>
                     <input id="novo-pergunta" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
@@ -41,7 +48,8 @@
                         Visível para os alunos
                     </label>
                 </div>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Nova pergunta</button>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Publicar pergunta</button>
+                <button type="button" id="btn-cancelar-pergunta" class="ml-2 text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
             </form>
 
             <div id="lista-faq" class="space-y-3">
@@ -81,22 +89,40 @@
             renderizarFaq(resultado.faqs || []);
         }
 
+        const L = window.PibiexLista;
+        let FAQS = [];
+        let FILTRO = 'todos';
+        const ABERTOS = new Set();
+
         function renderizarFaq(faqs) {
+            if (faqs) FAQS = faqs;
             const container = document.getElementById('lista-faq');
 
-            if (faqs.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhuma pergunta cadastrada ainda.</p>';
+            if (FAQS.length === 0) {
+                document.getElementById('abas-faq').innerHTML = '';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhuma pergunta cadastrada ainda</b>Clique em "+ Nova pergunta" para cadastrar a primeira.</div>';
                 return;
             }
 
-            container.innerHTML = faqs.map((f) => {
+            const termo = document.getElementById('busca-faq').value.trim().toLowerCase();
+            const base = FAQS.filter((f) => !termo || (f.pergunta || '').toLowerCase().includes(termo) || (f.resposta || '').toLowerCase().includes(termo));
+            L.abas(document.getElementById('abas-faq'), [
+                { id: 'todos', rotulo: 'Todas', n: base.length },
+                { id: 'ativos', rotulo: 'Visíveis', n: base.filter((f) => f.ativo).length },
+                { id: 'inativos', rotulo: 'Ocultas', n: base.filter((f) => !f.ativo).length },
+            ], FILTRO, (id) => { FILTRO = id; renderizarFaq(); });
+
+            const lista = base.filter((f) => FILTRO === 'todos' || (FILTRO === 'ativos' ? f.ativo : !f.ativo));
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhuma pergunta encontrada</b>Mude a busca ou o filtro.</div>'; return; }
+
+            container.innerHTML = lista.map((f) => {
                 if (idEmEdicao === f.id) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-pergunta-${f.id}" value="${escaparHtml(f.pergunta)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <textarea id="edit-resposta-${f.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(f.resposta)}</textarea>
+                            <input id="edit-pergunta-${f.id}" value="${L.esc(f.pergunta)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold" aria-label="Pergunta">
+                            <textarea id="edit-resposta-${f.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Resposta">${L.esc(f.resposta)}</textarea>
                             <div class="flex items-center gap-3 flex-wrap">
-                                <input id="edit-ordem-${f.id}" type="number" value="${f.ordem ?? 0}" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <input id="edit-ordem-${f.id}" type="number" value="${f.ordem ?? 0}" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Ordem">
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" id="edit-ativo-${f.id}" class="rounded border-gray-300" ${f.ativo ? 'checked' : ''}>
                                     Visível para os alunos
@@ -106,30 +132,43 @@
                                 <button onclick="salvarFaq('${f.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                                 <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
-
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(f.pergunta)}</p>
-                                    ${!f.ativo ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inativo</span>' : ''}
-                                </div>
-                                <p class="text-sm text-gray-600">${escaparHtml(f.resposta)}</p>
-                                <p class="text-[11px] text-gray-400 mt-2">Ordem: ${f.ordem ?? 0}</p>
-                            </div>
-                            <div class="flex gap-2 shrink-0">
-                                <button onclick="editarFaq('${f.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                <button onclick="excluirFaq('${f.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
+                    <details class="cx" data-id="${L.esc(f.id)}" ${ABERTOS.has(f.id) ? 'open' : ''}>
+                        <summary>
+                            <span class="min-w-0 flex-1">
+                                <span class="cx-titulo block">${L.esc(f.pergunta)}</span>
+                                <span class="flex flex-wrap gap-1.5 mt-1.5">
+                                    ${!f.ativo ? '<span class="chip cinza">Oculta dos alunos</span>' : ''}
+                                    <span class="chip cinza">Ordem ${f.ordem ?? 0}</span>
+                                </span>
+                            </span>
+                        </summary>
+                        <div class="cx-corpo">
+                            <p class="text-sm text-gray-700 whitespace-pre-wrap">${L.esc(f.resposta)}</p>
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <button onclick="editarFaq('${f.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Editar</button>
+                                <button onclick="excluirFaq('${f.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir</button>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </details>`;
             }).join('');
+
+            container.querySelectorAll('details.cx').forEach((det) => {
+                det.addEventListener('toggle', () => { if (det.open) ABERTOS.add(det.dataset.id); else ABERTOS.delete(det.dataset.id); });
+            });
         }
+        document.getElementById('busca-faq').addEventListener('input', () => renderizarFaq());
+
+        function mostrarFormulario(mostrar) {
+            document.getElementById('form-novo').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-nova-pergunta').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-pergunta').focus();
+        }
+        document.getElementById('btn-nova-pergunta').addEventListener('click', () => mostrarFormulario(document.getElementById('form-novo').classList.contains('hidden')));
+        document.getElementById('btn-cancelar-pergunta').addEventListener('click', () => { document.getElementById('form-novo').reset(); mostrarFormulario(false); });
+
 
         document.getElementById('form-novo').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -142,6 +181,7 @@
             const resultado = await chamarGerenciarFaq('criar', { pergunta, resposta, ordem, ativo });
             if (resultado) {
                 document.getElementById('form-novo').reset();
+                mostrarFormulario(false);
                 document.getElementById('novo-ordem').value = '0';
                 document.getElementById('novo-ativo').checked = true;
                 carregarFaq();

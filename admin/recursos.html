@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -22,7 +23,13 @@
             <h1 class="text-2xl font-black text-gray-800 mb-1">Recursos Extras</h1>
             <p class="text-gray-500 mb-6">Vídeos, e-books, sites e artigos recomendados que aparecem na área do aluno.</p>
 
-            <form id="form-novo" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8 space-y-3">
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <input id="busca-recurso" type="search" class="caixa-busca" style="flex:1;min-width:200px" placeholder="Buscar recurso pelo título" aria-label="Buscar recurso pelo título" autocomplete="off">
+                <button type="button" id="btn-novo-recurso" aria-expanded="false" aria-controls="form-novo" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm">+ Novo recurso</button>
+            </div>
+            <div id="abas-recursos" class="mb-4"></div>
+
+            <form id="form-novo" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 space-y-3">
                 <div class="flex flex-wrap gap-3">
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs font-bold text-gray-500 mb-1">Título</label>
@@ -50,7 +57,8 @@
                     <label class="block text-xs font-bold text-gray-500 mb-1">Descrição (opcional)</label>
                     <input id="novo-descricao" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
                 </div>
-                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Novo recurso</button>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Publicar recurso</button>
+                <button type="button" id="btn-cancelar-recurso" class="ml-2 text-sm font-bold text-gray-500 hover:text-gray-800 px-3 py-2">Cancelar</button>
             </form>
 
             <div id="lista-recursos" class="space-y-3">
@@ -99,54 +107,73 @@
             renderizarRecursos(resultado.recursos || []);
         }
 
+        const L = window.PibiexLista;
+        let RECURSOS = [];
+        let FILTRO = 'todos';
+
         function renderizarRecursos(recursos) {
+            if (recursos) RECURSOS = recursos;
             const container = document.getElementById('lista-recursos');
 
-            if (recursos.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum recurso cadastrado ainda.</p>';
+            if (RECURSOS.length === 0) {
+                document.getElementById('abas-recursos').innerHTML = '';
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum recurso cadastrado ainda</b>Clique em "+ Novo recurso" para cadastrar o primeiro.</div>';
                 return;
             }
 
-            container.innerHTML = recursos.map((r) => {
+            const termo = document.getElementById('busca-recurso').value.trim().toLowerCase();
+            const base = RECURSOS.filter((r) => !termo || (r.titulo || '').toLowerCase().includes(termo) || (r.descricao || '').toLowerCase().includes(termo));
+            const tipos = Object.keys(ROTULO_TIPO).filter((t) => RECURSOS.some((r) => r.tipo === t));
+            if (FILTRO !== 'todos' && !tipos.includes(FILTRO)) FILTRO = 'todos';
+            L.abas(document.getElementById('abas-recursos'), [{ id: 'todos', rotulo: 'Todos', n: base.length }]
+                .concat(tipos.map((t) => ({ id: t, rotulo: ROTULO_TIPO[t], n: base.filter((r) => r.tipo === t).length }))),
+                FILTRO, (id) => { FILTRO = id; renderizarRecursos(); });
+
+            const lista = base.filter((r) => FILTRO === 'todos' || r.tipo === FILTRO);
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhum recurso encontrado</b>Mude a busca ou o tipo.</div>'; return; }
+
+            container.innerHTML = lista.map((r) => {
                 if (idEmEdicao === r.id) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-titulo-${r.id}" value="${escaparHtml(r.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <input id="edit-url-${r.id}" value="${escaparHtml(r.url)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                            <input id="edit-descricao-${r.id}" value="${escaparHtml(r.descricao || '')}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <input id="edit-titulo-${r.id}" value="${L.esc(r.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold" aria-label="Título">
+                            <input id="edit-url-${r.id}" value="${L.esc(r.url)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="URL">
+                            <input id="edit-descricao-${r.id}" value="${L.esc(r.descricao || '')}" placeholder="Descrição (opcional)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Descrição">
                             <div class="flex gap-2 flex-wrap">
-                                <select id="edit-tipo-${r.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">${opcoesTipo(r.tipo)}</select>
-                                <input id="edit-ordem-${r.id}" type="number" value="${r.ordem ?? 0}" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <select id="edit-tipo-${r.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Tipo">${opcoesTipo(r.tipo)}</select>
+                                <input id="edit-ordem-${r.id}" type="number" value="${r.ordem ?? 0}" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm" aria-label="Ordem">
                                 <button onclick="salvarRecurso('${r.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                                 <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
-
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <span class="shrink-0 text-gray-500">${icone(ICONE_POR_TIPO[r.tipo] || 'link', 24)}</span>
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <p class="font-bold text-gray-800 text-sm">${escaparHtml(r.titulo)}</p>
-                                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">${ROTULO_TIPO[r.tipo] || escaparHtml(r.tipo)}</span>
-                                    </div>
-                                    <a href="${escaparHtml(r.url)}" target="_blank" rel="noopener" class="text-blue-600 text-xs truncate block hover:underline">${escaparHtml(r.url)}</a>
-                                    ${r.descricao ? `<p class="text-xs text-gray-500 mt-0.5">${escaparHtml(r.descricao)}</p>` : ''}
-                                </div>
-                            </div>
-                            <div class="flex gap-2 shrink-0">
-                                <button onclick="editarRecurso('${r.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                <button onclick="excluirRecurso('${r.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <span class="shrink-0 text-gray-500">${icone(ICONE_POR_TIPO[r.tipo] || 'link', 24)}</span>
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-800 text-sm flex items-center gap-2 flex-wrap">${L.esc(r.titulo)} <span class="chip azul">${L.esc(ROTULO_TIPO[r.tipo] || r.tipo)}</span></p>
+                                <a href="${L.esc(/^https?:\/\//i.test(r.url) ? r.url : '#')}" target="_blank" rel="noopener" class="text-blue-700 text-xs truncate block hover:underline">${L.esc(r.url)}</a>
+                                ${r.descricao ? `<p class="text-xs text-gray-600 mt-0.5">${L.esc(r.descricao)}</p>` : ''}
                             </div>
                         </div>
-                    </div>
-                `;
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="editarRecurso('${r.id}')" class="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-sm font-bold px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">${icone('editar')} Editar</button>
+                            <button onclick="excluirRecurso('${r.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir</button>
+                        </div>
+                    </div>`;
             }).join('');
         }
+        document.getElementById('busca-recurso').addEventListener('input', () => renderizarRecursos());
+
+        function mostrarFormulario(mostrar) {
+            document.getElementById('form-novo').classList.toggle('hidden', !mostrar);
+            document.getElementById('btn-novo-recurso').setAttribute('aria-expanded', String(mostrar));
+            if (mostrar) document.getElementById('novo-titulo').focus();
+        }
+        document.getElementById('btn-novo-recurso').addEventListener('click', () => mostrarFormulario(document.getElementById('form-novo').classList.contains('hidden')));
+        document.getElementById('btn-cancelar-recurso').addEventListener('click', () => { document.getElementById('form-novo').reset(); mostrarFormulario(false); });
+
 
         document.getElementById('form-novo').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -160,6 +187,7 @@
             const resultado = await chamarGerenciarRecursos('criar', { titulo, tipo, url, descricao, ordem });
             if (resultado) {
                 document.getElementById('form-novo').reset();
+                mostrarFormulario(false);
                 document.getElementById('novo-ordem').value = '0';
                 carregarRecursos();
             }
