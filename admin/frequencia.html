@@ -51,7 +51,11 @@
                         </div>
                         <div class="w-40">
                             <label for="chamada-horas" class="block text-xs font-bold text-gray-500 mb-1">Vale quantas horas</label>
-                            <input id="chamada-horas" type="number" min="0.5" step="0.5" value="1" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <div class="flex items-stretch gap-1">
+                                <button type="button" id="horas-menos" class="border border-gray-200 bg-white rounded-lg px-3 text-lg font-bold text-gray-700" aria-label="Diminuir meia hora" title="Diminuir meia hora">−</button>
+                                <input id="chamada-horas" type="number" min="0.5" max="24" step="0.5" value="1" class="w-full min-w-0 border border-gray-200 rounded-lg px-2 py-2 text-sm text-center font-bold">
+                                <button type="button" id="horas-mais" class="border border-gray-200 bg-white rounded-lg px-3 text-lg font-bold text-gray-700" aria-label="Aumentar meia hora" title="Aumentar meia hora">+</button>
+                            </div>
                         </div>
                         <div class="w-48">
                             <label for="chamada-duracao" class="block text-xs font-bold text-gray-500 mb-1">Disponível por (minutos)</label>
@@ -544,6 +548,16 @@
             TOKEN_EQUIPE = sessao.token;
             carregarTurmas();
         });
+        // Horas da chamada: sempre começa em 1; − e + andam de meia em meia hora.
+        (function () {
+            const campo = document.getElementById('chamada-horas');
+            const passo = (d) => {
+                const atual = parseFloat(campo.value) || 1;
+                campo.value = Math.min(24, Math.max(0.5, Math.round((atual + d) * 2) / 2));
+            };
+            document.getElementById('horas-menos').addEventListener('click', () => passo(-0.5));
+            document.getElementById('horas-mais').addEventListener('click', () => passo(0.5));
+        })();
     </script>
 </body>
 </html>
