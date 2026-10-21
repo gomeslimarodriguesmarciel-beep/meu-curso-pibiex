@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -20,7 +21,7 @@
 
         <main class="p-4 md:p-8 max-w-4xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">Gerenciar Avisos</h1>
-            <p class="text-gray-500 mb-6">Publique avisos para a turma. Avisos fixados aparecem primeiro no início do aluno.</p>
+            <p class="text-gray-500 mb-6">Publique avisos para a turma. Cada aviso some sozinho da tela dos alunos na data que você escolher; o aluno também pode marcar como lido. Avisos fixados ficam no topo até você tirar.</p>
 
             <div id="seletor-turma" class="mb-6"></div>
 
@@ -33,13 +34,27 @@
                     <label class="block text-xs font-bold text-gray-500 mb-1">Mensagem</label>
                     <textarea id="novo-mensagem" required rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"></textarea>
                 </div>
-                <label class="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" id="novo-fixado" class="rounded border-gray-300">
-                    Fixar este aviso no topo
-                </label>
+                <div class="flex flex-wrap items-end gap-4">
+                    <div>
+                        <label for="novo-expira" class="block text-xs font-bold text-gray-500 mb-1">Some da tela dos alunos</label>
+                        <select id="novo-expira" class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                            <option value="1">Em 1 dia</option>
+                            <option value="3">Em 3 dias</option>
+                            <option value="7">Em 7 dias</option>
+                            <option value="14" selected>Em 14 dias</option>
+                            <option value="30">Em 30 dias</option>
+                            <option value="nunca">Nunca (até eu encerrar)</option>
+                        </select>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-gray-700 pb-2">
+                        <input type="checkbox" id="novo-fixado" class="rounded border-gray-300">
+                        Fixar este aviso no topo
+                    </label>
+                </div>
                 <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">+ Publicar aviso</button>
             </form>
 
+            <div id="abas-avisos" class="mb-4"></div>
             <div id="lista-avisos" class="space-y-3">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
@@ -68,35 +83,84 @@
             return data;
         }
 
+        let AVISOS = [];
+        let ABA = 'ativos';          // 'ativos' | 'encerrados' | 'todos'
+        const L = window.PibiexLista;
+        const esc = L.esc;
+
+        const expirou = (a) => !!a.expira_em && new Date(a.expira_em) <= new Date();
+
+        // "now + N dias" no fim do dia, para o aviso valer o dia inteiro.
+        function dataEm(dias) {
+            const d = new Date();
+            d.setDate(d.getDate() + Number(dias));
+            return d.toISOString();
+        }
+        // valor do <select> -> o que o servidor espera (null = nunca some)
+        function expiraDoSelect(valor) { return valor === 'nunca' ? null : dataEm(valor); }
+
+        function textoExpiracao(a) {
+            if (!a.expira_em) return a.fixado ? 'Fixado, sem data para sumir' : 'Sem data para sumir';
+            const quando = new Date(a.expira_em);
+            if (quando <= new Date()) return 'Encerrado ' + L.tempo(a.expira_em);
+            const dias = Math.ceil((quando - new Date()) / 86400000);
+            return dias <= 1 ? 'Some hoje ou amanhã' : `Some em ${dias} dias (${L.dataCurta(a.expira_em)})`;
+        }
+
         async function carregarAvisos() {
             const resultado = await chamarGerenciarAvisos('listar', { turmaId: TURMA_ATUAL });
             if (!resultado) {
                 document.getElementById('lista-avisos').innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar avisos.</p>';
                 return;
             }
-            renderizarAvisos(resultado.avisos || []);
+            AVISOS = resultado.avisos || [];
+            renderizarAvisos();
         }
 
-        function renderizarAvisos(avisos) {
+        function renderizarAvisos() {
             const container = document.getElementById('lista-avisos');
+            const ativos = AVISOS.filter((a) => !expirou(a));
+            const encerrados = AVISOS.filter(expirou);
+            L.abas(document.getElementById('abas-avisos'), [
+                { id: 'ativos', rotulo: 'No ar', n: ativos.length },
+                { id: 'encerrados', rotulo: 'Encerrados', n: encerrados.length },
+                { id: 'todos', rotulo: 'Todos', n: AVISOS.length },
+            ], ABA, (id) => { ABA = id; renderizarAvisos(); });
 
-            if (avisos.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm bg-white rounded-xl p-6 border border-gray-100">Nenhum aviso publicado ainda.</p>';
+            const lista = ABA === 'ativos' ? ativos : ABA === 'encerrados' ? encerrados : AVISOS;
+
+            if (AVISOS.length === 0) {
+                container.innerHTML = '<div class="vazio-lista"><b>Nenhum aviso publicado ainda</b>Use o formulário acima para publicar o primeiro.</div>';
+                return;
+            }
+            if (lista.length === 0) {
+                container.innerHTML = `<div class="vazio-lista"><b>${ABA === 'ativos' ? 'Nenhum aviso no ar agora' : 'Nenhum aviso encerrado'}</b>${ABA === 'ativos' ? 'Os alunos não estão vendo nenhum aviso.' : ''}</div>`;
                 return;
             }
 
-            container.innerHTML = avisos.map((aviso) => {
+            container.innerHTML = lista.map((aviso) => {
                 const editando = idEmEdicao === aviso.id;
+                const fim = expirou(aviso);
 
                 if (editando) {
                     return `
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-2">
-                            <input id="edit-titulo-${aviso.id}" value="${escaparHtml(aviso.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
-                            <textarea id="edit-mensagem-${aviso.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${escaparHtml(aviso.mensagem)}</textarea>
-                            <label class="flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox" id="edit-fixado-${aviso.id}" class="rounded border-gray-300" ${aviso.fixado ? 'checked' : ''}>
-                                Fixar este aviso no topo
-                            </label>
+                            <input id="edit-titulo-${aviso.id}" value="${esc(aviso.titulo)}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold">
+                            <textarea id="edit-mensagem-${aviso.id}" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">${esc(aviso.mensagem)}</textarea>
+                            <div class="flex flex-wrap items-end gap-4">
+                                <div>
+                                    <label for="edit-expira-${aviso.id}" class="block text-xs font-bold text-gray-500 mb-1">Some da tela dos alunos</label>
+                                    <select id="edit-expira-${aviso.id}" class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                                        <option value="manter" selected>Manter (${esc(textoExpiracao(aviso))})</option>
+                                        <option value="1">Em 1 dia</option><option value="3">Em 3 dias</option><option value="7">Em 7 dias</option>
+                                        <option value="14">Em 14 dias</option><option value="30">Em 30 dias</option><option value="nunca">Nunca (até eu encerrar)</option>
+                                    </select>
+                                </div>
+                                <label class="flex items-center gap-2 text-sm text-gray-700 pb-2">
+                                    <input type="checkbox" id="edit-fixado-${aviso.id}" class="rounded border-gray-300" ${aviso.fixado ? 'checked' : ''}>
+                                    Fixar este aviso no topo
+                                </label>
+                            </div>
                             <div class="flex gap-2">
                                 <button onclick="salvarAviso('${aviso.id}')" class="bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-lg">Salvar</button>
                                 <button onclick="cancelarEdicao()" class="bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg">Cancelar</button>
@@ -106,19 +170,23 @@
                 }
 
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${aviso.fixado ? 'border-l-4 border-l-amber-400' : ''}">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2 mb-1">
-                                    ${aviso.fixado ? '<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Fixado</span>' : ''}
-                                    <p class="font-bold text-gray-800 text-sm">${escaparHtml(aviso.titulo)}</p>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${aviso.fixado ? 'border-l-4 border-l-amber-400' : ''} ${fim ? 'opacity-80' : ''}">
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                    ${aviso.fixado ? '<span class="chip ambar">Fixado</span>' : ''}
+                                    <span class="chip ${fim ? 'cinza' : 'verde'}">${fim ? 'Encerrado' : 'No ar'}</span>
+                                    <p class="font-bold text-gray-800 text-sm">${esc(aviso.titulo)}</p>
                                 </div>
-                                <p class="text-sm text-gray-600">${escaparHtml(aviso.mensagem)}</p>
-                                <p class="text-[11px] text-gray-400 mt-2">${formatarData(aviso.criado_em)}</p>
+                                <p class="text-sm text-gray-600 whitespace-pre-wrap">${esc(aviso.mensagem)}</p>
+                                <p class="text-[11px] text-gray-500 mt-2">Publicado ${esc(L.tempo(aviso.criado_em))} · ${esc(textoExpiracao(aviso))}</p>
                             </div>
-                            <div class="flex gap-2 shrink-0">
-                                <button onclick="editarAviso('${aviso.id}')" class="text-gray-400 hover:text-gray-700 text-xs" aria-label="Editar">${icone('editar')}</button>
-                                <button onclick="excluirAviso('${aviso.id}')" class="text-gray-400 hover:text-red-600 text-xs" aria-label="Excluir">${icone('excluir')}</button>
+                            <div class="flex flex-wrap gap-2 shrink-0">
+                                ${fim
+                                    ? `<button onclick="reativarAviso('${aviso.id}')" class="bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold px-3 py-2 rounded-lg">Reativar por 7 dias</button>`
+                                    : `<button onclick="encerrarAviso('${aviso.id}')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold px-3 py-2 rounded-lg">Encerrar agora</button>`}
+                                <button onclick="editarAviso('${aviso.id}')" class="text-gray-500 hover:text-gray-800 p-2" aria-label="Editar">${icone('editar')}</button>
+                                <button onclick="excluirAviso('${aviso.id}')" class="text-gray-500 hover:text-red-600 p-2" aria-label="Excluir">${icone('excluir')}</button>
                             </div>
                         </div>
                     </div>
@@ -133,11 +201,35 @@
             const fixado = document.getElementById('novo-fixado').checked;
             if (!titulo || !mensagem) return;
 
-            const resultado = await chamarGerenciarAvisos('criar', { turmaId: TURMA_ATUAL, titulo, mensagem, fixado });
+            const expiraEm = expiraDoSelect(document.getElementById('novo-expira').value);
+            const resultado = await chamarGerenciarAvisos('criar', { turmaId: TURMA_ATUAL, titulo, mensagem, fixado, expiraEm });
             if (resultado) {
                 document.getElementById('form-novo-aviso').reset();
+                ABA = 'ativos';
                 carregarAvisos();
             }
+        });
+
+
+        function acharAviso(id) { return AVISOS.find((a) => a.id === id); }
+
+        window.encerrarAviso = async (avisoId) => {
+            const a = acharAviso(avisoId);
+            if (!a) return;
+            const resultado = await chamarGerenciarAvisos('atualizar', { avisoId, titulo: a.titulo, mensagem: a.mensagem, fixado: a.fixado, expiraEm: new Date().toISOString() });
+            if (resultado) { if (window.PibiexA11y) window.PibiexA11y.aviso('Aviso encerrado. Os alunos não o veem mais.'); carregarAvisos(); }
+        };
+
+        window.reativarAviso = async (avisoId) => {
+            const a = acharAviso(avisoId);
+            if (!a) return;
+            const resultado = await chamarGerenciarAvisos('atualizar', { avisoId, titulo: a.titulo, mensagem: a.mensagem, fixado: a.fixado, expiraEm: dataEm(7) });
+            if (resultado) { ABA = 'ativos'; if (window.PibiexA11y) window.PibiexA11y.aviso('Aviso de volta ao ar por 7 dias.'); carregarAvisos(); }
+        };
+
+        // ao fixar, a sugestão é não ter data para sumir
+        document.getElementById('novo-fixado').addEventListener('change', (e) => {
+            if (e.target.checked) document.getElementById('novo-expira').value = 'nunca';
         });
 
         window.editarAviso = (id) => { idEmEdicao = id; carregarAvisos(); };
@@ -149,7 +241,10 @@
             const fixado = document.getElementById(`edit-fixado-${avisoId}`).checked;
             if (!titulo || !mensagem) return;
 
-            const resultado = await chamarGerenciarAvisos('atualizar', { avisoId, titulo, mensagem, fixado });
+            const escolha = document.getElementById(`edit-expira-${avisoId}`).value;
+            const dados = { avisoId, titulo, mensagem, fixado };
+            if (escolha !== 'manter') dados.expiraEm = expiraDoSelect(escolha);
+            const resultado = await chamarGerenciarAvisos('atualizar', dados);
             if (resultado) { idEmEdicao = null; carregarAvisos(); }
         };
 

@@ -7,9 +7,11 @@
     <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="/vendor/supabase/supabase.js"></script>
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        .aviso-curto { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }body { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="flex min-h-screen">
 
@@ -41,12 +43,19 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <section>
-                    <h2 class="flex items-center gap-2 text-[15px] font-bold mb-3" style="color: var(--pibiex-texto);">
-                        <span class="w-[18px] h-[18px]" style="color: var(--pibiex-dourado);" id="icone-avisos"></span>
-                        Avisos
-                    </h2>
-                    <div id="lista-avisos" class="space-y-3">
-                        <p class="text-sm" style="color: var(--pibiex-texto-suave);">Carregando avisos...</p>
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <h2 class="flex items-center gap-2 text-[15px] font-bold" style="color: var(--pibiex-texto);">
+                            <span class="w-[18px] h-[18px]" style="color: var(--pibiex-dourado);" id="icone-avisos"></span>
+                            Avisos
+                        </h2>
+                        <button type="button" id="btn-todos-lidos" hidden class="text-[12px] font-bold underline" style="color: var(--pibiex-tinta);">Marcar todos como lidos</button>
+                    </div>
+                    <div id="lista-avisos" class="space-y-3" aria-live="polite">
+                        <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+                    </div>
+                    <div id="area-anteriores" class="mt-3" hidden>
+                        <button type="button" id="btn-anteriores" aria-expanded="false" class="text-[12.5px] font-bold underline" style="color: var(--pibiex-texto-suave);"></button>
+                        <div id="lista-anteriores" class="space-y-3 mt-3" hidden></div>
                     </div>
                 </section>
 
@@ -106,21 +115,123 @@
             return `${dia}/${mes}/${ano}`;
         }
 
-        function renderizarAvisos(avisos) {
+        const L = window.PibiexLista;
+        let AVISOS = [];
+        let TOTAL_ANTERIORES = 0;
+
+        function cartaoAviso(a, opcoes) {
+            const longo = (a.mensagem || '').length > 260;
+            const lido = opcoes && opcoes.somenteLeitura;
+            return `
+                <article class="bg-white rounded-lg p-4 border aviso-cartao" data-id="${escaparHtml(a.id)}" style="border-color: var(--pibiex-borda); ${a.fixado ? 'border-left: 3px solid var(--pibiex-dourado);' : ''} ${lido ? 'opacity:.8;' : ''}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                ${a.fixado ? `<span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style="color: var(--pibiex-tinta); background: var(--pibiex-papel);">Fixado</span>` : ''}
+                                ${lido ? `<span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style="color: var(--pibiex-texto-suave); background: var(--pibiex-papel);">${a.motivo === 'expirado' ? 'Encerrado' : 'Lido'}</span>` : ''}
+                                <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${escaparHtml(a.titulo)}</p>
+                            </div>
+                            <p class="text-sm whitespace-pre-wrap aviso-texto ${longo ? 'aviso-curto' : ''}" style="color: var(--pibiex-texto-suave);">${escaparHtml(a.mensagem)}</p>
+                            ${longo ? '<button type="button" class="text-[12px] font-bold underline mt-1 aviso-mais" style="color: var(--pibiex-tinta);" aria-expanded="false">Ler tudo</button>' : ''}
+                            <p class="text-[11px] mt-2" style="color: var(--pibiex-texto-suave);">${escaparHtml(L.tempo(a.criado_em))}</p>
+                        </div>
+                        ${(!a.fixado && !lido) ? `<button type="button" class="aviso-dispensar shrink-0 text-[12px] font-bold rounded-md px-2.5 py-1.5 border" style="color: var(--pibiex-texto); border-color: var(--pibiex-borda);" aria-label="Marcar o aviso ${escaparHtml(a.titulo)} como lido">Entendi</button>` : ''}
+                    </div>
+                </article>`;
+        }
+
+        function ligarCartoes(raiz) {
+            raiz.querySelectorAll('.aviso-mais').forEach((b) => {
+                b.onclick = () => {
+                    const texto = b.parentElement.querySelector('.aviso-texto');
+                    const aberto = texto.classList.toggle('aviso-curto') === false;
+                    b.textContent = aberto ? 'Mostrar menos' : 'Ler tudo';
+                    b.setAttribute('aria-expanded', String(aberto));
+                };
+            });
+            raiz.querySelectorAll('.aviso-dispensar').forEach((b) => {
+                b.onclick = () => dispensar(b.closest('.aviso-cartao').dataset.id);
+            });
+        }
+
+        function renderizarAvisos() {
             const container = document.getElementById('lista-avisos');
-            if (!avisos || avisos.length === 0) {
-                container.innerHTML = `<p class="text-sm bg-white rounded-lg p-4 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhum aviso publicado ainda.</p>`;
+            const dispensaveis = AVISOS.filter((a) => !a.fixado).length;
+            document.getElementById('btn-todos-lidos').hidden = dispensaveis < 2;
+
+            if (AVISOS.length === 0) {
+                container.innerHTML = `<div class="vazio-lista"><b>Nenhum aviso novo</b>${TOTAL_ANTERIORES ? 'Você está em dia com os avisos.' : 'Quando o professor publicar um aviso, ele aparece aqui.'}</div>`;
+            } else {
+                container.innerHTML = AVISOS.map((a) => cartaoAviso(a)).join('');
+                ligarCartoes(container);
+            }
+
+            const area = document.getElementById('area-anteriores');
+            area.hidden = TOTAL_ANTERIORES === 0;
+            const botao = document.getElementById('btn-anteriores');
+            botao.textContent = `${botao.getAttribute('aria-expanded') === 'true' ? 'Esconder' : 'Ver'} avisos anteriores (${TOTAL_ANTERIORES})`;
+        }
+
+        async function chamarAvisos(acao, dados) {
+            const token = localStorage.getItem('pibiex_aluno_token');
+            const { data, error } = await window.supabaseClient.functions.invoke('avisos-aluno', { body: { token, acao, ...dados } });
+            if (error || !data || data.erro) return null;
+            return data;
+        }
+
+        async function dispensar(id) {
+            const antes = [...AVISOS];
+            const cartao = document.querySelector(`.aviso-cartao[data-id="${CSS.escape(id)}"]`);
+            if (cartao) { cartao.style.transition = 'opacity .2s, transform .2s'; cartao.style.opacity = '0'; cartao.style.transform = 'translateX(12px)'; }
+            AVISOS = AVISOS.filter((a) => a.id !== id);
+            TOTAL_ANTERIORES += 1;
+            const ok = await chamarAvisos('dispensar', { avisoId: id });
+            if (!ok) {
+                AVISOS = antes; TOTAL_ANTERIORES -= 1;
+                if (window.PibiexA11y) window.PibiexA11y.aviso('Não foi possível marcar como lido. Tente de novo.');
+            }
+            setTimeout(renderizarAvisos, cartao ? 200 : 0);
+        }
+
+        document.getElementById('btn-todos-lidos').addEventListener('click', async () => {
+            const antes = [...AVISOS];
+            const fixados = AVISOS.filter((a) => a.fixado);
+            const total = AVISOS.length - fixados.length;
+            AVISOS = fixados; TOTAL_ANTERIORES += total;
+            renderizarAvisos();
+            const ok = await chamarAvisos('dispensar_todos', {});
+            if (!ok) {
+                AVISOS = antes; TOTAL_ANTERIORES -= total; renderizarAvisos();
+                if (window.PibiexA11y) window.PibiexA11y.aviso('Não foi possível marcar como lidos. Tente de novo.');
+            }
+        });
+
+        document.getElementById('btn-anteriores').addEventListener('click', async (e) => {
+            const botao = e.currentTarget;
+            const lista = document.getElementById('lista-anteriores');
+            const abrir = botao.getAttribute('aria-expanded') !== 'true';
+            botao.setAttribute('aria-expanded', String(abrir));
+            lista.hidden = !abrir;
+            if (abrir) {
+                lista.innerHTML = '<div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>';
+                const r = await chamarAvisos('anteriores', {});
+                lista.innerHTML = r && r.avisos && r.avisos.length
+                    ? r.avisos.map((a) => cartaoAviso(a, { somenteLeitura: true })).join('')
+                    : '<p class="text-sm" style="color: var(--pibiex-texto-suave);">Nenhum aviso anterior.</p>';
+                ligarCartoes(lista);
+            }
+            renderizarAvisos();
+        });
+
+        async function carregarAvisos() {
+            const r = await chamarAvisos('listar', {});
+            if (!r) {
+                document.getElementById('lista-avisos').innerHTML = '<p class="text-sm" style="color: var(--pibiex-texto-suave);">Não foi possível carregar os avisos agora.</p>';
                 return;
             }
-            container.innerHTML = avisos.map(a => `
-                <div class="bg-white rounded-lg p-4 border" style="border-color: var(--pibiex-borda); ${a.fixado ? 'border-left: 3px solid var(--pibiex-dourado);' : ''}">
-                    <div class="flex items-center gap-2 mb-1">
-                        ${a.fixado ? `<span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style="color: var(--pibiex-tinta); background: var(--pibiex-papel);">Fixado</span>` : ''}
-                        <p class="font-semibold text-sm" style="color: var(--pibiex-texto);">${escaparHtml(a.titulo)}</p>
-                    </div>
-                    <p class="text-sm" style="color: var(--pibiex-texto-suave);">${escaparHtml(a.mensagem)}</p>
-                </div>
-            `).join('');
+            AVISOS = r.avisos || [];
+            TOTAL_ANTERIORES = r.anteriores || 0;
+            renderizarAvisos();
         }
 
         function renderizarAulas(aulas) {
@@ -176,14 +287,7 @@
         }
 
         async function carregarConteudo(dadosAluno) {
-            const { data: avisos } = await window.supabaseClient
-                .from('avisos')
-                .select('*')
-                .eq('turma_id', dadosAluno.turmaId)
-                .order('fixado', { ascending: false })
-                .order('criado_em', { ascending: false })
-                .limit(10);
-            renderizarAvisos(avisos);
+            carregarAvisos();
 
             const hoje = new Date().toISOString().slice(0, 10);
             const { data: aulas } = await window.supabaseClient
