@@ -256,6 +256,8 @@
             #sim-faixa .sair { background: #F59E0B; color: #111827; }
             #sim-faixa button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
             #sim-faixa .tag { cursor: pointer; border: 0; }
+            #sim-faixa .minimizar { background: transparent; color: #fff; border: 1px solid #4B5563 !important; padding: 6px 10px !important; }
+            #sim-faixa.compacto .minimizar { display: none; }
             #sim-faixa.compacto { left: 12px; transform: none; bottom: 12px; padding: 6px 8px; gap: 8px; flex-wrap: nowrap; border-radius: 14px; }
             #sim-faixa.compacto .texto, #sim-faixa.compacto .trocar { display: none; }
             #sim-faixa.compacto .sair { padding: 6px 10px; }
@@ -277,6 +279,13 @@
               '<button type="button" class="trocar">Mudar modo</button><button type="button" class="sair">Sair</button>';
         const marca = el.querySelector('.nome');
         if (marca) marca.replaceWith(nome);
+        const minimizar = document.createElement('button');
+        minimizar.type = 'button';
+        minimizar.className = 'minimizar';
+        minimizar.textContent = '—';
+        minimizar.title = 'Minimizar';
+        minimizar.setAttribute('aria-label', 'Minimizar a faixa da simulação');
+        el.appendChild(minimizar);
         el.querySelector('.trocar').onclick = () => window.PibiexSimulacao.sair(true);
         el.querySelector('.sair').onclick = () => window.PibiexSimulacao.sair(false);
         document.body.appendChild(el);
@@ -288,6 +297,7 @@
         tag.setAttribute('aria-label', 'Mostrar ou esconder os detalhes da simulação');
         const alternar = () => { el.classList.toggle('compacto'); try { sessionStorage.setItem('pibiex_sim_compacto', el.classList.contains('compacto') ? '1' : '0'); } catch (e) { /* ok */ } };
         tag.onclick = alternar;
+        minimizar.onclick = alternar;
         tag.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternar(); } };
         let preferencia = null;
         try { preferencia = sessionStorage.getItem('pibiex_sim_compacto'); } catch (e) { /* ok */ }

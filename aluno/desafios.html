@@ -240,7 +240,7 @@
                                 <span class="flex flex-wrap gap-1.5 mt-2">
                                     ${chipEstado}
                                     ${d.semana ? `<span class="chip cinza">Semana ${escaparHtml(d.semana)}</span>` : ''}
-                                    <span class="chip ambar">${escaparHtml(d.pontos)} pts</span>
+                                    <span class="chip ambar">${escaparHtml(d.valeQuantosPontos ?? d.pontos ?? 0)} pts</span>
                                     ${d.dataFim ? `<span class="chip cinza">até ${formatarData(d.dataFim)}</span>` : ''}
                                 </span>
                             </span>
@@ -265,6 +265,7 @@
                                 <div class="flex-1 min-w-[160px]">
                                     <label for="arquivo-${d.id}" class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Enviar arquivo</label>
                                     <input type="file" id="arquivo-${d.id}" class="text-xs w-full">
+                                    <p class="text-[10.5px] mt-1" style="color: var(--pibiex-texto-suave);">Até 5 MB (PDF, imagem, Word, PowerPoint, ZIP…)</p>
                                 </div>
                                 <div class="flex-1 min-w-[160px]">
                                     <label for="link-${d.id}" class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">${envio ? 'Ou substituir link' : 'Ou cole um link'}</label>
@@ -298,6 +299,12 @@
 
             const arquivo = inputArquivo.files[0];
             const link = inputLink.value.trim();
+            if (arquivo && arquivo.size > 5 * 1024 * 1024) {
+                msg.innerText = `O arquivo tem ${(arquivo.size / 1024 / 1024).toFixed(1).replace('.', ',')} MB e o limite é 5 MB. Reduza o tamanho ou cole um link.`;
+                msg.className = 'text-xs mt-2 text-red-600';
+                msg.classList.remove('hidden');
+                return;
+            }
 
             if (!arquivo && !link) {
                 msg.innerText = 'Envie um arquivo ou cole um link antes de enviar.';
@@ -315,7 +322,7 @@
                 // Arquivo tem prioridade sobre o link, se os dois vierem preenchidos.
                 if (arquivo) {
                     const { data: urlDados, error: erroUrl } = await window.supabaseClient.functions.invoke('enviar-desafio', {
-                        body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', desafioId, nomeArquivo: arquivo.name },
+                        body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', desafioId, nomeArquivo: arquivo.name, tamanho: arquivo.size },
                     });
                     if (erroUrl || !urlDados || urlDados.erro) throw new Error((urlDados && urlDados.erro) || 'Erro ao preparar envio do arquivo.');
 
