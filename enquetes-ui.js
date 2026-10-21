@@ -458,6 +458,7 @@
         function marcarHora() {
             const el = painel.querySelector('#enq-atualizado');
             if (!el || !ultimo) return;
+            if (!dados.some((e) => e.status === 'aberta')) { el.textContent = 'Resultado final'; return; }
             const s = Math.max(0, Math.round((Date.now() - ultimo) / 1000));
             el.textContent = s < 4 ? 'Atualizado agora' : `Atualizado há ${s} s`;
         }
@@ -469,18 +470,22 @@
             } catch (e) { return; }
             desenharBotao();
             desenharPainel();
+            agendar();
         }
 
         // Ritmo adaptativo (cada consulta é uma ida ao servidor): rápido só quando alguém está
         // olhando a apuração; devagar quando há votação aberta; quase parado quando não há nada.
         function intervalo() {
-            if (aberto) return 10000;
-            return dados.some((e) => e.status === 'aberta') ? 20000 : 60000;
+            // Sem votação aberta o resultado é final: não há o que atualizar.
+            if (!dados.some((e) => e.status === 'aberta')) return null;
+            return aberto ? 10000 : 20000;
         }
         function agendar() {
             clearTimeout(temporizador);
             if (document.hidden) return; // aba em segundo plano: não consulta
-            temporizador = setTimeout(async () => { await atualizar(); agendar(); }, intervalo());
+            const espera = intervalo();
+            if (espera === null) return;
+            temporizador = setTimeout(atualizar, espera);
         }
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) { clearTimeout(temporizador); return; }
