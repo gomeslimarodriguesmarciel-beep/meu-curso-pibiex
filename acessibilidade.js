@@ -28,8 +28,11 @@
                 apontar: p.apontar === true,
                 velocidade: [0.75, 1, 1.25, 1.5, 1.75].includes(p.velocidade) ? p.velocidade : 1,
                 voz: typeof p.voz === 'string' ? p.voz.slice(0, 200) : '',
+                // recursos extras (ver EXTRAS)
+                links: p.links === true, espaco: p.espaco === true, fonte: p.fonte === true,
+                cursor: p.cursor === true, semImagens: p.semImagens === true, libras: p.libras === true,
             };
-        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '' }; }
+        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '', links: false, espaco: false, fonte: false, cursor: false, semImagens: false, libras: false }; }
     }
 
     function gravar(p) {
@@ -40,12 +43,49 @@
         return !!(window.matchMedia && window.matchMedia('(prefers-contrast: more)').matches);
     }
 
+    // Recursos extras de leitura e navegação (cada um liga uma classe no <html>, exceto Libras).
+    const EXTRAS = [
+        { chave: 'links', classe: 'a11y-links', rotulo: 'Links destacados' },
+        { chave: 'espaco', classe: 'a11y-espaco', rotulo: 'Espaçamento do texto' },
+        { chave: 'fonte', classe: 'a11y-fonte', rotulo: 'Fonte simples' },
+        { chave: 'cursor', classe: 'a11y-cursor', rotulo: 'Cursor grande' },
+        { chave: 'semImagens', classe: 'a11y-sem-img', rotulo: 'Ocultar imagens' },
+        { chave: 'libras', classe: null, rotulo: 'Libras (VLibras)' },
+    ];
+
+    // VLibras: tradutor gratuito de texto para Libras do governo federal (vlibras.gov.br).
+    // Só é baixado quando a pessoa liga; ao ligar, o navegador conversa com o servidor do governo.
+    let libras = null;
+    function ligarLibras() {
+        if (libras === 'carregando' || libras === 'pronto') { const c = document.querySelector('[vw]'); if (c) c.style.display = ''; return; }
+        libras = 'carregando';
+        const montar = () => {
+            const caixa = document.createElement('div');
+            caixa.setAttribute('vw', '');
+            caixa.className = 'enabled';
+            caixa.innerHTML = '<div vw-access-button class="active"></div><div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
+            document.body.appendChild(caixa);
+            const sc = document.createElement('script');
+            sc.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
+            sc.onload = () => { try { new window.VLibras.Widget('https://vlibras.gov.br/app'); libras = 'pronto'; } catch (e) { libras = null; } };
+            sc.onerror = () => { libras = null; caixa.remove(); mostrarAviso('Não foi possível carregar o VLibras agora. Confira a conexão e tente de novo.'); };
+            document.head.appendChild(sc);
+        };
+        if (document.body) montar(); else document.addEventListener('DOMContentLoaded', montar, { once: true });
+    }
+    function esconderLibras() {
+        const c = document.querySelector('[vw]');
+        if (c) c.style.display = 'none';
+    }
+
     function aplicar(p) {
         const contraste = p.contraste === null ? sistemaPedeContraste() : p.contraste;
         raiz.classList.toggle('a11y-contraste', contraste);
         raiz.classList.toggle('a11y-texto-1', p.texto === 1);
         raiz.classList.toggle('a11y-texto-2', p.texto === 2);
         raiz.classList.toggle('a11y-sem-movimento', p.semMovimento === true);
+        EXTRAS.forEach((x) => { if (x.classe) raiz.classList.toggle(x.classe, p[x.chave] === true); });
+        if (p.libras === true) ligarLibras(); else esconderLibras();
         document.dispatchEvent(new CustomEvent('pibiex:a11y', { detail: { contraste, texto: p.texto, semMovimento: p.semMovimento === true } }));
     }
 
@@ -58,6 +98,7 @@
             apontar: p.apontar === true,
             velocidade: p.velocidade,
             voz: p.voz,
+            links: p.links, espaco: p.espaco, fonte: p.fonte, cursor: p.cursor, semImagens: p.semImagens, libras: p.libras,
         };
     }
 
@@ -152,12 +193,21 @@
                     </div>
                 </div>
 
+                <div class="a11y-bloco">
+                    <h3 class="a11y-sec">Leitura e navegação</h3>
+                    <div class="a11y-grade" id="a11y-extras">
+                        ${EXTRAS.map((x) => `<button type="button" class="a11y-tile" role="switch" aria-checked="false" data-extra="${x.chave}">${x.rotulo}</button>`).join('')}
+                    </div>
+                    <p class="a11y-nota-libras">Libras usa o tradutor gratuito VLibras, do governo federal: ao ligar, seu navegador acessa o site vlibras.gov.br.</p>
+                </div>
+
                 <div class="a11y-rodape"><button type="button" class="a11y-restaurar" id="a11y-restaurar">Restaurar o padrão</button></div>
             </section>`;
 
         const chaveContraste = el.querySelector('#a11y-contraste');
         const chaveMov = el.querySelector('#a11y-movimento');
         const segmentos = [...el.querySelectorAll('[data-texto]')];
+        const tilesExtras = [...el.querySelectorAll('[data-extra]')];
 
         const chaveApontar = el.querySelector('#a11y-apontar');
         const selVoz = el.querySelector('#a11y-voz');
@@ -171,10 +221,12 @@
             chaveContraste.setAttribute('aria-checked', String(e.contraste));
             chaveMov.setAttribute('aria-checked', String(e.semMovimento));
             segmentos.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.texto) === e.texto)));
+            tilesExtras.forEach((b) => b.setAttribute('aria-checked', String(e[b.dataset.extra] === true)));
         }
 
         chaveContraste.onclick = () => { mudar({ contraste: !estado().contraste }); desenhar(); };
         chaveMov.onclick = () => { mudar({ semMovimento: !estado().semMovimento }); desenhar(); };
+        tilesExtras.forEach((b) => { b.onclick = () => { mudar({ [b.dataset.extra]: !estado()[b.dataset.extra] }); desenhar(); }; });
         segmentos.forEach((b) => { b.onclick = () => { mudar({ texto: Number(b.dataset.texto) }); desenhar(); }; });
         el.querySelector('#a11y-restaurar').onclick = () => {
             try { localStorage.removeItem(CHAVE); } catch (e) { /* ok */ }
