@@ -30,9 +30,9 @@
                 voz: typeof p.voz === 'string' ? p.voz.slice(0, 200) : '',
                 // recursos extras (ver EXTRAS)
                 links: p.links === true, espaco: p.espaco === true, fonte: p.fonte === true,
-                cursor: p.cursor === true, semImagens: p.semImagens === true, libras: p.libras === true,
+                cursor: p.cursor === true, semImagens: p.semImagens === true, libras: p.libras !== false, // já vem ligado; só desliga se a pessoa desmarcar
             };
-        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '', links: false, espaco: false, fonte: false, cursor: false, semImagens: false, libras: false }; }
+        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '', links: false, espaco: false, fonte: false, cursor: false, semImagens: false, libras: true }; }
     }
 
     function gravar(p) {
