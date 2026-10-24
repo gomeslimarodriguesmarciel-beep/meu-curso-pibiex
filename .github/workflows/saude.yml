@@ -1,0 +1,34 @@
+name: Saúde do site
+
+# Confere de hora em hora se o site e o servidor estão no ar.
+# Se algo falhar, o GitHub avisa por e-mail que a verificação falhou.
+# Só faz leituras: não cria, altera nem apaga nenhum dado.
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+jobs:
+  saude:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Site no ar
+        run: |
+          for p in "" login.html privacidade.html aluno/inicio.html admin/inicio.html; do
+            codigo=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "https://pibiexdigital.com.br/$p")
+            echo "$p -> $codigo"
+            [ "$codigo" = "200" ] || { echo "::error::A página /$p respondeu $codigo"; exit 1; }
+          done
+
+      - name: Servidor (Supabase) respondendo
+        run: |
+          chave=$(grep -o "SUPABASE_ANON_KEY = '[^']*'" aluno/shell.js | head -1 | sed "s/.*= '//; s/'//")
+          [ -n "$chave" ] || { echo "::error::Não achei a chave pública no site"; exit 1; }
+          resposta=$(curl -s --max-time 25 -X POST "https://gclcsgqvunutbvpazgsg.supabase.co/functions/v1/validar-sessao-aluno" \
+            -H "apikey: $chave" -H "Authorization: Bearer $chave" -H "Content-Type: application/json" \
+            -d '{"token":"verificacao-de-saude"}')
+          echo "$resposta"
+          echo "$resposta" | grep -q '"erro"' || { echo "::error::O servidor não respondeu como esperado"; exit 1; }

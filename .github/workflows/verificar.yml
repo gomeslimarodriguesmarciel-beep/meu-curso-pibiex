@@ -6,11 +6,24 @@ on:
   pull_request:
 
 jobs:
-  verificar:
+  estatico:
+    name: Verificações do código
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - run: node tools/testes/verificar.mjs
+
+  navegador:
+    name: Testes no navegador (sem dados reais)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/testes/fluxos.mjs
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
