@@ -100,7 +100,7 @@
         .painel-fundo .cartao-titulo p { font-size: 11.5px; color: var(--text-muted); margin: 2px 0 0; }
         .painel-fundo .mini-pills { display: flex; gap: 4px; background: var(--surface-card-2); border-radius: 999px; padding: 3px; }
         .painel-fundo .mini-pill { border: none; background: transparent; color: var(--text-muted); font-size: 10.5px; font-weight: 700; padding: 5px 10px; border-radius: 999px; cursor: pointer; }
-        .painel-fundo .mini-pill.ativo { background: var(--series-1); color: white; }
+        .painel-fundo .mini-pill.ativo { background: #1D4ED8; color: white; }
 
         .painel-fundo .caixa-svg { position: relative; width: 100%; overflow-x: auto; min-height: 230px; }
         .painel-fundo svg.grafico { width: 100%; height: auto; display: block; overflow: visible; }
@@ -301,7 +301,7 @@
                             <input type="text" id="campo-busca" placeholder="Buscar aluno…">
                         </div>
                     </div>
-                    <div class="tabela-wrap">
+                    <div class="tabela-wrap" tabindex="0" role="region" aria-label="Tabela de alunos (role para os lados)">
                         <table class="tabela-alunos">
                             <thead>
                                 <tr>

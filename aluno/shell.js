@@ -262,7 +262,7 @@ function montarMenuLateral(paginaAtivaId) {
     container.outerHTML = `
         <div id="sidebar-fundo" onclick="window.fecharMenuAluno()"
              class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
-        <aside id="sidebar-container" class="fixed md:sticky top-0 left-0 h-screen w-[17rem] shrink-0 py-6 z-40 flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-hidden"
+        <aside id="sidebar-container" aria-label="Barra lateral" class="fixed md:sticky top-0 left-0 h-screen w-[17rem] shrink-0 py-6 z-40 flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-200 overflow-hidden"
                style="background: var(--pibiex-gradiente);">
             <div class="pibiex-textura-grade"></div>
             <div class="px-5 pb-6 mb-2 flex items-center justify-between gap-3 border-b border-white/10 relative">
@@ -490,7 +490,7 @@ function montarAssistenteFlutuante() {
 
     container.outerHTML = `
         <div id="assistente-flutuante">
-            <button id="botao-assistente" onclick="alternarPainelAssistente()"
+            <button id="botao-assistente" onclick="alternarPainelAssistente()" aria-label="Abrir o assistente de IA"
                     class="fixed bottom-6 right-6 z-40 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center transition transform hover:scale-105"
                     style="background: var(--pibiex-tinta); border: 1.5px solid var(--pibiex-dourado);">
                 <span class="w-6 h-6" style="color: var(--pibiex-dourado);">${ICONES.assistente}</span>

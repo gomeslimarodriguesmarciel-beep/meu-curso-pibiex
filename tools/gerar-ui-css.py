@@ -199,6 +199,12 @@ html.a11y-fonte, html.a11y-fonte body, html.a11y-fonte button, html.a11y-fonte i
 html.a11y-cursor, html.a11y-cursor * { cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='40'%20height='40'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M4%202l14%209.5-6.2%201.3%203.6%207.2-3%201.5-3.6-7.2L4%2019z'%20fill='%23111827'%20stroke='white'%20stroke-width='1.6'%20stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, auto !important; }
 html.a11y-cursor a, html.a11y-cursor button, html.a11y-cursor summary, html.a11y-cursor [role="button"], html.a11y-cursor [role="switch"], html.a11y-cursor label, html.a11y-cursor select { cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='40'%20height='40'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M4%202l14%209.5-6.2%201.3%203.6%207.2-3%201.5-3.6-7.2L4%2019z'%20fill='%23FACC15'%20stroke='white'%20stroke-width='1.6'%20stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, pointer !important; }
 html.a11y-sem-img img, html.a11y-sem-img video, html.a11y-sem-img picture, html.a11y-sem-img [style*="background-image"] { visibility: hidden !important; }
+/* contraste mínimo (4,5:1) nas cores de status mais usadas */
+.text-red-600 { color: #B91C1C; }
+.text-green-600 { color: #15803D; }
+.text-amber-600 { color: #B45309; }
+.bg-green-600, .btn-verde { background-color: #15803D; }
+.bg-green-600:hover, .hover\:bg-green-700:hover { background-color: #166534; }
 .a11y-sec { margin: 0 0 4px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #475569; }
 .a11y-bloco { padding: 14px 20px 4px; }
 .a11y-bloco .a11y-linha { padding: 11px 0; }

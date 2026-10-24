@@ -108,7 +108,7 @@
                             <textarea id="texto-${lab.id}" rows="3" placeholder="Descreva sua solução (opcional se for enviar só um link)..."
                                       class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">${escaparHtml(envio ? (envio.resposta_texto || '') : '')}</textarea>
                             <div class="flex flex-wrap items-end gap-2">
-                                <input type="file" id="arquivo-${lab.id}" class="flex-1 min-w-[160px] text-xs">
+                                <input type="file" id="arquivo-${lab.id}" aria-label="Anexar arquivo (opcional)" class="flex-1 min-w-[160px] text-xs">
                                 <input type="url" id="link-${lab.id}" placeholder="Ou cole um link (opcional)" value="${escaparHtml(envio ? (envio.arquivo_url || '') : '')}"
                                        class="flex-1 min-w-[160px] border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                                 <button onclick="enviarResposta('${lab.id}')" id="btn-${lab.id}"

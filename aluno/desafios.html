@@ -75,7 +75,7 @@
         }
 
         // Pódio sem emoji: a posição em dourado, prata e bronze.
-        const COR_POSICAO = { 1: '#CA8A04', 2: '#64748B', 3: '#C2410C' };
+        const COR_POSICAO = { 1: '#854D0E', 2: '#475569', 3: '#9A3412' };
 
         // ============================================================
         // Cartão de progresso (nível, pontos, barra até o próximo nível)
@@ -131,7 +131,7 @@
                     <p class="text-[13px] font-bold text-center max-w-[92px] truncate" style="color: var(--pibiex-texto);">
                         ${p.souEu ? 'Você' : escaparHtml(p.nome.split(' ')[0])}
                     </p>
-                    <p class="text-[11px] font-semibold" style="color: var(--pibiex-dourado);">${p.pontos} pts</p>
+                    <p class="text-[11px] font-semibold" style="color: var(--pibiex-dourado-profundo);">${p.pontos} pts</p>
                 </div>
             `).join('');
 

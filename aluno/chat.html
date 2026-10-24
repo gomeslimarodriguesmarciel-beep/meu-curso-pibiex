@@ -26,6 +26,7 @@
         <div id="topo-pagina"></div>
 
         <main class="p-6 md:p-9 max-w-3xl mx-auto">
+            <h1 class="sr-only">Chat</h1>
 
             <div class="flex flex-wrap items-center gap-2 mb-5">
                 <button id="aba-turma" onclick="trocarAba('turma')"
@@ -244,7 +245,7 @@
                     <div class="max-w-[85%]">
                         <div class="rounded-lg px-4 py-2 ${meu ? 'text-white rounded-br-sm' : 'border rounded-bl-sm'}"
                              style="${meu ? 'background: var(--pibiex-tinta);' : 'background:#fff; border-color: var(--pibiex-borda);'}">
-                            ${mostrarAutor && !meu ? `<p class="text-[11.5px] font-bold mb-0.5" style="color: var(--pibiex-dourado);">${escaparHtml(m.autorNome)}${m.autorTipo === 'equipe' ? ' · professor' : ''}</p>` : ''}
+                            ${mostrarAutor && !meu ? `<p class="text-[11.5px] font-bold mb-0.5" style="color: var(--pibiex-dourado-profundo);">${escaparHtml(m.autorNome)}${m.autorTipo === 'equipe' ? ' · professor' : ''}</p>` : ''}
                             ${anexo}
                             ${corpo ? `<p class="text-[13.5px] whitespace-pre-wrap break-words">${corpo}</p>` : ''}
                             <p class="text-[10.5px] mt-1 ${meu ? 'text-white/60' : ''}" style="${meu ? '' : 'color: var(--pibiex-texto-suave);'}">

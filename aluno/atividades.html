@@ -179,15 +179,15 @@
 
                         <div class="flex flex-wrap items-end gap-2 pt-2">
                             <div class="flex-1 min-w-[160px]">
-                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Arquivo (opcional)</label>
+                                <label for="arquivo-${atv.id}" class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Arquivo (opcional)</label>
                                 <input type="file" id="arquivo-${atv.id}" class="text-xs w-full">
                             </div>
                             <div class="flex-1 min-w-[160px]">
-                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Ou cole um link (opcional)</label>
+                                <label for="link-${atv.id}" class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Ou cole um link (opcional)</label>
                                 <input type="url" id="link-${atv.id}" placeholder="https://..." class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                             </div>
                             <div class="flex-1 min-w-[160px]">
-                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Comentário (opcional)</label>
+                                <label for="comentario-${atv.id}" class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Comentário (opcional)</label>
                                 <input type="text" id="comentario-${atv.id}" class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
                             </div>
                             <button onclick="enviarArquivo('${atv.id}')" id="btn-enviar-${atv.id}"

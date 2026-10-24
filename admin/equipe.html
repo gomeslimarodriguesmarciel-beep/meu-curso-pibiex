@@ -161,7 +161,7 @@
                 const souEu = m.id === MEU_ID;
 
                 return `
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${m.ativo ? '' : 'opacity-75'}">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 ${m.ativo ? '' : 'bg-gray-50'}">
                         <div class="flex items-start justify-between gap-4 flex-wrap">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2 mb-1 flex-wrap">
@@ -173,7 +173,7 @@
                             </div>
                             <div class="flex gap-2 shrink-0 flex-wrap">
                                 ${souEu ? '' : `
-                                    <select onchange="mudarNivel('${m.id}', this.value)" class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs">
+                                    <select aria-label="Nível de acesso" onchange="mudarNivel('${m.id}', this.value)" class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs">
                                         <option value="restrito" ${m.nivel_acesso === 'restrito' ? 'selected' : ''}>Restrito</option>
                                         <option value="total" ${m.nivel_acesso === 'total' ? 'selected' : ''}>Total</option>
                                     </select>

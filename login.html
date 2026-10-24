@@ -19,7 +19,7 @@ o tamanho do widget se ele renderizasse automaticamente ali). -->
 <style>
 body { font-family: 'Inter', sans-serif; }
 .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
-.btn-desabilitado { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.btn-desabilitado { opacity: 1; cursor: not-allowed; pointer-events: none; background: #CBD5E1 !important; color: #334155 !important; box-shadow: none !important; }
 </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -28,18 +28,18 @@ body { font-family: 'Inter', sans-serif; }
 
 <a href="index.html" class="absolute top-8 left-6 md:top-12 md:left-12 z-0 flex items-center gap-6">
 <img src="logo unitins branca.png" alt="Logo Unitins" class="h-32 md:h-64 mix-blend-multiply object-contain opacity-90" onerror="this.style.display='none'">
-<h1 class="text-white text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg hidden min-[1500px]:block opacity-90">
+<p class="text-white text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg hidden min-[1500px]:block opacity-90">
 PIBIEX DIGITAL
-</h1>
+</p>
 </a>
 
 <!-- ================= CARD DE LOGIN DO ALUNO ================= -->
 <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
 
 <div class="bg-blue-600 text-white text-center py-8 px-6">
-<h2 class="text-2xl font-extrabold tracking-widest uppercase leading-snug">
+<h1 class="text-2xl font-extrabold tracking-widest uppercase leading-snug">
 Curso de<br>Inteligência Artificial
-</h2>
+</h1>
 </div>
 
 <div class="p-8 md:p-10">
@@ -47,13 +47,13 @@ Curso de<br>Inteligência Artificial
 
 <form id="form-login" class="space-y-5">
 <div>
-<label class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Usuário</label>
+<label for="login-usuario" class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Usuário</label>
 <input type="text" id="login-usuario" required autocomplete="username"
 class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
 </div>
 
 <div>
-<label class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Senha</label>
+<label for="login-senha" class="block text-gray-700 font-bold text-sm mb-2 uppercase tracking-wide">Senha</label>
 <div class="relative">
 <input type="password" id="login-senha" required autocomplete="current-password"
 class="w-full bg-blue-50/50 border border-blue-100 rounded-xl p-4 pr-12 text-gray-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
@@ -105,12 +105,12 @@ Desenvolvido por <span class="font-bold text-blue-100/80">MARCIEL GOMES LIMA ROD
 
 <form id="form-admin" class="space-y-4">
 <div>
-<label class="block text-sm font-bold text-gray-700">Usuário</label>
+<label for="admin-email" class="block text-sm font-bold text-gray-700">Usuário</label>
 <input type="text" id="admin-email" required autocomplete="username"
 class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
 </div>
 <div>
-<label class="block text-sm font-bold text-gray-700">Senha</label>
+<label for="admin-senha" class="block text-sm font-bold text-gray-700">Senha</label>
 <div class="relative">
 <input type="password" id="admin-senha" required autocomplete="current-password"
 class="w-full border border-gray-200 p-3 pr-14 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
@@ -146,12 +146,12 @@ Esqueci minha senha
 
 <form id="form-recuperar" class="space-y-4">
 <div>
-<label class="block text-sm font-bold text-gray-700">Nome completo</label>
+<label for="recuperar-nome" class="block text-sm font-bold text-gray-700">Nome completo</label>
 <input type="text" id="recuperar-nome" required
 class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
 </div>
 <div>
-<label class="block text-sm font-bold text-gray-700">Data de nascimento</label>
+<label for="recuperar-nascimento" class="block text-sm font-bold text-gray-700">Data de nascimento</label>
 <input type="date" id="recuperar-nascimento" required
 class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none">
 </div>
@@ -173,7 +173,7 @@ Buscar minha conta
 
 <form id="form-recuperar-email" class="space-y-3">
 <div>
-<label class="block text-sm font-bold text-gray-700">E-mail</label>
+<label for="recuperar-email" class="block text-sm font-bold text-gray-700">E-mail</label>
 <input type="email" id="recuperar-email" required placeholder="seuemail@exemplo.com"
 class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none">
 </div>
@@ -225,7 +225,7 @@ Fechar
 
 <form id="form-recuperar-equipe" class="space-y-4">
 <div>
-<label class="block text-sm font-bold text-gray-700">Usuário</label>
+<label for="recuperar-equipe-usuario" class="block text-sm font-bold text-gray-700">Usuário</label>
 <input type="text" id="recuperar-equipe-usuario" required autocomplete="username"
 class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-red-500 outline-none">
 </div>
@@ -246,7 +246,7 @@ Buscar minha conta
 
 <form id="form-recuperar-equipe-email" class="space-y-3">
 <div>
-<label class="block text-sm font-bold text-gray-700">E-mail</label>
+<label for="recuperar-equipe-email" class="block text-sm font-bold text-gray-700">E-mail</label>
 <input type="email" id="recuperar-equipe-email" required placeholder="seuemail@exemplo.com"
 class="w-full border border-gray-200 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none">
 </div>
