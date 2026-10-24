@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { spawnSync } from 'node:child_process';
 
 const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', '..');
 const IGNORAR = new Set(['node_modules', '.git', 'supabase', 'tools', 'vendor']);
@@ -41,7 +42,15 @@ const inline = (txt) => [...txt.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*
 // 1. Sintaxe de todo JavaScript (arquivos e blocos dentro das páginas)
 {
     const p = [];
-    for (const f of scripts) { try { new vm.Script(ler(f), { filename: f }); } catch (e) { p.push(`${rel(f)}: ${e.message}`); } }
+    for (const f of scripts) {
+        const texto = ler(f);
+        try {
+            if (/^(export|import) /m.test(texto)) { // módulo de navegador: confere como módulo
+                const r = spawnSync(process.execPath, ['--input-type=module', '--check'], { input: texto, encoding: 'utf8' });
+                if (r.status !== 0) throw new Error((r.stderr || 'erro de sintaxe').split('\n').slice(0, 3).join(' '));
+            } else new vm.Script(texto, { filename: f });
+        } catch (e) { p.push(`${rel(f)}: ${e.message}`); }
+    }
     for (const f of paginas) inline(ler(f)).forEach((b, i) => { try { new vm.Script(b, { filename: f }); } catch (e) { p.push(`${rel(f)} (bloco ${i + 1}): ${e.message}`); } });
     verificar(`sintaxe de ${scripts.length} scripts e ${paginas.length} páginas`, p);
 }

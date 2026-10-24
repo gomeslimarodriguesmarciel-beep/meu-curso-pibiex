@@ -1,0 +1,609 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 960. 540.]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 2446
+>>
+stream
+0.200025 w
+0 G
+0.04 0.11 0.29 rg
+0. 540. 960. -540. re
+f
+0.12 0.23 0.54 rg
+0. 540. 960. -8. re
+f
+BT
+/F2 13 Tf
+14.9499999999999993 TL
+0.639 0.902 0.208 rg
+60. 484. Td
+(PIBIEX DIGITAL  ·  GUIA RÁPIDO DE PROMPTS) Tj
+ET
+BT
+/F2 38 Tf
+43.6999999999999957 TL
+1. g
+60. 410. Td
+(Um bom prompt tem 5 partes) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0.706 0.784 1. rg
+60. 35. Td
+(Material de demonstração · 1 de 4) Tj
+ET
+0.64 0.9 0.21 rg
+75. 331. m
+75. 333.7614237491540052 72.7614237491539626 336. 70. 336. c
+67.2385762508460374 336. 65. 333.7614237491540052 65. 331. c
+65. 328.2385762508459948 67.2385762508460374 326. 70. 326. c
+72.7614237491539626 326. 75. 328.2385762508459948 75. 331. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 325. Td
+(Papel: quem a IA deve ser \(ex.: "um professor de história paciente"\).) Tj
+ET
+0.64 0.9 0.21 rg
+75. 283. m
+75. 285.7614237491540052 72.7614237491539626 288. 70. 288. c
+67.2385762508460374 288. 65. 285.7614237491540052 65. 283. c
+65. 280.2385762508460516 67.2385762508460374 278. 70. 278. c
+72.7614237491539626 278. 75. 280.2385762508460516 75. 283. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 277. Td
+(Objetivo: o que você quer conseguir.) Tj
+ET
+0.64 0.9 0.21 rg
+75. 235. m
+75. 237.7614237491539484 72.7614237491539626 240. 70. 240. c
+67.2385762508460374 240. 65. 237.7614237491539484 65. 235. c
+65. 232.2385762508460516 67.2385762508460374 230. 70. 230. c
+72.7614237491539626 230. 75. 232.2385762508460516 75. 235. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 229. Td
+(Contexto: o que a IA precisa saber \(nível, prazo, material\).) Tj
+ET
+0.64 0.9 0.21 rg
+75. 187. m
+75. 189.7614237491539484 72.7614237491539626 192. 70. 192. c
+67.2385762508460374 192. 65. 189.7614237491539484 65. 187. c
+65. 184.2385762508460516 67.2385762508460374 182. 70. 182. c
+72.7614237491539626 182. 75. 184.2385762508460516 75. 187. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 181. Td
+(Formato: como quer a resposta \(lista, tabela, tamanho\).) Tj
+ET
+0.64 0.9 0.21 rg
+75. 139. m
+75. 141.7614237491539484 72.7614237491539626 144. 70. 144. c
+67.2385762508460374 144. 65. 141.7614237491539484 65. 139. c
+65. 136.2385762508460516 67.2385762508460374 134. 70. 134. c
+72.7614237491539626 134. 75. 136.2385762508460516 75. 139. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 133. Td
+(Regras: o que ela deve ou não fazer \(ex.: "não invente dados"\).) Tj
+ET
+endstream
+endobj
+5 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 960. 540.]
+/Contents 6 0 R
+>>
+endobj
+6 0 obj
+<<
+/Length 964
+>>
+stream
+0.200025 w
+0 G
+0.04 0.11 0.29 rg
+0. 540. 960. -540. re
+f
+0.12 0.23 0.54 rg
+0. 540. 960. -8. re
+f
+BT
+/F2 13 Tf
+14.9499999999999993 TL
+0.639 0.902 0.208 rg
+60. 484. Td
+(PIBIEX DIGITAL  ·  GUIA RÁPIDO DE PROMPTS) Tj
+ET
+BT
+/F2 38 Tf
+43.6999999999999957 TL
+1. g
+60. 410. Td
+(Antes e depois) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0.706 0.784 1. rg
+60. 35. Td
+(Material de demonstração · 2 de 4) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+1. 0.549 0.549 rg
+60. 325. Td
+(PROMPT FRACO) Tj
+ET
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+60. 290. Td
+("Fale sobre a Revolução Industrial.") Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0.639 0.902 0.208 rg
+60. 220. Td
+(PROMPT FORTE) Tj
+ET
+BT
+/F1 19 Tf
+21.8499999999999979 TL
+0.922 0.949 1. rg
+60. 188. Td
+(Você é um professor de história. Explique a Revolução Industrial para um aluno do 3º ano do ensino) Tj
+T* (médio, em 5 tópicos curtos, com um exemplo do dia a dia. Use só fatos que possam ser conferidos.) Tj
+ET
+endstream
+endobj
+7 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 960. 540.]
+/Contents 8 0 R
+>>
+endobj
+8 0 obj
+<<
+/Length 2000
+>>
+stream
+0.200025 w
+0 G
+0.04 0.11 0.29 rg
+0. 540. 960. -540. re
+f
+0.12 0.23 0.54 rg
+0. 540. 960. -8. re
+f
+BT
+/F2 13 Tf
+14.9499999999999993 TL
+0.639 0.902 0.208 rg
+60. 484. Td
+(PIBIEX DIGITAL  ·  GUIA RÁPIDO DE PROMPTS) Tj
+ET
+BT
+/F2 38 Tf
+43.6999999999999957 TL
+1. g
+60. 410. Td
+(Confira sempre o que a IA responde) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0.706 0.784 1. rg
+60. 35. Td
+(Material de demonstração · 3 de 4) Tj
+ET
+0.64 0.9 0.21 rg
+75. 331. m
+75. 333.7614237491540052 72.7614237491539626 336. 70. 336. c
+67.2385762508460374 336. 65. 333.7614237491540052 65. 331. c
+65. 328.2385762508459948 67.2385762508460374 326. 70. 326. c
+72.7614237491539626 326. 75. 328.2385762508459948 75. 331. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 325. Td
+(Peça as fontes e abra pelo menos duas delas.) Tj
+ET
+0.64 0.9 0.21 rg
+75. 283. m
+75. 285.7614237491540052 72.7614237491539626 288. 70. 288. c
+67.2385762508460374 288. 65. 285.7614237491540052 65. 283. c
+65. 280.2385762508460516 67.2385762508460374 278. 70. 278. c
+72.7614237491539626 278. 75. 280.2385762508460516 75. 283. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 277. Td
+(Desconfie de números, datas e nomes muito exatos.) Tj
+ET
+0.64 0.9 0.21 rg
+75. 235. m
+75. 237.7614237491539484 72.7614237491539626 240. 70. 240. c
+67.2385762508460374 240. 65. 237.7614237491539484 65. 235. c
+65. 232.2385762508460516 67.2385762508460374 230. 70. 230. c
+72.7614237491539626 230. 75. 232.2385762508460516 75. 235. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 229. Td
+(Pergunte: "Em que parte você não tem certeza?".) Tj
+ET
+0.64 0.9 0.21 rg
+75. 187. m
+75. 189.7614237491539484 72.7614237491539626 192. 70. 192. c
+67.2385762508460374 192. 65. 189.7614237491539484 65. 187. c
+65. 184.2385762508460516 67.2385762508460374 182. 70. 182. c
+72.7614237491539626 182. 75. 184.2385762508460516 75. 187. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 181. Td
+(Compare a resposta com o seu material de aula.) Tj
+ET
+endstream
+endobj
+9 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 960. 540.]
+/Contents 10 0 R
+>>
+endobj
+10 0 obj
+<<
+/Length 1996
+>>
+stream
+0.200025 w
+0 G
+0.04 0.11 0.29 rg
+0. 540. 960. -540. re
+f
+0.12 0.23 0.54 rg
+0. 540. 960. -8. re
+f
+BT
+/F2 13 Tf
+14.9499999999999993 TL
+0.639 0.902 0.208 rg
+60. 484. Td
+(PIBIEX DIGITAL  ·  GUIA RÁPIDO DE PROMPTS) Tj
+ET
+BT
+/F2 38 Tf
+43.6999999999999957 TL
+1. g
+60. 410. Td
+(Agora é com você) Tj
+ET
+BT
+/F1 11 Tf
+12.6499999999999986 TL
+0.706 0.784 1. rg
+60. 35. Td
+(Material de demonstração · 4 de 4) Tj
+ET
+0.64 0.9 0.21 rg
+75. 331. m
+75. 333.7614237491540052 72.7614237491539626 336. 70. 336. c
+67.2385762508460374 336. 65. 333.7614237491540052 65. 331. c
+65. 328.2385762508459948 67.2385762508460374 326. 70. 326. c
+72.7614237491539626 326. 75. 328.2385762508459948 75. 331. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 325. Td
+(Abra o Banco de Prompts e copie um modelo.) Tj
+ET
+0.64 0.9 0.21 rg
+75. 283. m
+75. 285.7614237491540052 72.7614237491539626 288. 70. 288. c
+67.2385762508460374 288. 65. 285.7614237491540052 65. 283. c
+65. 280.2385762508460516 67.2385762508460374 278. 70. 278. c
+72.7614237491539626 278. 75. 280.2385762508460516 75. 283. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 277. Td
+(Troque o que estiver entre [colchetes] pelo seu caso.) Tj
+ET
+0.64 0.9 0.21 rg
+75. 235. m
+75. 237.7614237491539484 72.7614237491539626 240. 70. 240. c
+67.2385762508460374 240. 65. 237.7614237491539484 65. 235. c
+65. 232.2385762508460516 67.2385762508460374 230. 70. 230. c
+72.7614237491539626 230. 75. 232.2385762508460516 75. 235. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 229. Td
+(Teste em uma IA e ajuste o pedido até ficar bom.) Tj
+ET
+0.64 0.9 0.21 rg
+75. 187. m
+75. 189.7614237491539484 72.7614237491539626 192. 70. 192. c
+67.2385762508460374 192. 65. 189.7614237491539484 65. 187. c
+65. 184.2385762508460516 67.2385762508460374 182. 70. 182. c
+72.7614237491539626 182. 75. 184.2385762508460516 75. 187. c
+f
+BT
+/F1 21 Tf
+24.1499999999999986 TL
+0.922 0.949 1. rg
+92. 181. Td
+(Publique o resultado na Galeria e comente o de um colega.) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R 5 0 R 7 0 R 9 0 R ]
+/Count 4
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+19 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+20 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+21 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+22 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+23 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+24 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 11 0 R
+/F2 12 0 R
+/F3 13 0 R
+/F4 14 0 R
+/F5 15 0 R
+/F6 16 0 R
+/F7 17 0 R
+/F8 18 0 R
+/F9 19 0 R
+/F10 20 0 R
+/F11 21 0 R
+/F12 22 0 R
+/F13 23 0 R
+/F14 24 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+25 0 obj
+<<
+/Producer (jsPDF 2.5.1)
+/CreationDate (D:20261024162748-03'00')
+>>
+endobj
+26 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 27
+0000000000 65535 f 
+0000008050 00000 n 
+0000009890 00000 n 
+0000000015 00000 n 
+0000000120 00000 n 
+0000002618 00000 n 
+0000002723 00000 n 
+0000003738 00000 n 
+0000003843 00000 n 
+0000005895 00000 n 
+0000006001 00000 n 
+0000008125 00000 n 
+0000008251 00000 n 
+0000008382 00000 n 
+0000008516 00000 n 
+0000008654 00000 n 
+0000008778 00000 n 
+0000008907 00000 n 
+0000009039 00000 n 
+0000009175 00000 n 
+0000009303 00000 n 
+0000009430 00000 n 
+0000009559 00000 n 
+0000009692 00000 n 
+0000009794 00000 n 
+0000010143 00000 n 
+0000010229 00000 n 
+trailer
+<<
+/Size 27
+/Root 26 0 R
+/Info 25 0 R
+/ID [ <27DF9195E2FEA792844830A90AAB69BF> <27DF9195E2FEA792844830A90AAB69BF> ]
+>>
+startxref
+10333
+%%EOF

@@ -17,6 +17,14 @@ node tools/testes/verificar.mjs
 7. Nenhuma chave secreta no site publicado.
 8. Política de privacidade e termos existem.
 
+## 1b. Lógica da demonstração pública (rápido, sem navegador)
+
+```
+node tools/testes/demo.mjs
+```
+
+Confere, sem rede, os fluxos da demonstração: a aluna envia e o professor corrige, abertura e registro de chamada, enquete, desafios, notas, galeria, chat e avisos.
+
 ## 2. Testes no navegador (precisam de Edge ou Chrome instalado)
 
 ```
@@ -25,6 +33,8 @@ node tools/testes/fluxos.mjs
 
 Abre cada página do aluno e do professor num navegador sem tela e confere que não há erro de JavaScript. Depois simula fluxos:
 enviar uma atividade, a busca rápida (Ctrl+K), o pedido de privacidade do aluno e a resposta do professor.
+
+Também entra na demonstração pública e confirma que **nenhuma chamada** sai para o Supabase.
 
 Se o navegador não for achado sozinho, defina `CHROME_PATH` com o caminho dele.
 

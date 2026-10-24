@@ -18,9 +18,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // este cliente — é isso que as policies de leitura das tabelas de conteúdo
 // exigem agora (antes eram públicas, qualquer um na internet lia direto pela
 // API). Setado aqui uma vez vale pra toda página que carrega este shell.
-window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { 'x-sessao-token': localStorage.getItem('pibiex_equipe_token') || '' } },
-});
+const MODO_DEMO = (() => { try { return sessionStorage.getItem('pibiex_demo'); } catch (e) { return null; } })();
+const OPCOES_CLIENTE = { global: { headers: { 'x-sessao-token': localStorage.getItem('pibiex_equipe_token') || '' } } };
+if (MODO_DEMO) {
+    // Demonstração: nenhuma chamada sai para o Supabase. Tudo é respondido por /demo/falso.js, no próprio navegador.
+    window.__demoPronto = import('/demo/falso.js');
+    OPCOES_CLIENTE.global.fetch = (url, opcoes) => window.__demoPronto.then((m) => m.fetchDemo(url, opcoes));
+}
+window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, OPCOES_CLIENTE);
 
 // ============================================================
 // 0) Identidade visual: fonte + tokens de cor injetados uma vez

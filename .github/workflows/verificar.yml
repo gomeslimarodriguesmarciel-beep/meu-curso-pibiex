@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: 22
       - run: node tools/testes/verificar.mjs
+      - run: node tools/testes/demo.mjs
 
   navegador:
     name: Testes no navegador (sem dados reais)

@@ -13,6 +13,26 @@
 //
 // Carregado no <head> para a preferência valer antes de a página aparecer (sem "piscar").
 
+// Modo demonstração (/demo/): enquanto a aba estiver nele, "localStorage" passa a ser uma área separada
+// (sessionStorage com prefixo), para a demonstração nunca ler nem apagar uma sessão real neste navegador.
+// Na tela de login a marca é descartada. Fora da demonstração este bloco não faz nada.
+(function () {
+    try {
+        if (/\/login\.html$/.test(location.pathname)) { sessionStorage.removeItem('pibiex_demo'); return; }
+        if (!sessionStorage.getItem('pibiex_demo')) return;
+        const P = 'demo:';
+        const area = {
+            getItem: (k) => sessionStorage.getItem(P + k),
+            setItem: (k, v) => sessionStorage.setItem(P + k, String(v)),
+            removeItem: (k) => sessionStorage.removeItem(P + k),
+            clear: () => Object.keys(sessionStorage).filter((k) => k.startsWith(P)).forEach((k) => sessionStorage.removeItem(k)),
+            key: (i) => Object.keys(sessionStorage).filter((k) => k.startsWith(P)).map((k) => k.slice(P.length))[i] ?? null,
+            get length() { return Object.keys(sessionStorage).filter((k) => k.startsWith(P)).length; },
+        };
+        Object.defineProperty(window, 'localStorage', { configurable: true, get: () => area });
+    } catch (e) { /* sem armazenamento: nada a isolar */ }
+})();
+
 (function () {
     const CHAVE = 'pibiex_prefs';
     const raiz = document.documentElement;

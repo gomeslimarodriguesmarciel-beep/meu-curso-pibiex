@@ -54,19 +54,20 @@ if (!alvo) { console.log('Não consegui abrir o navegador de teste.'); navegador
 
 const ws = new WebSocket(alvo.webSocketDebuggerUrl);
 await new Promise((r) => (ws.onopen = r));
-let seq = 0; const pend = new Map(); let erros = [];
+let seq = 0; const pend = new Map(); let erros = []; let paraSupabase = [];
 ws.onmessage = (m) => {
     const msg = JSON.parse(m.data);
     if (msg.id && pend.has(msg.id)) { pend.get(msg.id)(msg); pend.delete(msg.id); }
     if (msg.method === 'Runtime.exceptionThrown') erros.push('exceção: ' + (msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text).split('\n')[0]);
     if (msg.method === 'Runtime.consoleAPICalled' && msg.params.type === 'error') erros.push('console: ' + msg.params.args.map((a) => a.value ?? a.description).join(' ').slice(0, 160));
+    if (msg.method === 'Network.requestWillBeSent' && /supabase[.]co/.test(msg.params.request.url)) paraSupabase.push(msg.params.request.url);
     if (msg.method === 'Page.javascriptDialogOpening') cdp('Page.handleJavaScriptDialog', { accept: true });
 };
 const cdp = (method, params = {}) => new Promise((res) => { const i = ++seq; pend.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
 await cdp('Page.enable'); await cdp('Runtime.enable'); await cdp('Network.enable');
 await cdp('Network.setCacheDisabled', { cacheDisabled: true });
 await cdp('Emulation.setDeviceMetricsOverride', { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false });
-await cdp('Page.addScriptToEvaluateOnNewDocument', { source: FALSO });
+const idScript = (await cdp('Page.addScriptToEvaluateOnNewDocument', { source: FALSO })).result.identifier;
 
 const avaliar = async (expressao) => (await cdp('Runtime.evaluate', { expression: expressao, awaitPromise: true, returnByValue: true })).result?.result?.value;
 async function abrir(url, espera = 2500) { erros = []; await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/${url}` }); await esperar(espera); }
@@ -85,7 +86,7 @@ const nossos = (lista) => lista.filter((e) => !/recaptcha|gstatic|vlibras|google
 // 1) todas as páginas abrem sem erro
 console.log('\n== Páginas abrem sem erro de JavaScript');
 const paginas = [
-    'index.html', 'sobre.html', 'transparencia.html', 'login.html', 'privacidade.html', 'termos.html',
+    'index.html', 'demo/index.html', 'sobre.html', 'transparencia.html', 'login.html', 'privacidade.html', 'termos.html',
     ...fs.readdirSync(path.join(RAIZ, 'aluno')).filter((f) => f.endsWith('.html')).filter((f) => f !== 'trabalhos.html').map((f) => `aluno/${f}?votou=1`),
     ...fs.readdirSync(path.join(RAIZ, 'admin')).filter((f) => f.endsWith('.html')).map((f) => `admin/${f}`),
 ];
@@ -144,6 +145,54 @@ await abrir('admin/privacidade.html', 2500);
     const pediu = await ate(`!!document.querySelector('[role="dialog"], [role="alertdialog"], .dlg')`, 4000);
     resultado('professor: pede confirmação ao responder', pediu);
 }
+
+
+// 3) Demonstração pública: tudo no navegador, sem falar com o Supabase
+console.log('\n== Demonstração pública (nenhuma chamada ao servidor real)');
+await cdp('Page.removeScriptToEvaluateOnNewDocument', { identifier: idScript });
+await avaliar(`sessionStorage.clear()`);
+paraSupabase = [];
+await abrir('demo/index.html', 1500);
+await avaliar(`document.getElementById('entrar-aluno').click()`);
+await esperar(3000);
+resultado('demo: entra como aluna', /aluno\/inicio/.test(await avaliar('location.pathname')));
+const paginasDemo = ['aluno/atividades.html', 'aluno/conteudo.html', 'aluno/desafios.html', 'aluno/enquetes.html', 'aluno/galeria.html', 'aluno/notas.html', 'aluno/chat.html', 'aluno/frequencia.html', 'aluno/cronograma.html', 'aluno/prompts.html', 'aluno/laboratorio-ia.html', 'aluno/recursos.html', 'aluno/ferramentas-ia.html', 'aluno/faq.html', 'aluno/perfil.html'];
+for (const p of paginasDemo) {
+    erros = [];
+    await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/${p}` });
+    await esperar(1800);
+    const ruins = nossos(erros);
+    const vazio = await avaliar(`document.querySelector('main') ? document.querySelector('main').innerText.trim().length < 40 : true`);
+    resultado('demo (aluna): ' + p, ruins.length === 0 && !vazio, ruins.slice(0, 2).join(' | ') || (vazio ? 'página ficou vazia' : ''));
+}
+
+// fluxo: a aluna envia uma atividade, o professor a vê e corrige
+erros = [];
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/aluno/atividades.html` });
+await esperar(2200);
+await avaliar(`(() => { const det = [...document.querySelectorAll('details.cx')].find(d => d.querySelector('textarea')); det.open = true; const t = det.querySelector('textarea'); t.value = 'Resposta da demonstração'; t.dispatchEvent(new Event('input', { bubbles: true })); det.querySelector('button[id^="btn-enviar-"]').click(); })()`);
+if (await ate(`!!document.querySelector('[role="dialog"], [role="alertdialog"], .dlg')`, 4000)) {
+    await avaliar(`(() => { const b = [...document.querySelectorAll('[role="dialog"] button, [role="alertdialog"] button, .dlg button')].find(x => /enviar|confirmar|sim|ok/i.test(x.textContent)); if (b) b.click(); })()`);
+}
+resultado('demo: a aluna envia a atividade', await ate(`[...document.querySelectorAll('.chip')].some(c => /Enviad/i.test(c.textContent))`, 5000));
+
+await avaliar(`document.querySelector('#demo-faixa .trocar').click()`);
+await esperar(3000);
+resultado('demo: troca para professor', /admin\/inicio/.test(await avaliar('location.pathname')));
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/admin/trabalhos.html` });
+await esperar(2500);
+resultado('demo: professor vê o trabalho enviado pela aluna', !!(await avaliar(`document.body.innerText.includes('Lia Exemplo') || [...document.querySelectorAll('details')].some(d => d.textContent.includes('Lia Exemplo'))`)));
+
+const paginasProf = ['admin/inicio.html', 'admin/painel.html', 'admin/alunos.html', 'admin/frequencia.html', 'admin/enquetes.html', 'admin/avisos.html', 'admin/desafios.html', 'admin/atividades.html', 'admin/cronograma.html', 'admin/conteudo.html', 'admin/galeria.html', 'admin/chat.html', 'admin/privacidade.html'];
+for (const p of paginasProf) {
+    erros = [];
+    await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/${p}` });
+    await esperar(1800);
+    const ruins = nossos(erros);
+    const vazio = await avaliar(`document.querySelector('main') ? document.querySelector('main').innerText.trim().length < 40 : true`);
+    resultado('demo (professor): ' + p, ruins.length === 0 && !vazio, ruins.slice(0, 2).join(' | ') || (vazio ? 'página ficou vazia' : ''));
+}
+resultado('demo: nenhuma chamada saiu para o Supabase', paraSupabase.length === 0, paraSupabase.slice(0, 3).join(' | '));
 
 ws.close(); navegador.kill(); servidor.close();
 try { fs.rmSync(perfil, { recursive: true, force: true }); } catch { /* o navegador ainda pode estar fechando */ }
