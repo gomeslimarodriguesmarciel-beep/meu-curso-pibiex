@@ -117,7 +117,7 @@
 <main id="topo">
 <section class="hero-bg relative overflow-hidden pt-28 pb-16 md:pt-40 md:pb-24 px-5">
     <div class="absolute -top-24 -right-24 w-96 h-96 halo pointer-events-none"></div>
-    <div class="max-w-6xl mx-auto relative grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-14 items-center">
+    <div class="max-w-6xl mx-auto relative grid lg:grid-cols-[1.15fr_.85fr] gap-12 lg:gap-14 items-center">
         <div>
             <a href="#programa" class="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.06] pl-3 pr-4 py-1.5 mb-6 text-[11px] md:text-xs font-bold tracking-wide text-blue-100 hover:bg-white/10 transition">
                 <span class="w-1.5 h-1.5 rounded-full" style="background: var(--pibiex-lima);"></span>
@@ -141,12 +141,9 @@
             <a href="sobre.html" class="inline-flex items-center gap-1.5 text-sm font-bold text-blue-100 hover:text-white underline underline-offset-4 decoration-white/30">Conhecer a plataforma em detalhes →</a>
         </div>
 
-        <div class="relative">
+        <div class="relative hidden lg:flex justify-center lg:justify-end" aria-hidden="true">
             <div class="absolute inset-0 halo"></div>
-            <div class="janela relative">
-                <div class="janela-barra" aria-hidden="true"><i></i><i></i><i></i><span>pibiexdigital.com.br/aluno/atividades</span></div>
-                <img src="img/tela-atividades.png" width="1280" height="800" alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção" fetchpriority="high">
-            </div>
+            <img src="logo-pibiex-digital-branca.png" alt="" class="flutuar relative w-72 xl:w-[24rem] h-auto object-contain drop-shadow-2xl">
         </div>
     </div>
 </section>
@@ -184,44 +181,35 @@
 <!-- ================= NA PRÁTICA ================= -->
 <section id="plataforma" class="py-20 md:py-28 px-5 scroll-mt-16" style="background: #F4F6FB;">
     <div class="max-w-6xl mx-auto">
-        <div class="max-w-2xl mb-10">
+        <div class="max-w-2xl mb-12">
             <p class="rotulo mb-3">Na prática</p>
-            <h2 class="text-3xl md:text-[38px] font-black balance leading-tight">Uma plataforma de verdade, não só uma página de links.</h2>
-            <p class="mt-4 text-[15px] leading-relaxed" style="color: #4B5563;">Cada perfil vê o que precisa. O aluno tem o caminho do curso na frente; o professor tem a lista do que pede atenção hoje.</p>
+            <h2 class="text-3xl md:text-[38px] font-black balance leading-tight">Cada perfil vê o que precisa.</h2>
+            <p class="mt-4 text-[15px] leading-relaxed" style="color: #4B5563;">O aluno tem o caminho do curso na frente. O professor tem a lista do que pede atenção hoje.</p>
         </div>
 
-        <div role="tablist" aria-label="Telas da plataforma" class="flex flex-wrap gap-3 mb-6">
-            <button type="button" role="tab" class="aba" id="t-ativ" aria-controls="p-tela" aria-selected="true" data-img="img/tela-atividades.png" data-url="pibiexdigital.com.br/aluno/atividades" data-alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção">Aluno · Atividades</button>
-            <button type="button" role="tab" class="aba" id="t-cont" aria-controls="p-tela" aria-selected="false" tabindex="-1" data-img="img/tela-conteudo.png" data-url="pibiexdigital.com.br/aluno/conteudo" data-alt="Tela de Conteúdo do aluno: módulos com slides, PDFs, vídeos e links, busca e filtro por tipo">Aluno · Conteúdo</button>
-            <button type="button" role="tab" class="aba" id="t-prof" aria-controls="p-tela" aria-selected="false" tabindex="-1" data-img="img/tela-professor.png" data-url="pibiexdigital.com.br/admin/inicio" data-alt="Painel inicial do professor: trabalhos para corrigir, desafios sem nota e próxima aula">Professor · Início</button>
-        </div>
-
-        <div class="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
-            <div id="p-tela" role="tabpanel" class="janela">
-                <div class="janela-barra" aria-hidden="true"><i></i><i></i><i></i><span id="url-tela">pibiexdigital.com.br/aluno/atividades</span></div>
-                <img id="img-tela" src="img/tela-atividades.png" width="1280" height="800" alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção" loading="lazy">
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="cartao">
+                <p class="rotulo mb-2">Para o aluno</p>
+                <ul class="lista-ok mt-3">
+                    <li>Vê o que fazer e até quando, com prazo destacado.</li>
+                    <li>Escreve a resposta direto ou anexa arquivo e link.</li>
+                    <li>Acompanha nota, horas, comentário e posição no ranking.</li>
+                    <li>Registra a presença pelo celular durante a aula.</li>
+                    <li>Estuda com materiais, prompts prontos e laboratório de IA.</li>
+                </ul>
             </div>
-            <div class="space-y-6">
-                <div>
-                    <h3 class="font-black text-lg mb-2">Para o aluno</h3>
-                    <ul class="lista-ok">
-                        <li>Vê o que fazer e até quando, com prazo destacado.</li>
-                        <li>Escreve a resposta direto ou anexa arquivo e link.</li>
-                        <li>Acompanha nota, horas, comentário e posição no ranking.</li>
-                        <li>Registra a presença pelo celular durante a aula.</li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-black text-lg mb-2">Para o professor</h3>
-                    <ul class="lista-ok">
-                        <li>Tela inicial com o que precisa de atenção hoje.</li>
-                        <li>Corrige trabalhos e dá nota em uma fila única.</li>
-                        <li>Abre a chamada e acompanha os registros ao vivo.</li>
-                        <li>Enxerga a plataforma como o aluno, sem salvar nada.</li>
-                    </ul>
-                </div>
+            <div class="cartao">
+                <p class="rotulo mb-2">Para o professor</p>
+                <ul class="lista-ok mt-3">
+                    <li>Tela inicial com o que precisa de atenção hoje.</li>
+                    <li>Corrige trabalhos e dá nota em uma fila única.</li>
+                    <li>Abre a chamada e acompanha os registros ao vivo.</li>
+                    <li>Publica avisos, enquetes e materiais sem mexer em código.</li>
+                    <li>Enxerga a plataforma como o aluno, sem salvar nada.</li>
+                </ul>
             </div>
         </div>
+        <p class="mt-8"><a href="sobre.html#galeria" class="font-extrabold text-sm underline underline-offset-4" style="color: #1E3A8A;">Ver as telas da plataforma →</a></p>
     </div>
 </section>
 
@@ -411,24 +399,6 @@
 </footer>
 
 <script>
-(function () {
-    var abas = [].slice.call(document.querySelectorAll('[role="tab"][data-img]'));
-    var img = document.getElementById('img-tela'), url = document.getElementById('url-tela'), painel = document.getElementById('p-tela');
-    function mostrar(i, focar) {
-        abas.forEach(function (a, k) { a.setAttribute('aria-selected', String(k === i)); a.tabIndex = k === i ? 0 : -1; });
-        img.src = abas[i].dataset.img; img.alt = abas[i].dataset.alt; url.textContent = abas[i].dataset.url;
-        painel.setAttribute('aria-labelledby', abas[i].id);
-        if (focar) abas[i].focus();
-    }
-    abas.forEach(function (a, i) {
-        a.addEventListener('click', function () { mostrar(i, false); });
-        a.addEventListener('keydown', function (e) {
-            if (e.key === 'ArrowRight') { e.preventDefault(); mostrar((i + 1) % abas.length, true); }
-            if (e.key === 'ArrowLeft') { e.preventDefault(); mostrar((i + abas.length - 1) % abas.length, true); }
-        });
-    });
-    painel.setAttribute('aria-labelledby', 't-ativ');
-})();
 if (window.PibiexA11y) PibiexA11y.botaoFlutuante();
 </script>
 </body>
