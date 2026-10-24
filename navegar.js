@@ -116,7 +116,7 @@
         .nav-botao { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #CBD5E1; background: #fff; color: #374151; border-radius: 999px; padding: 7px 12px; font: 600 12.5px 'Inter', system-ui, sans-serif; cursor: pointer; }
         .nav-botao:hover { background: #F1F5F9; }
         .nav-botao kbd { font: 700 10.5px 'Inter', system-ui, sans-serif; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 5px; padding: 1px 5px; color: #475569; }
-        @media (max-width: 760px) { .nav-botao kbd, .nav-botao .nav-txt { display: none; } .nav-botao { padding: 8px 10px; } }
+        @media (max-width: 1240px) { .nav-botao kbd, .nav-botao .nav-txt { display: none; } .nav-botao { padding: 8px 10px; } }
         html.a11y-contraste .nav-janela { border: 2px solid #000; }
         html.a11y-contraste .nav-botao { border: 2px solid #111827; }
     `;

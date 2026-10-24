@@ -72,6 +72,7 @@ const GRUPOS_MENU_EQUIPE = [
             { id: 'turmas',      label: 'Turmas',             href: 'turmas.html' },
             { id: 'alunos',      label: 'Alunos',             href: 'alunos.html' },
             { id: 'equipe',      label: 'Equipe',             href: 'equipe.html', requerTotal: true },
+            { id: 'privacidade', label: 'Privacidade',        href: 'privacidade.html', requerTotal: true },
         ],
     },
     {
@@ -131,6 +132,7 @@ const ICONES = {
     laboratorio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.5 18a2 2 0 0 0 1.8 3h9.4a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M8.5 14h7"/></svg>',
     faq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.7 2.2c-.7.4-1.2.9-1.2 1.7v.3"/><path d="M12 16.7h.01"/></svg>',
     recursos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 7l1.5-1.5a3.5 3.5 0 0 1 5 5L16 12M13 17l-1.5 1.5a3.5 3.5 0 0 1-5-5L8 12"/></svg>',
+    privacidade: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg>',
     equipe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3"/><path d="M6.5 19c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5"/><circle cx="4.5" cy="10" r="2"/><circle cx="19.5" cy="10" r="2"/><path d="M2.5 19c.2-2 1.3-3.5 2.8-4M21.5 19c-.2-2-1.3-3.5-2.8-4"/></svg>',
     perfil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-3.8 4-5.5 7-5.5s6 1.7 7 5.5"/></svg>',
 };
@@ -255,7 +257,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
                 <a href="${item.href}" class="${classesBase} ${classesAtivo}">
                     ${iconeSvg(item.id)}
                     <span>${item.label}</span>
-                    ${(item.id === 'trabalhos' || item.id === 'desafios') ? `<span data-pend="${item.id}" class="pend-badge" hidden aria-live="polite"></span>` : ''}
+                    ${(item.id === 'trabalhos' || item.id === 'desafios' || item.id === 'privacidade') ? `<span data-pend="${item.id}" class="pend-badge" hidden aria-live="polite"></span>` : ''}
                 </a>
             `;
         }).join('');
@@ -727,7 +729,7 @@ function iniciarPendencias(paginaAtivaId) {
         document.querySelectorAll(`[data-pend="${id}"]`).forEach((el) => {
             el.textContent = n > 99 ? '99+' : String(n);
             el.hidden = !n;
-            el.setAttribute('aria-label', `${n} para corrigir`);
+            el.setAttribute('aria-label', `${n} pendente${n === 1 ? '' : 's'}`);
         });
     }
 
@@ -739,7 +741,8 @@ function iniciarPendencias(paginaAtivaId) {
         try { ({ data } = await window.supabaseClient.functions.invoke('admin-pendencias', { body: { tokenEquipe } })); } catch (e) { return; }
         if (!data || data.erro) return;
         const trab = data.trabalhos || 0, des = data.desafios || 0, total = trab + des;
-        pintar('trabalhos', trab); pintar('desafios', des);
+        const ped = data.pedidosPrivacidade || 0;
+        pintar('trabalhos', trab); pintar('desafios', des); pintar('privacidade', ped);
         document.title = (total ? `(${total}) ` : '') + tituloBase;
         if (anterior !== null && total > anterior && data.ultimo) {
             const u = data.ultimo;

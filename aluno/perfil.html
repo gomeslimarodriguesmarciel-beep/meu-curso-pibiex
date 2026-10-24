@@ -79,6 +79,29 @@
                 <button onclick="salvarSenha()" class="mt-3 text-[13px] font-bold px-4 py-2 rounded-lg text-white" style="background: var(--pibiex-tinta);">Salvar nova senha</button>
                 <p id="msg-senha" class="text-[12.5px] font-semibold mt-2 hidden"></p>
             </div>
+            <!-- Meus dados e privacidade (LGPD) -->
+            <div class="bg-white rounded-lg border p-5 mt-5" style="border-color: var(--pibiex-borda);" id="privacidade-dados">
+                <p class="text-[11px] font-bold uppercase tracking-wide mb-2" style="color: var(--pibiex-texto-suave);">Meus dados e privacidade</p>
+                <p class="text-[13px] mb-3" style="color: var(--pibiex-texto-suave);">Você pode baixar uma cópia de tudo o que a plataforma guarda sobre você ou pedir ao professor para corrigir ou apagar seus dados. Leia a <a href="../privacidade.html" class="underline font-semibold" style="color: var(--pibiex-tinta);">Política de Privacidade</a>.</p>
+                <button type="button" onclick="baixarMeusDados()" id="btn-baixar-dados" class="text-[13px] font-bold px-4 py-2 rounded-lg text-white" style="background: var(--pibiex-tinta);">Baixar meus dados</button>
+                <p id="msg-dados" class="text-[12.5px] font-semibold mt-2 hidden"></p>
+
+                <div class="mt-5 pt-4 border-t" style="border-color: var(--pibiex-borda);">
+                    <label for="pedido-tipo" class="block text-[11px] font-bold uppercase tracking-wide mb-1" style="color: var(--pibiex-texto-suave);">Fazer um pedido ao professor</label>
+                    <select id="pedido-tipo" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color: var(--pibiex-borda);">
+                        <option value="correcao">Corrigir um dado meu</option>
+                        <option value="exclusao">Apagar meus dados</option>
+                        <option value="acesso">Receber uma cópia dos meus dados</option>
+                        <option value="outro">Outro assunto de privacidade</option>
+                    </select>
+                    <label for="pedido-mensagem" class="sr-only">Explique o que você precisa</label>
+                    <textarea id="pedido-mensagem" rows="3" maxlength="1000" placeholder="Explique em poucas palavras o que você precisa" class="w-full border rounded-lg px-3 py-2 text-sm" style="border-color: var(--pibiex-borda);"></textarea>
+                    <button type="button" onclick="enviarPedido()" id="btn-pedido" class="mt-2 text-[13px] font-bold px-4 py-2 rounded-lg text-white" style="background: var(--pibiex-tinta);">Enviar pedido</button>
+                    <p id="msg-pedido" class="text-[12.5px] font-semibold mt-2 hidden"></p>
+                    <div id="lista-pedidos-aluno" class="mt-3 space-y-2"></div>
+                </div>
+            </div>
+
             <div id="a11y-painel" class="mt-5"></div>
         </main>
     </div>
@@ -256,6 +279,65 @@
             carregarPerfil();
         });
     
+        // ---- Meus dados e privacidade (LGPD) ----
+        const ROTULO_PEDIDO = { acesso: 'Cópia dos dados', correcao: 'Corrigir dado', exclusao: 'Apagar dados', outro: 'Outro assunto' };
+
+        async function chamarMeusDados(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('meus-dados', { body: { token: TOKEN_ALUNO, acao, ...(dados || {}) } });
+            if (error || !data || data.erro) {
+                let msg = data && data.erro;
+                if (!msg && error && error.context) { try { msg = (await error.context.json()).erro; } catch (e) { /* sem corpo */ } }
+                throw new Error(msg || 'Não foi possível agora. Tente novamente.');
+            }
+            return data;
+        }
+
+        window.baixarMeusDados = async () => {
+            const btn = document.getElementById('btn-baixar-dados');
+            btn.disabled = true; btn.innerText = 'Preparando…';
+            try {
+                const r = await chamarMeusDados('exportar');
+                const blob = new Blob([JSON.stringify(r.exportacao, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'meus-dados-pibiex.json';
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+                mostrarMsg('msg-dados', 'Pronto! O arquivo foi baixado.', true);
+            } catch (e) { mostrarMsg('msg-dados', e.message, false); }
+            btn.disabled = false; btn.innerText = 'Baixar meus dados';
+        };
+
+        function escaparHtmlPerfil(t) { const d = document.createElement('div'); d.innerText = t ?? ''; return d.innerHTML; }
+
+        async function carregarPedidos() {
+            try {
+                const r = await chamarMeusDados('listar');
+                document.getElementById('lista-pedidos-aluno').innerHTML = (r.pedidos || []).map((p) => `
+                    <div class="rounded-lg p-3 text-[12.5px]" style="background: var(--pibiex-papel);">
+                        <p class="font-bold" style="color: var(--pibiex-texto);">${escaparHtmlPerfil(ROTULO_PEDIDO[p.tipo] || p.tipo)} · ${p.status === 'atendido' ? 'respondido' : 'esperando resposta'}</p>
+                        ${p.mensagem ? `<p style="color: var(--pibiex-texto-suave);">${escaparHtmlPerfil(p.mensagem)}</p>` : ''}
+                        ${p.resposta ? `<p class="mt-1" style="color: var(--pibiex-texto);"><b>Resposta:</b> ${escaparHtmlPerfil(p.resposta)}</p>` : ''}
+                    </div>`).join('');
+            } catch (e) { /* a lista é só um complemento */ }
+        }
+
+        window.enviarPedido = async () => {
+            const btn = document.getElementById('btn-pedido');
+            const tipo = document.getElementById('pedido-tipo').value;
+            const mensagem = document.getElementById('pedido-mensagem').value.trim();
+            if (tipo === 'exclusao' && !(await PibiexA11y.confirmar('Pedir para apagar seus dados? O professor vai conferir com você antes, e isso não poderá ser desfeito.'))) return;
+            btn.disabled = true;
+            try {
+                await chamarMeusDados('pedir', { tipo, mensagem });
+                document.getElementById('pedido-mensagem').value = '';
+                mostrarMsg('msg-pedido', 'Pedido enviado. O professor vai responder aqui.', true);
+                carregarPedidos();
+            } catch (e) { mostrarMsg('msg-pedido', e.message, false); }
+            btn.disabled = false;
+        };
+        iniciarShellAluno('perfil').then((d) => { if (d) { TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token'); carregarPedidos(); } });
+
         if (window.PibiexA11y) PibiexA11y.montarPainel(document.getElementById('a11y-painel'));
     </script>
 </body>

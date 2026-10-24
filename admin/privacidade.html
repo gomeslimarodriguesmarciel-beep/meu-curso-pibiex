@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIBIEX Digital · Privacidade</title>
+    <link rel="stylesheet" href="/tailwind.css">
+    <link rel="stylesheet" href="/pibiex-ui.css">
+    <script src="/acessibilidade.js"></script>
+    <script src="/painel-listas.js"></script>
+    <link rel="stylesheet" href="/fonts/inter.css">
+    <script src="/vendor/supabase/supabase.js"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+    <div id="sidebar-container"></div>
+
+    <div class="flex-1 min-w-0">
+        <div id="topo-pagina"></div>
+
+        <main class="p-4 md:p-8 max-w-4xl mx-auto">
+            <h1 class="text-2xl font-black text-gray-800 mb-1">Privacidade dos alunos</h1>
+            <p class="text-gray-500 mb-6">
+                Pedidos que os alunos fazem em <b>Perfil → Meus dados e privacidade</b> (ver, corrigir ou apagar os próprios dados).
+                A lei (LGPD) pede resposta em até <b>15 dias</b>.
+            </p>
+
+            <div id="abas-pedidos" class="mb-4"></div>
+            <div id="lista-pedidos">
+                <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="shell.js"></script>
+    <script>
+        let TOKEN_EQUIPE = null;
+        const L = window.PibiexLista;
+        let PEDIDOS = [];
+        let ABA = 'abertos';
+        const RASCUNHO = {};
+
+        const ROTULO_TIPO = { acesso: 'Quer uma cópia dos dados', correcao: 'Quer corrigir um dado', exclusao: 'Quer apagar os dados', outro: 'Outro pedido' };
+        const DICA_TIPO = {
+            acesso: 'O aluno já pode baixar a cópia em Perfil. Se pediu aqui, confirme que deu certo.',
+            correcao: 'Corrija o dado em Alunos (nome, usuário, turma) e avise o aluno.',
+            exclusao: 'Para apagar os dados use Alunos → Excluir aluno. Isso não pode ser desfeito: antes, confirme que é o próprio aluno (ou o responsável) pedindo.',
+            outro: '',
+        };
+
+        async function chamar(acao, dados) {
+            const { data, error } = await window.supabaseClient.functions.invoke('gerenciar-pedidos-privacidade', {
+                body: { tokenEquipe: TOKEN_EQUIPE, acao, ...dados },
+            });
+            if (error || !data || data.erro) {
+                PibiexA11y.aviso((data && data.erro) || 'Não foi possível concluir. Tente novamente.');
+                return null;
+            }
+            return data;
+        }
+
+        function dataBr(iso) { return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
+
+        function prazo(p) {
+            const dias = Math.floor((Date.now() - new Date(p.criado_em).getTime()) / 86400000);
+            const falta = 15 - dias;
+            return falta < 0 ? `<span class="chip vermelho">Passou do prazo de 15 dias</span>` : `<span class="chip ${falta <= 5 ? 'ambar' : 'azul'}">${falta} dia${falta === 1 ? '' : 's'} para responder</span>`;
+        }
+
+        function renderizar(novos) {
+            if (novos) PEDIDOS = novos;
+            const abertos = PEDIDOS.filter((p) => p.status === 'aberto');
+            const atendidos = PEDIDOS.filter((p) => p.status === 'atendido');
+            L.abas(document.getElementById('abas-pedidos'), [
+                { id: 'abertos', rotulo: 'Esperando resposta', n: abertos.length, alerta: abertos.length > 0 },
+                { id: 'atendidos', rotulo: 'Atendidos', n: atendidos.length },
+            ], ABA, (id) => { ABA = id; renderizar(); });
+
+            const lista = ABA === 'abertos' ? abertos : atendidos;
+            const container = document.getElementById('lista-pedidos');
+            if (!lista.length) {
+                container.innerHTML = `<div class="vazio-lista"><b>${ABA === 'abertos' ? 'Nenhum pedido esperando' : 'Nada atendido ainda'}</b>${ABA === 'abertos' ? 'Quando um aluno pedir algo sobre os próprios dados, aparece aqui.' : ''}</div>`;
+                return;
+            }
+            container.innerHTML = lista.map((p) => {
+                const nome = p.alunos ? p.alunos.nome_completo : 'Aluno';
+                return `
+                <details class="cx" ${ABA === 'abertos' && lista.length === 1 ? 'open' : ''}>
+                    <summary>
+                        <span class="min-w-0 flex-1">
+                            <span class="cx-titulo block">${L.esc(nome)}</span>
+                            <span class="cx-sub block">${L.esc(ROTULO_TIPO[p.tipo] || p.tipo)} · ${dataBr(p.criado_em)}</span>
+                            <span class="flex flex-wrap gap-1.5 mt-2">${p.status === 'aberto' ? prazo(p) : '<span class="chip verde">Atendido em ' + dataBr(p.atendido_em) + '</span>'}</span>
+                        </span>
+                    </summary>
+                    <div class="cx-corpo">
+                        ${p.mensagem ? `<p class="text-sm whitespace-pre-wrap mb-3" style="color:#374151">“${L.esc(p.mensagem)}”</p>` : '<p class="text-sm mb-3 text-gray-500">O aluno não escreveu mensagem.</p>'}
+                        ${p.status === 'aberto' ? `
+                            ${DICA_TIPO[p.tipo] ? `<p class="text-xs bg-amber-50 text-amber-900 rounded-lg p-3 mb-3">${L.esc(DICA_TIPO[p.tipo])}</p>` : ''}
+                            <label for="resp-${p.id}" class="block text-xs font-bold text-gray-500 mb-1">Resposta para o aluno</label>
+                            <textarea id="resp-${p.id}" rows="3" maxlength="1000" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" oninput="guardar('${p.id}')" placeholder="Ex.: Corrigi seu nome. Qualquer coisa me avise."></textarea>
+                            <button onclick="atender('${p.id}')" class="mt-2 bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-2 rounded-lg text-sm">Responder e marcar como atendido</button>
+                        ` : `<p class="text-xs font-bold text-gray-500 mb-1">Sua resposta</p><p class="text-sm whitespace-pre-wrap">${L.esc(p.resposta || '')}</p>`}
+                    </div>
+                </details>`;
+            }).join('');
+            Object.keys(RASCUNHO).forEach((id) => { const c = document.getElementById('resp-' + id); if (c) c.value = RASCUNHO[id]; });
+        }
+
+        window.guardar = (id) => { const c = document.getElementById('resp-' + id); if (c) RASCUNHO[id] = c.value; };
+
+        window.atender = async (pedidoId) => {
+            const resposta = (document.getElementById('resp-' + pedidoId).value || '').trim();
+            if (resposta.length < 3) { PibiexA11y.aviso('Escreva uma resposta curta para o aluno.'); return; }
+            if (!(await PibiexA11y.confirmar('Enviar esta resposta e marcar o pedido como atendido?'))) return;
+            const r = await chamar('atender', { pedidoId, resposta });
+            if (r) { delete RASCUNHO[pedidoId]; await carregar(); PibiexA11y.aviso('Pedido atendido.'); }
+        };
+
+        async function carregar() {
+            const r = await chamar('listar', {});
+            if (!r) { document.getElementById('lista-pedidos').innerHTML = '<p class="text-red-500 text-sm">Não foi possível carregar os pedidos.</p>'; return; }
+            renderizar(r.pedidos || []);
+        }
+
+        iniciarShellEquipe('privacidade').then((sessao) => {
+            if (!sessao) return;
+            TOKEN_EQUIPE = sessao.token;
+            carregar();
+        });
+    </script>
+</body>
+</html>

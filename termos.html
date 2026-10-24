@@ -30,7 +30,7 @@
         #barra-progresso { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: var(--pibiex-dourado); z-index: 50; transition: width .08s linear; }
         .clausula + .clausula { margin-top: 1.75rem; padding-top: 1.75rem; border-top: 1px solid var(--pibiex-borda); }
         .clausula p + p { margin-top: .6rem; }
-        #check-aceite:disabled + span { opacity: .55; }
+        #check-aceite:disabled + span, #check-responsavel:disabled + span { opacity: .55; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -134,6 +134,10 @@
                         <input type="checkbox" id="check-aceite" disabled class="mt-0.5 w-4 h-4 shrink-0">
                         <span class="text-[13.5px] font-semibold" style="color: var(--pibiex-texto);">Li e compreendi todos os itens acima, e aceito as condições de uso da plataforma PIBIEX Digital.</span>
                     </label>
+                    <label class="flex items-start gap-3 rounded-xl p-4 cursor-pointer transition mt-3" style="border: 1.5px solid var(--pibiex-borda);" id="rotulo-responsavel">
+                        <input type="checkbox" id="check-responsavel" disabled class="mt-0.5 w-4 h-4 shrink-0">
+                        <span class="text-[13.5px] font-semibold" style="color: var(--pibiex-texto);">Se eu tenho menos de 18 anos, declaro que meu pai, mãe ou responsável legal sabe que vou usar a plataforma e concorda com o uso dos meus dados, como explicado na <a href="privacidade.html" target="_blank" rel="noopener" class="underline" style="color: #1E3A8A;">Política de Privacidade</a>. Se tenho 18 anos ou mais, marco esta caixa apenas para confirmar que li.</span>
+                    </label>
                     <p id="aviso-rolagem" class="text-[12px] font-semibold mt-2 ml-1" style="color: var(--pibiex-texto-suave);">Role o documento até o final para habilitar a caixa de aceite.</p>
                     <p id="msg-erro-aceite" class="hidden text-[12.5px] font-bold text-red-600 mt-3"></p>
 
@@ -179,6 +183,7 @@
             const chegouAoFim = total <= 0 || window.scrollY >= total - 30;
             if (chegouAoFim) {
                 check.disabled = false;
+                document.getElementById('check-responsavel').disabled = false;
                 document.getElementById('aviso-rolagem').classList.add('hidden');
             }
         }
@@ -207,6 +212,14 @@
                 return;
             }
 
+            const resp = document.getElementById('check-responsavel');
+            if (check.checked && !resp.checked) {
+                msgErro.innerText = 'Marque também a segunda caixa (sobre o responsável).';
+                msgErro.classList.remove('hidden');
+                document.getElementById('rotulo-responsavel').style.borderColor = '#FCA5A5';
+                return;
+            }
+
             if (!check.checked) {
                 msgErro.innerText = 'Marque a caixa acima para confirmar que leu e concorda com o termo.';
                 msgErro.classList.remove('hidden');
@@ -220,7 +233,7 @@
             btn.disabled = true;
 
             const { data, error } = await supabaseClient.functions.invoke('aceitar-termos', {
-                body: { token: tokenAluno },
+                body: { token: tokenAluno, cienciaResponsavel: true },
             });
 
             if (error || !data || data.erro || data.ok !== true) {

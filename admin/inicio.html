@@ -91,6 +91,9 @@
             cartoes.push(d === null
                 ? cartaoAtencao({ href: 'desafios.html', valor: '—', rotulo: 'Desafios', detalhe: 'Não foi possível contar agora.', tom: 'cinza' })
                 : cartaoAtencao({ href: 'desafios.html', valor: d, rotulo: d ? 'Dar nota' : 'Em dia', detalhe: d ? (d === 1 ? 'envio de desafio sem nota' : 'envios de desafio sem nota') : 'Nenhum envio de desafio sem nota.', tom: d ? 'ambar' : 'verde' }));
+            if (pend && pend.pedidosPrivacidade > 0) {
+                cartoes.push(cartaoAtencao({ href: 'privacidade.html', valor: pend.pedidosPrivacidade, rotulo: 'Pedido de privacidade', detalhe: 'de aluno esperando resposta (LGPD)', tom: 'ambar' }));
+            }
             cartoes.push(proxima
                 ? cartaoAtencao({ href: 'cronograma.html', valor: L.esc(proxima.data), rotulo: 'Próxima aula', detalhe: `${L.esc(proxima.titulo)}${proxima.hora ? ' · ' + L.esc(proxima.hora) : ''}`, tom: 'azul' })
                 : cartaoAtencao({ href: 'cronograma.html', valor: '—', rotulo: 'Próxima aula', detalhe: 'Nenhuma aula marcada para os próximos dias.', tom: 'cinza' }));
