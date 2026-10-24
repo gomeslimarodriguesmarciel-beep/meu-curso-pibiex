@@ -140,8 +140,7 @@ const GRUPOS_MENU = [
             { id: 'cronograma', label: 'Cronograma',     href: 'cronograma.html' },
             { id: 'conteudo',   label: 'Conteúdo',       href: 'conteudo.html' },
             { id: 'atividades', label: 'Atividades',     href: 'atividades.html' },
-            { id: 'trabalhos',  label: 'Meus Trabalhos', href: 'trabalhos.html' },
-            { id: 'notas',      label: 'Minhas Notas',   href: 'notas.html' },
+            { id: 'notas',      label: 'Bloco de notas',  href: 'notas.html' },
             { id: 'frequencia', label: 'Minha Frequência', href: 'frequencia.html' },
             { id: 'chat',       label: 'Chat da Turma',  href: 'chat.html' },
             { id: 'enquetes',   label: 'Enquetes',       href: 'enquetes.html' },
@@ -774,3 +773,6 @@ async function iniciarShellAluno(paginaAtivaId) {
 
     return sessao.dados;
 }
+
+// Busca rápida de páginas (Ctrl+K)
+(function () { var s = document.createElement("script"); s.src = "/navegar.js"; s.defer = true; document.head.appendChild(s); })();

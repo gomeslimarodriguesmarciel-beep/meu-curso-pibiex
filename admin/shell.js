@@ -769,3 +769,6 @@ async function iniciarShellEquipe(paginaAtivaId) {
 
     return { token: sessao.token, dados: sessao.dados };
 }
+
+// Busca rápida de páginas (Ctrl+K)
+(function () { var s = document.createElement("script"); s.src = "/navegar.js"; s.defer = true; document.head.appendChild(s); })();

@@ -22,14 +22,10 @@
 
         <main class="p-4 md:p-9 max-w-4xl mx-auto">
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Atividades</h1>
-            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">
-                Leia o enunciado e escreva sua resposta aqui mesmo — cada atividade aceita uma única resposta. Se quiser
-                anexar arquivo ou link junto com o texto, faça o envio completo em
-                <a href="trabalhos.html" class="underline font-semibold" style="color: var(--pibiex-tinta);">Meus Trabalhos</a>.
-            </p>
+            <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Leia o enunciado, escreva a resposta aqui mesmo ou anexe um arquivo ou link, e acompanhe notas e comentários do professor.</p>
 
-            <div id="abas-atividades" class="mb-4"></div>
-            <div id="lista-atividades">
+            <div id="abas-trabalhos" class="mb-4"></div>
+            <div id="lista-trabalhos">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
@@ -39,167 +35,86 @@
 
     <script src="shell.js"></script>
     <script>
+        let TOKEN_ALUNO = null;
+        let TRABALHOS_ATUAIS = {};
+
         function escaparHtml(texto) {
             const div = document.createElement('div');
             div.innerText = texto ?? '';
             return div.innerHTML;
         }
-
-        function formatarPrazo(dataIso) {
-            if (!dataIso) return null;
-            const data = new Date(dataIso);
-            return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        function urlSegura(url) {
+            return /^https?:\/\//i.test(url ?? '') ? url : '#';
         }
 
-        let TOKEN_ALUNO = null;
-        let TRABALHOS = {};
-
         const ROTULO_STATUS = {
+            pendente: { texto: 'Não enviado', cor: '#6B7280', fundo: '#F3F4F6' },
             enviado:  { texto: 'Enviado · aguardando correção', cor: '#8A6D1E', fundo: '#FBF3DC' },
             avaliado: { texto: 'Corrigido', cor: '#15803D', fundo: '#E9F7EE' },
         };
 
-        function blocoResposta(atv) {
-            const t = TRABALHOS[atv.id];
-            const rotulo = t ? ROTULO_STATUS[t.status] : null;
-            const corrigido = t && t.status === 'avaliado';
-            return `
-                <div class="mt-4 pt-4 border-t" style="border-color: var(--pibiex-borda);">
-                    <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                        <label for="resposta-${atv.id}" class="text-xs font-semibold" style="color: var(--pibiex-texto);">Sua resposta</label>
-                        ${rotulo ? `<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style="background: ${rotulo.fundo}; color: ${rotulo.cor};">${rotulo.texto}</span>` : ''}
-                    </div>
-                    ${corrigido ? `
-                        <div class="rounded-md p-3 mb-2" style="background: var(--pibiex-papel);">
-                            <p class="text-xs font-semibold" style="color: var(--pibiex-texto);">Nota: ${t.nota ?? '—'}${t.horas_concedidas !== null && t.horas_concedidas !== undefined ? ` · Horas: ${t.horas_concedidas}h` : ''}</p>
-                            ${t.feedback_professor ? `<p class="text-xs mt-1" style="color: var(--pibiex-texto-suave);">${escaparHtml(t.feedback_professor)}</p>` : ''}
-                        </div>` : ''}
-                    ${t ? `
-                        <div class="rounded-md px-3 py-2 text-sm whitespace-pre-wrap break-words" style="background: var(--pibiex-papel); color: var(--pibiex-texto);">${t.resposta_texto ? escaparHtml(t.resposta_texto) : (t.arquivo_url ? 'Você respondeu com arquivo/link (veja em Meus Trabalhos).' : '')}</div>
-                        <p class="text-[11px] mt-2" style="color: var(--pibiex-texto-suave);">Resposta enviada — não é possível enviar outra para esta atividade.</p>
-                    ` : `
-                        <textarea id="resposta-${atv.id}" rows="5" maxlength="20000" placeholder="Escreva aqui sua resposta..."
-                                  oninput="atualizarContador('${atv.id}')"
-                                  class="w-full border rounded-md px-3 py-2 text-sm resize-y" style="border-color: var(--pibiex-borda);"></textarea>
-                        <div class="flex items-center justify-between gap-2 mt-2 flex-wrap">
-                            <span id="contador-${atv.id}" class="text-[11px]" style="color: var(--pibiex-texto-suave);"></span>
-                            <button onclick="enviarResposta('${atv.id}')" id="btn-resposta-${atv.id}"
-                                    class="text-white text-xs font-semibold px-4 py-2 rounded-md" style="background: var(--pibiex-tinta);">
-                                Enviar resposta
-                            </button>
-                        </div>
-                        <p class="text-[11px] mt-1" style="color: var(--pibiex-texto-suave);">Atenção: você só pode enviar uma vez. Depois de enviar, não dá para alterar nem enviar outra.</p>
-                    `}
-                    <p id="msg-resposta-${atv.id}" class="text-xs mt-2 hidden"></p>
-                </div>
-            `;
-        }
-
-        window.atualizarContador = (id) => {
-            const campo = document.getElementById(`resposta-${id}`);
-            const contador = document.getElementById(`contador-${id}`);
-            if (campo) RASCUNHO[id] = campo.value;
-            if (campo && contador) contador.innerText = `${campo.value.length} / 20000`;
-        };
-
-        window.enviarResposta = async (atividadeId) => {
-            const campo = document.getElementById(`resposta-${atividadeId}`);
-            const btn = document.getElementById(`btn-resposta-${atividadeId}`);
-            const msg = document.getElementById(`msg-resposta-${atividadeId}`);
-            const texto = campo.value.trim();
-            msg.classList.add('hidden');
-
-            if (!texto) {
-                msg.innerText = 'Escreva sua resposta antes de enviar.';
-                msg.className = 'text-xs mt-2 text-red-600';
-                return;
-            }
-            if (!(await PibiexA11y.confirmar('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?'))) {
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = 'Enviando...';
-            try {
-                const { data, error } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
-                    body: { token: TOKEN_ALUNO, acao: 'enviar', atividadeId, respostaTexto: texto },
-                });
-                if (error || !data || data.erro) throw new Error((data && data.erro) || 'Erro ao enviar a resposta.');
-                TRABALHOS[atividadeId] = { ...(TRABALHOS[atividadeId] || {}), ...data.trabalho };
-                delete RASCUNHO[atividadeId];
-                ABA = 'enviadas'; ABERTA = atividadeId;
-                renderizarAtividades(ATIVIDADES);
-                const novaMsg = document.getElementById(`msg-resposta-${atividadeId}`);
-                novaMsg.innerText = 'Resposta enviada! O professor já pode ver.';
-                novaMsg.className = 'text-xs mt-2 text-green-700';
-            } catch (erro) {
-                msg.innerText = erro.message || 'Erro ao enviar. Tente novamente.';
-                msg.className = 'text-xs mt-2 text-red-600';
-                btn.disabled = false;
-                btn.innerText = 'Enviar resposta';
-            }
-        };
-
-        let ATIVIDADES = [];
+        const L = window.PibiexLista;
+        let ATIVS = [];
+        let TRAB = {};
         let ABA = null;                // 'afazer' | 'enviadas' | 'corrigidas' | 'todas'
         let ABERTA = null;
-        const RASCUNHO = {};           // o que o aluno já digitou, para não perder ao trocar de aba
-        const L = window.PibiexLista;
+        const RASCUNHO = {};           // texto já digitado, para não perder ao trocar de aba
 
         function estadoDe(atv) {
-            const t = TRABALHOS[atv.id];
+            const t = TRAB[atv.id];
             if (!t) return 'afazer';
             return t.status === 'avaliado' ? 'corrigidas' : 'enviadas';
         }
 
-        function ordemAfazer(x, y) {
-            // quem vence primeiro vem primeiro; sem prazo vai para o fim
-            const dx = x.data_entrega ? new Date(x.data_entrega).getTime() : Infinity;
-            const dy = y.data_entrega ? new Date(y.data_entrega).getTime() : Infinity;
-            return dx - dy;
-        }
-
         function listaDaAba() {
-            const base = ATIVIDADES.filter((a) => ABA === 'todas' || estadoDe(a) === ABA);
-            if (ABA === 'afazer') return base.sort(ordemAfazer);
+            const base = ATIVS.filter((a) => ABA === 'todas' || estadoDe(a) === ABA);
+            if (ABA === 'afazer') {
+                return base.sort((x, y) => (x.data_entrega ? new Date(x.data_entrega).getTime() : Infinity) - (y.data_entrega ? new Date(y.data_entrega).getTime() : Infinity));
+            }
             return base.sort((x, y) => (y.criado_em || y.data_entrega || '').localeCompare(x.criado_em || x.data_entrega || ''));
         }
 
-        function renderizarAtividades(atividades) {
-            if (atividades) ATIVIDADES = atividades;
-            const container = document.getElementById('lista-atividades');
+        window.guardarRascunho = (id) => {
+            const campo = document.getElementById(`texto-${id}`);
+            if (campo) RASCUNHO[id] = campo.value;
+        };
 
-            if (!ATIVIDADES || ATIVIDADES.length === 0) {
-                document.getElementById('abas-atividades').innerHTML = '';
+        function renderizarTrabalhos(atividades, trabalhosPorAtividade) {
+            ATIVS = atividades || [];
+            TRAB = trabalhosPorAtividade || {};
+            const container = document.getElementById('lista-trabalhos');
+
+            if (ATIVS.length === 0) {
+                document.getElementById('abas-trabalhos').innerHTML = '';
                 container.innerHTML = `<p class="text-sm bg-white rounded-lg p-5 border" style="color: var(--pibiex-texto-suave); border-color: var(--pibiex-borda);">Nenhuma atividade publicada ainda.</p>`;
                 return;
             }
 
             const n = { afazer: 0, enviadas: 0, corrigidas: 0 };
-            ATIVIDADES.forEach((a) => { n[estadoDe(a)]++; });
+            ATIVS.forEach((a) => { n[estadoDe(a)]++; });
             if (ABA === null) {
                 ABA = n.afazer ? 'afazer' : (n.enviadas ? 'enviadas' : 'todas');
                 const primeira = listaDaAba()[0];
                 ABERTA = primeira ? primeira.id : null;
             }
-            L.abas(document.getElementById('abas-atividades'), [
+            L.abas(document.getElementById('abas-trabalhos'), [
                 { id: 'afazer', rotulo: 'A fazer', n: n.afazer, alerta: n.afazer > 0 },
                 { id: 'enviadas', rotulo: 'Enviadas', n: n.enviadas },
                 { id: 'corrigidas', rotulo: 'Corrigidas', n: n.corrigidas },
-                { id: 'todas', rotulo: 'Todas', n: ATIVIDADES.length },
+                { id: 'todas', rotulo: 'Todas', n: ATIVS.length },
             ], ABA, (id) => {
                 ABA = id;
                 const primeira = listaDaAba()[0];
                 ABERTA = (id === 'afazer' && primeira) ? primeira.id : null;
-                renderizarAtividades();
+                renderizarTrabalhos(ATIVS, TRAB);
             });
 
             const lista = listaDaAba();
             if (lista.length === 0) {
                 const msgs = {
                     afazer: ['Tudo em dia', 'Você não tem atividades pendentes.'],
-                    enviadas: ['Nada aguardando correção', 'As atividades que você enviar aparecem aqui até o professor corrigir.'],
-                    corrigidas: ['Nenhuma correção ainda', 'Quando o professor corrigir, a nota aparece aqui.'],
+                    enviadas: ['Nada aguardando correção', 'Os trabalhos que você enviar aparecem aqui até o professor corrigir.'],
+                    corrigidas: ['Nenhuma correção ainda', 'Quando o professor corrigir, a nota e o comentário aparecem aqui.'],
                     todas: ['Nenhuma atividade', ''],
                 };
                 const [t, d] = msgs[ABA];
@@ -208,13 +123,15 @@
             }
 
             container.innerHTML = lista.map((atv) => {
-                const prazo = L.prazo(atv.data_entrega);
+                const trabalho = TRAB[atv.id];
+                const status = trabalho ? trabalho.status : 'pendente';
                 const est = estadoDe(atv);
-                const t = TRABALHOS[atv.id];
+                const prazo = L.prazo(atv.data_entrega);
                 const chipEstado = est === 'afazer'
                     ? (prazo.estado === 'passou' ? '<span class="chip vermelho">Prazo encerrado</span>' : '<span class="chip ambar">A fazer</span>')
-                    : est === 'enviadas' ? '<span class="chip azul">Enviada · aguardando correção</span>'
-                    : `<span class="chip verde">Corrigida${t.nota !== null && t.nota !== undefined ? ' · nota ' + escaparHtml(t.nota) : ''}</span>`;
+                    : est === 'enviadas' ? '<span class="chip azul">Enviado · aguardando correção</span>'
+                    : `<span class="chip verde">Corrigido${trabalho.nota !== null && trabalho.nota !== undefined ? ' · nota ' + escaparHtml(trabalho.nota) : ''}</span>`;
+
                 return `
                     <details class="cx" data-id="${atv.id}" ${ABERTA === atv.id ? 'open' : ''}>
                         <summary>
@@ -224,13 +141,63 @@
                                 <span class="flex flex-wrap gap-1.5 mt-2">
                                     ${chipEstado}
                                     ${est === 'afazer' && prazo.estado !== 'sem' && prazo.estado !== 'passou' ? `<span class="chip ${prazo.estado === 'perto' ? 'ambar' : 'azul'}">${escaparHtml(prazo.texto)}</span>` : ''}
-                                    ${atv.horas_maximas ? `<span class="chip ambar">Vale até ${atv.horas_maximas}h</span>` : ''}
+                                    ${atv.horas_maximas ? `<span class="chip ambar">Vale até ${escaparHtml(atv.horas_maximas)}h</span>` : ''}
                                 </span>
                             </span>
                         </summary>
                         <div class="cx-corpo">
-                            ${atv.descricao ? `<p class="text-sm whitespace-pre-wrap" style="color: var(--pibiex-texto-suave);">${escaparHtml(atv.descricao)}</p>` : ''}
-                            ${blocoResposta(atv)}
+                        ${atv.descricao ? `<p class="text-sm whitespace-pre-wrap mb-4" style="color: var(--pibiex-texto-suave);">${escaparHtml(atv.descricao)}</p>` : ''}
+
+                        ${trabalho && trabalho.arquivo_url ? `
+                            <p class="text-xs mb-3" style="color: var(--pibiex-texto-suave);">
+                                Arquivo enviado: <a href="${escaparHtml(urlSegura(trabalho.arquivo_url))}" target="_blank" rel="noopener" class="underline font-semibold" style="color: var(--pibiex-tinta);">abrir arquivo</a>
+                            </p>
+                        ` : ''}
+
+                        ${status === 'avaliado' ? `
+                            <div class="rounded-md p-3 mb-3" style="background: var(--pibiex-papel);">
+                                <p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Nota: ${trabalho.nota ?? '—'}</p>
+                                ${trabalho.horas_concedidas !== null && trabalho.horas_concedidas !== undefined ? `<p class="text-xs font-semibold mb-1" style="color: var(--pibiex-texto);">Horas concedidas: ${trabalho.horas_concedidas}h</p>` : ''}
+                                ${trabalho.feedback_professor ? `<p class="text-xs" style="color: var(--pibiex-texto-suave);">${escaparHtml(trabalho.feedback_professor)}</p>` : ''}
+                            </div>
+                        ` : ''}
+
+                        ${trabalho ? `
+                        <div class="pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                            ${trabalho.resposta_texto ? `
+                                <p class="text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Sua resposta</p>
+                                <div class="rounded-md px-3 py-2 text-sm whitespace-pre-wrap break-words" style="background: var(--pibiex-papel); color: var(--pibiex-texto);">${escaparHtml(trabalho.resposta_texto)}</div>
+                            ` : ''}
+                            <p class="text-[11px] mt-2" style="color: var(--pibiex-texto-suave);">Resposta enviada — não é possível enviar outra para esta atividade.</p>
+                        </div>
+                        ` : `
+                        <div class="pt-3 border-t" style="border-color: var(--pibiex-borda);">
+                            <label for="texto-${atv.id}" class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Sua resposta (escreva aqui)</label>
+                            <textarea id="texto-${atv.id}" rows="5" maxlength="20000" placeholder="Digite sua resposta para esta atividade..." oninput="guardarRascunho('${atv.id}')"
+                                      class="w-full border rounded-md px-3 py-2 text-sm resize-y" style="border-color: var(--pibiex-borda);"></textarea>
+                        </div>
+
+                        <div class="flex flex-wrap items-end gap-2 pt-2">
+                            <div class="flex-1 min-w-[160px]">
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Arquivo (opcional)</label>
+                                <input type="file" id="arquivo-${atv.id}" class="text-xs w-full">
+                            </div>
+                            <div class="flex-1 min-w-[160px]">
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Ou cole um link (opcional)</label>
+                                <input type="url" id="link-${atv.id}" placeholder="https://..." class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                            </div>
+                            <div class="flex-1 min-w-[160px]">
+                                <label class="block text-[11px] font-semibold mb-1" style="color: var(--pibiex-texto-suave);">Comentário (opcional)</label>
+                                <input type="text" id="comentario-${atv.id}" class="w-full border rounded-md px-2.5 py-1.5 text-xs" style="border-color: var(--pibiex-borda);">
+                            </div>
+                            <button onclick="enviarArquivo('${atv.id}')" id="btn-enviar-${atv.id}"
+                                    class="text-white text-xs font-semibold px-4 py-2 rounded-md shrink-0" style="background: var(--pibiex-tinta);">
+                                Enviar
+                            </button>
+                        </div>
+                        <p class="text-[11px] mt-2" style="color: var(--pibiex-texto-suave);">Atenção: você só pode enviar uma vez por atividade. Depois de enviar, não dá para alterar nem enviar outra.</p>
+                        <p id="msg-${atv.id}" class="text-xs mt-2 hidden"></p>
+                        `}
                         </div>
                     </details>
                 `;
@@ -240,39 +207,102 @@
                 d.addEventListener('toggle', () => { if (d.open) ABERTA = d.dataset.id; else if (ABERTA === d.dataset.id) ABERTA = null; });
             });
             Object.keys(RASCUNHO).forEach((id) => {
-                const campo = document.getElementById(`resposta-${id}`);
-                if (campo) { campo.value = RASCUNHO[id]; atualizarContador(id); }
+                const campo = document.getElementById(`texto-${id}`);
+                if (campo) campo.value = RASCUNHO[id];
             });
         }
 
-        async function carregarAtividades(dadosAluno) {
-            const { data, error } = await window.supabaseClient
+        window.enviarArquivo = async (atividadeId) => {
+            const inputArquivo = document.getElementById(`arquivo-${atividadeId}`);
+            const inputLink = document.getElementById(`link-${atividadeId}`);
+            const inputComentario = document.getElementById(`comentario-${atividadeId}`);
+            const inputTexto = document.getElementById(`texto-${atividadeId}`);
+            const respostaTexto = inputTexto ? inputTexto.value.trim() : '';
+            const btn = document.getElementById(`btn-enviar-${atividadeId}`);
+            const msg = document.getElementById(`msg-${atividadeId}`);
+            msg.classList.add('hidden');
+
+            const arquivo = inputArquivo.files[0];
+            const link = inputLink.value.trim();
+            if (!arquivo && !link && !respostaTexto) {
+                msg.innerText = 'Escreva sua resposta ou envie um arquivo/link antes de enviar.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                msg.classList.remove('hidden');
+                return;
+            }
+            if (!(await PibiexA11y.confirmar('Você só pode enviar UMA resposta para esta atividade e não poderá alterá-la depois. Enviar agora?'))) return;
+
+            btn.innerText = 'Enviando...';
+            btn.disabled = true;
+
+            try {
+                let arquivoUrl = link;
+
+                if (arquivo) {
+                    // 1) Pede um link seguro de upload
+                    const { data: urlDados, error: erroUrl } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                        body: { token: TOKEN_ALUNO, acao: 'gerar_url_upload', atividadeId, nomeArquivo: arquivo.name },
+                    });
+                    if (erroUrl || !urlDados || urlDados.erro) throw new Error((urlDados && urlDados.erro) || 'Erro ao preparar envio.');
+
+                    // 2) Envia o arquivo direto pro Storage usando esse link
+                    const { error: erroUpload } = await window.supabaseClient
+                        .storage.from('arquivos')
+                        .uploadToSignedUrl(urlDados.caminho, urlDados.token, arquivo);
+                    if (erroUpload) throw new Error('Erro ao enviar o arquivo.');
+
+                    // 3) Pega o link público
+                    const { data: urlPublica } = window.supabaseClient.storage.from('arquivos').getPublicUrl(urlDados.caminho);
+                    arquivoUrl = urlPublica.publicUrl;
+                }
+
+                const { data: registro, error: erroRegistro } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
+                    body: {
+                        token: TOKEN_ALUNO, acao: 'enviar', atividadeId,
+                        arquivoUrl,
+                        respostaTexto,
+                        comentario: inputComentario.value.trim(),
+                    },
+                });
+                if (erroRegistro || !registro || registro.erro) throw new Error((registro && registro.erro) || 'Erro ao registrar envio.');
+
+                delete RASCUNHO[atividadeId];
+                ABA = 'enviadas'; ABERTA = atividadeId;
+                await carregarTudo();
+            } catch (erro) {
+                msg.innerText = erro.message || 'Erro ao enviar. Tente novamente.';
+                msg.className = 'text-xs mt-2 text-red-600';
+                msg.classList.remove('hidden');
+                btn.innerText = 'Enviar';
+                btn.disabled = false;
+            }
+        };
+
+        async function carregarTudo() {
+            const dados = JSON.parse(localStorage.getItem('pibiex_aluno_dados'));
+
+            const { data: atividades } = await window.supabaseClient
                 .from('atividades')
                 .select('id, titulo, descricao, data_entrega, horas_maximas, criado_em, modulos(titulo, turma_id)')
                 .order('data_entrega', { ascending: true });
 
-            if (error) {
-                document.getElementById('lista-atividades').innerHTML =
-                    `<p class="text-sm text-red-600 bg-white rounded-lg p-5 border border-red-100">Não foi possível carregar as atividades.</p>`;
-                console.error(error);
-                return;
-            }
+            const daTurma = (atividades || []).filter(a => a.modulos && a.modulos.turma_id === dados.turmaId);
 
-            const daTurma = (data || []).filter(a => a.modulos && a.modulos.turma_id === dadosAluno.turmaId);
-
-            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
             const { data: resultado } = await window.supabaseClient.functions.invoke('enviar-trabalho', {
                 body: { token: TOKEN_ALUNO, acao: 'listar' },
             });
-            TRABALHOS = {};
-            (resultado && resultado.trabalhos ? resultado.trabalhos : []).forEach(t => { TRABALHOS[t.atividade_id] = t; });
 
-            ATIVIDADES = daTurma;
-            renderizarAtividades(daTurma);
+            const trabalhosPorAtividade = {};
+            (resultado && resultado.trabalhos ? resultado.trabalhos : []).forEach(t => { trabalhosPorAtividade[t.atividade_id] = t; });
+
+            TRABALHOS_ATUAIS = trabalhosPorAtividade;
+            renderizarTrabalhos(daTurma, trabalhosPorAtividade);
         }
 
         iniciarShellAluno('atividades').then((dados) => {
-            if (dados) carregarAtividades(dados);
+            if (!dados) return;
+            TOKEN_ALUNO = localStorage.getItem('pibiex_aluno_token');
+            carregarTudo();
         });
     </script>
 </body>
