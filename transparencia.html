@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transparência · PIBIEX Digital</title>
+<meta name="description" content="Quais serviços o PIBIEX Digital usa, onde ficam os dados, como o site é monitorado e o que mudou recentemente.">
+<meta name="author" content="Marciel Gomes Lima Rodrigues">
+<link rel="canonical" href="https://pibiexdigital.com.br/transparencia.html">
+<link rel="icon" type="image/png" href="icone-pibiex-digital.png">
+<link rel="apple-touch-icon" href="icone-pibiex-digital.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PIBIEX Digital">
+<meta property="og:title" content="Transparência · PIBIEX Digital">
+<meta property="og:description" content="Serviços usados, onde ficam os dados, monitoramento e novidades da plataforma.">
+<meta property="og:image" content="https://pibiexdigital.com.br/img/cartao-compartilhamento.png">
+<meta property="og:url" content="https://pibiexdigital.com.br/transparencia.html">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="stylesheet" href="/tailwind.css">
+<link rel="stylesheet" href="/pibiex-ui.css">
+<script src="/acessibilidade.js"></script>
+<link rel="stylesheet" href="/fonts/inter.css">
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    :root { --pibiex-gradiente: linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 50%, #1E40AF 100%); --pibiex-lima: #A3E635; --pibiex-lima-profundo: #4D7C0F; --pibiex-texto: #111827; --pibiex-texto-suave: #4B5563; --pibiex-borda: #E5E7EB; --pibiex-tinta: #1E3A8A; }
+    .hero-bg { background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), var(--pibiex-gradiente); background-size: 34px 34px, 34px 34px, 100% 100%; }
+    .balance { text-wrap: balance; }
+    .rotulo { font-size: 11px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; color: var(--pibiex-lima-profundo); }
+    .cartao { border: 1px solid var(--pibiex-borda); border-radius: 16px; padding: 20px 22px; background: #fff; }
+    .cartao h3 { margin: 0 0 6px; font-size: 15px; font-weight: 800; }
+    .cartao p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--pibiex-texto-suave); }
+    .etiqueta { display: inline-block; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: #EEF2FF; color: #1E3A8A; margin-top: 10px; margin-right: 6px; }
+    .etiqueta.verde { background: #ECFCCB; color: #3F6212; }
+    .btn-voltar { display: inline-flex; align-items: center; gap: 8px; color: #DBEAFE; font-weight: 800; font-size: 13.5px; border: 1.5px solid rgba(255,255,255,.3); border-radius: 999px; padding: 8px 16px; }
+    .btn-voltar:hover { background: rgba(255,255,255,.1); color: #fff; }
+    a:focus-visible, button:focus-visible { outline: 3px solid #1E3A8A; outline-offset: 2px; }
+    .linha-tempo { list-style: none; margin: 0; padding: 0 0 0 22px; border-left: 2px solid var(--pibiex-borda); }
+    .linha-tempo li { position: relative; margin: 0 0 18px; padding-left: 8px; font-size: 14.5px; line-height: 1.6; color: var(--pibiex-texto-suave); }
+    .linha-tempo li::before { content: ""; position: absolute; left: -30px; top: 7px; width: 12px; height: 12px; border-radius: 50%; background: var(--pibiex-lima); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--pibiex-lima-profundo); }
+    .linha-tempo b { color: var(--pibiex-texto); }
+    html.a11y-contraste .cartao { border-color: #111827; }
+</style>
+</head>
+<body class="min-h-screen" style="color: var(--pibiex-texto);">
+
+<header class="fixed top-0 inset-x-0 z-40 backdrop-blur-md bg-[#0B1B4A]/95 border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
+        <a href="index.html" class="hidden sm:flex items-center gap-3" aria-label="PIBIEX Digital, página inicial">
+            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital" class="h-10 w-auto object-contain">
+        </a>
+        <div class="flex items-center gap-3 ml-auto">
+            <a href="index.html" class="btn-voltar"><span aria-hidden="true">←</span> Início</a>
+            <a href="login.html" class="bg-white text-[#1E3A8A] font-extrabold text-sm px-5 py-2.5 rounded-full hover:bg-blue-50 transition shadow-lg">Entrar</a>
+        </div>
+    </div>
+</header>
+
+<main>
+<section class="hero-bg pt-32 pb-14 md:pt-40 md:pb-16 px-5">
+    <div class="max-w-4xl mx-auto">
+        <p class="rotulo mb-4" style="color: var(--pibiex-lima);">Transparência</p>
+        <h1 class="balance text-white text-4xl sm:text-5xl font-black leading-[1.08] mb-6">Como a plataforma funciona por baixo, sem letras miúdas.</h1>
+        <p class="text-blue-100/90 text-base md:text-lg leading-relaxed max-w-3xl">
+            Aqui está o que a gente usa, onde os dados ficam, como o site é vigiado e o que mudou. Os detalhes jurídicos estão na
+            <a href="privacidade.html" class="underline font-bold text-white">Política de Privacidade</a>.
+        </p>
+    </div>
+</section>
+
+<section class="bg-white py-16 md:py-20 px-5">
+    <div class="max-w-5xl mx-auto">
+        <p class="rotulo mb-3">Serviços que usamos</p>
+        <h2 class="text-3xl font-black balance mb-3 max-w-2xl">Poucos serviços de fora, todos declarados.</h2>
+        <p class="text-[15px] leading-relaxed mb-8 max-w-2xl" style="color: var(--pibiex-texto-suave);">Não vendemos nem usamos dados para publicidade. Os serviços abaixo existem para a plataforma funcionar.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="cartao"><h3>Supabase</h3><p>Banco de dados, arquivos e funções do servidor. Guarda cadastros, atividades, notas, presenças e mensagens, com acesso controlado por permissão.</p><span class="etiqueta">Canadá</span><span class="etiqueta verde">Dados da plataforma</span></div>
+            <div class="cartao"><h3>GitHub Pages</h3><p>Hospedagem das páginas do site. Recebe o endereço IP de quem abre o site, como qualquer hospedagem.</p><span class="etiqueta">Estados Unidos</span></div>
+            <div class="cartao"><h3>Google reCAPTCHA</h3><p>Confere se quem entra pela tela de login é uma pessoa. Só aparece no login.</p><span class="etiqueta">Estados Unidos</span><span class="etiqueta verde">Somente no login</span></div>
+            <div class="cartao"><h3>Google Gemini</h3><p>Assistente de IA para tirar dúvidas. Recebe só o texto da conversa, sem nome nem dados de cadastro.</p><span class="etiqueta">Estados Unidos</span><span class="etiqueta verde">Só quando o aluno usa o assistente</span></div>
+            <div class="cartao"><h3>Resend</h3><p>Envio de e-mails automáticos, como a senha provisória, apenas para quem tem e-mail cadastrado.</p><span class="etiqueta">Estados Unidos</span></div>
+            <div class="cartao"><h3>VLibras</h3><p>Tradutor de Libras do governo federal. Já vem ligado, e a pessoa pode desligar a qualquer momento no botão de acessibilidade.</p><span class="etiqueta">Brasil</span><span class="etiqueta verde">Pode ser desligado</span></div>
+        </div>
+
+        <div class="cartao mt-6">
+            <h3>O que a plataforma não usa</h3>
+            <p>Anúncios, rastreadores de comportamento, fontes carregadas do Google (as letras ficam no próprio site) nem venda de dados.</p>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 md:py-20 px-5" style="background: #F4F6FB;">
+    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-10">
+        <div>
+            <p class="rotulo mb-3">Cuidado com os dados</p>
+            <h2 class="text-2xl md:text-[28px] font-black balance mb-4">O que fazemos para protegê-los.</h2>
+            <ul class="space-y-3 text-[14.5px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                <li><b style="color: var(--pibiex-texto);">Cada um vê só o que é seu.</b> A conferência é feita no servidor, não só na tela.</li>
+                <li><b style="color: var(--pibiex-texto);">Arquivos privados.</b> Trabalhos e materiais só abrem com link temporário.</li>
+                <li><b style="color: var(--pibiex-texto);">Limpeza automática.</b> Registros técnicos antigos (sessões, tentativas de login e acessos) são apagados sozinhos depois de um prazo.</li>
+                <li><b style="color: var(--pibiex-texto);">Direitos do titular.</b> O aluno baixa uma cópia dos seus dados e faz pedidos de correção ou exclusão dentro da plataforma, com resposta em até 15 dias.</li>
+            </ul>
+        </div>
+        <div>
+            <p class="rotulo mb-3">Monitoramento</p>
+            <h2 class="text-2xl md:text-[28px] font-black balance mb-4">Quem vigia o site.</h2>
+            <ul class="space-y-3 text-[14.5px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+                <li><b style="color: var(--pibiex-texto);">De hora em hora,</b> uma rotina automática confere se o site e o servidor estão respondendo.</li>
+                <li><b style="color: var(--pibiex-texto);">A cada mudança,</b> testes automáticos abrem todas as páginas, simulam os fluxos principais e checam acessibilidade e segurança básica.</li>
+                <li><b style="color: var(--pibiex-texto);">Auditoria do servidor</b> confere permissões do banco, funções e arquivos privados a cada atualização importante.</li>
+                <li><b style="color: var(--pibiex-texto);">Os testes usam dados de mentira.</b> Nenhum dado real de aluno é lido ou alterado por eles.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="bg-white py-16 md:py-20 px-5">
+    <div class="max-w-4xl mx-auto">
+        <p class="rotulo mb-3">O que mudou</p>
+        <h2 class="text-2xl md:text-[30px] font-black balance mb-8">Novidades recentes.</h2>
+        <p class="text-[13px] font-bold uppercase tracking-wide mb-4" style="color: var(--pibiex-tinta);">Outubro de 2026</p>
+        <ul class="linha-tempo">
+            <li><b>Nova página inicial e página Sobre,</b> com a visão completa da plataforma e do que ela oferece.</li>
+            <li><b>Mais acessibilidade:</b> Libras (VLibras), leitura em voz alta, cores suaves ou em cinza, altura da linha, alinhamento à esquerda e fonte de leitura fácil.</li>
+            <li><b>Meus dados e privacidade:</b> o aluno baixa os próprios dados e faz pedidos de correção ou exclusão pela plataforma.</li>
+            <li><b>Atividades e trabalhos em uma só aba,</b> com resposta escrita, arquivo e link; Bloco de notas; busca rápida (Ctrl + K).</li>
+            <li><b>Recursos extras com arquivos</b> para ler na plataforma ou baixar.</li>
+            <li><b>Painel do professor reorganizado:</b> Início como central de atenção, aviso de trabalho novo, "Ver como aluno" e tela de Privacidade.</li>
+            <li><b>Bases técnicas:</b> política de privacidade reescrita, fontes próprias, limpeza automática de registros antigos, testes automáticos e monitoramento de hora em hora.</li>
+        </ul>
+    </div>
+</section>
+</main>
+
+<footer class="py-8 px-5" style="background: #0B1B4A;">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <span class="text-blue-100/80 text-xs font-bold tracking-wide">PIBIEX Digital · Desenvolvida por Marciel Gomes Lima Rodrigues · Site independente, não oficial da UNITINS</span>
+        <p class="text-blue-100/70 text-xs font-medium tracking-wide">
+            <a href="index.html" class="underline hover:text-white">Início</a> · <a href="sobre.html" class="underline hover:text-white">Sobre</a> · <a href="termos.html" class="underline hover:text-white">Termo de Uso</a> · <a href="privacidade.html" class="underline hover:text-white">Política de Privacidade</a>
+        </p>
+    </div>
+</footer>
+<script>if (window.PibiexA11y) PibiexA11y.botaoFlutuante();</script>
+</body>
+</html>

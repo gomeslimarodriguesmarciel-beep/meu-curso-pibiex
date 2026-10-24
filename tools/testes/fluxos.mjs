@@ -85,7 +85,7 @@ const nossos = (lista) => lista.filter((e) => !/recaptcha|gstatic|vlibras|google
 // 1) todas as páginas abrem sem erro
 console.log('\n== Páginas abrem sem erro de JavaScript');
 const paginas = [
-    'index.html', 'sobre.html', 'login.html', 'privacidade.html', 'termos.html',
+    'index.html', 'sobre.html', 'transparencia.html', 'login.html', 'privacidade.html', 'termos.html',
     ...fs.readdirSync(path.join(RAIZ, 'aluno')).filter((f) => f.endsWith('.html')).filter((f) => f !== 'trabalhos.html').map((f) => `aluno/${f}?votou=1`),
     ...fs.readdirSync(path.join(RAIZ, 'admin')).filter((f) => f.endsWith('.html')).map((f) => `admin/${f}`),
 ];

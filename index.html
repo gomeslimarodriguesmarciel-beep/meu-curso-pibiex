@@ -16,7 +16,10 @@
 <meta property="og:site_name" content="PIBIEX Digital">
 <meta property="og:title" content="PIBIEX Digital · Plataforma de apoio a cursos de Inteligência Artificial">
 <meta property="og:description" content="Aulas, atividades, desafios, frequência e acompanhamento do professor em um só lugar, com acessibilidade e proteção de dados.">
-<meta property="og:image" content="https://pibiexdigital.com.br/icone-pibiex-digital.png">
+<meta property="og:image" content="https://pibiexdigital.com.br/img/cartao-compartilhamento.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta property="og:url" content="https://pibiexdigital.com.br/">
 
 <script type="application/ld+json">
@@ -84,6 +87,14 @@
     .lista-ok li { position: relative; padding-left: 26px; margin: 9px 0; font-size: 14.5px; line-height: 1.55; color: #4B5563; }
     .lista-ok li::before { content: ""; position: absolute; left: 0; top: 7px; width: 14px; height: 8px; border-left: 3px solid var(--pibiex-lima-profundo); border-bottom: 3px solid var(--pibiex-lima-profundo); transform: rotate(-45deg) scale(.8); }
     .lista-ok b { color: #111827; }
+    details.faq { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 0; }
+    details.faq summary { cursor: pointer; list-style: none; padding: 18px 22px; font-weight: 800; font-size: 15.5px; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+    details.faq summary::-webkit-details-marker { display: none; }
+    details.faq summary::after { content: "+"; font-size: 22px; font-weight: 700; color: #4D7C0F; line-height: 1; }
+    details.faq[open] summary::after { content: "–"; }
+    details.faq summary:focus-visible { outline: 3px solid #1E3A8A; outline-offset: 2px; border-radius: 12px; }
+    details.faq p { margin: 0; padding: 0 22px 20px; font-size: 14.5px; line-height: 1.65; color: #4B5563; }
+    details.faq a { color: #1E3A8A; font-weight: 700; text-decoration: underline; }
     .selo { display: flex; align-items: center; gap: 12px; }
     .selo svg { flex-shrink: 0; color: var(--pibiex-lima); }
     .selo b { display: block; color: #fff; font-size: 14px; }
@@ -106,6 +117,7 @@
             <a href="#recursos" class="hover:text-white transition">Recursos</a>
             <a href="#plataforma" class="hover:text-white transition">Na prática</a>
             <a href="#confianca" class="hover:text-white transition">Confiança</a>
+            <a href="#duvidas" class="hover:text-white transition">Dúvidas</a>
             <a href="#programa" class="hover:text-white transition">O programa</a>
             <a href="sobre.html" class="hover:text-white transition">Sobre</a>
         </nav>
@@ -119,9 +131,9 @@
     <div class="absolute -top-24 -right-24 w-96 h-96 halo pointer-events-none"></div>
     <div class="max-w-6xl mx-auto relative grid lg:grid-cols-[1.15fr_.85fr] gap-12 lg:gap-14 items-center">
         <div>
-            <a href="#programa" class="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.06] pl-3 pr-4 py-1.5 mb-6 text-[11px] md:text-xs font-bold tracking-wide text-blue-100 hover:bg-white/10 transition">
+            <a href="#coordenacao" class="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.06] pl-3 pr-4 py-1.5 mb-6 text-[11px] md:text-xs font-bold tracking-wide text-blue-100 hover:bg-white/10 transition">
                 <span class="w-1.5 h-1.5 rounded-full" style="background: var(--pibiex-lima);"></span>
-                Projeto independente · não é um site oficial da UNITINS
+                Desenvolvida por Marciel Gomes Lima Rodrigues · Ponte Alta do Tocantins
             </a>
             <h1 class="balance text-white text-4xl sm:text-5xl lg:text-[52px] font-black leading-[1.06] mb-6">
                 A plataforma que organiza o curso de Inteligência Artificial.
@@ -258,8 +270,24 @@
             </div>
         </div>
         <p class="mt-8 text-sm" style="color: #4B5563;">
-            Leia a <a href="privacidade.html" class="underline font-bold" style="color: #1E3A8A;">Política de Privacidade</a> e o <a href="termos.html" class="underline font-bold" style="color: #1E3A8A;">Termo de Uso</a>.
+            Leia a <a href="privacidade.html" class="underline font-bold" style="color: #1E3A8A;">Política de Privacidade</a>, veja a <a href="transparencia.html" class="underline font-bold" style="color: #1E3A8A;">Transparência</a> e o <a href="termos.html" class="underline font-bold" style="color: #1E3A8A;">Termo de Uso</a>.
         </p>
+    </div>
+</section>
+
+<!-- ================= PERGUNTAS ================= -->
+<section id="duvidas" class="py-20 md:py-24 px-5 scroll-mt-16" style="background: #F4F6FB;">
+    <div class="max-w-3xl mx-auto">
+        <p class="rotulo mb-3 text-center">Perguntas frequentes</p>
+        <h2 class="text-3xl md:text-[36px] font-black balance text-center mb-10 leading-tight">Perguntas de quem chega agora.</h2>
+        <div class="space-y-3">
+            <details class="faq"><summary>Quem pode usar a plataforma?</summary><p>Alunos e equipe do curso de extensão em Inteligência Artificial. Não existe cadastro aberto ao público: o professor cadastra cada aluno, e o usuário e a senha são entregues pelo curso.</p></details>
+            <details class="faq"><summary>Como eu entro?</summary><p>Pelo botão <b>Entrar</b>, com o usuário e a senha fornecidos pelo curso. No primeiro acesso a senha é trocada e o Termo de Uso é aceito. Quem esqueceu os dados usa a opção "Esqueci usuário/senha" na tela de login.</p></details>
+            <details class="faq"><summary>Preciso instalar alguma coisa? Funciona no celular?</summary><p>Não é preciso instalar nada: funciona no navegador do celular ou do computador. As telas se adaptam ao tamanho do aparelho, e as páginas são leves para abrir mesmo com internet mais lenta.</p></details>
+            <details class="faq"><summary>Meus dados estão seguros?</summary><p>A plataforma coleta só o necessário, não tem anúncios nem vende dados, e cada pessoa vê apenas o que é seu. O aluno pode baixar uma cópia dos seus dados e pedir correção ou exclusão. Veja a <a href="privacidade.html">Política de Privacidade</a> e a página de <a href="transparencia.html">Transparência</a>.</p></details>
+            <details class="faq"><summary>A plataforma é acessível?</summary><p>Sim. Há Libras com o VLibras, leitura em voz alta, alto contraste, texto maior, cores suaves ou em cinza, altura da linha, fonte de leitura fácil e uso completo pelo teclado. O botão de acessibilidade está em todas as páginas.</p></details>
+            <details class="faq"><summary>Quem criou e quem responde pela plataforma?</summary><p>Ela foi desenvolvida por <b>Marciel Gomes Lima Rodrigues</b>, bolsista de TADS, para apoiar o curso de IA em Ponte Alta do Tocantins. É um projeto independente e não é um site oficial da UNITINS. Conheça mais na página <a href="sobre.html">Sobre</a>.</p></details>
+        </div>
     </div>
 </section>
 
@@ -391,7 +419,7 @@
             <span class="text-blue-100/70 text-xs font-bold tracking-wide">PIBIEX Digital · Site independente, não oficial da UNITINS</span>
         </div>
         <p class="text-blue-100/60 text-xs font-medium tracking-wide">
-            <a href="sobre.html" class="underline hover:text-white">Sobre</a> · <a href="termos.html" class="underline hover:text-white">Termo de Uso</a> · <a href="privacidade.html" class="underline hover:text-white">Política de Privacidade</a>
+            <a href="sobre.html" class="underline hover:text-white">Sobre</a> · <a href="transparencia.html" class="underline hover:text-white">Transparência</a> · <a href="termos.html" class="underline hover:text-white">Termo de Uso</a> · <a href="privacidade.html" class="underline hover:text-white">Política de Privacidade</a>
         </p>
         <p class="text-blue-100/60 text-xs font-medium tracking-wide">
             Desenvolvido por <span class="font-bold text-white">MARCIEL GOMES LIMA RODRIGUES</span>
