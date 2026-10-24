@@ -5,8 +5,8 @@
     <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIBIEX Digital</title>
-<meta name="description" content="Plataforma independente, desenvolvida por Marciel Gomes Lima Rodrigues, bolsista do curso de TADS da UNITINS, para apoiar o curso de extensão em Inteligência Artificial do PIBIEX. Não é um site oficial da UNITINS.">
+<title>PIBIEX Digital · Plataforma de apoio a cursos de Inteligência Artificial</title>
+<meta name="description" content="PIBIEX Digital: plataforma web para organizar um curso de Inteligência Artificial. Aulas e materiais, atividades com correção, desafios, frequência, chat da turma, acessibilidade com Libras e proteção de dados (LGPD).">
 <meta name="author" content="Marciel Gomes Lima Rodrigues">
 
 <link rel="icon" type="image/png" href="icone-pibiex-digital.png">
@@ -14,17 +14,20 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PIBIEX Digital">
-<meta property="og:title" content="PIBIEX Digital · Plataforma independente de apoio ao curso de Inteligência Artificial">
-<meta property="og:description" content="Plataforma desenvolvida por Marciel Gomes Lima Rodrigues, bolsista do curso de TADS da UNITINS, para apoiar o curso de extensão em Inteligência Artificial do PIBIEX. Não é um site oficial da UNITINS.">
+<meta property="og:title" content="PIBIEX Digital · Plataforma de apoio a cursos de Inteligência Artificial">
+<meta property="og:description" content="Aulas, atividades, desafios, frequência e acompanhamento do professor em um só lugar, com acessibilidade e proteção de dados.">
 <meta property="og:image" content="https://pibiexdigital.com.br/icone-pibiex-digital.png">
 <meta property="og:url" content="https://pibiexdigital.com.br/">
 
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "WebSite",
+  "@type": "WebApplication",
+  "applicationCategory": "EducationalApplication",
+  "inLanguage": "pt-BR",
+  "operatingSystem": "Qualquer (navegador)",
   "name": "PIBIEX Digital",
-  "description": "Plataforma independente, desenvolvida e mantida por Marciel Gomes Lima Rodrigues (bolsista do curso de TADS da UNITINS) para apoiar o curso de extensão em Inteligência Artificial do PIBIEX. Não é um site oficial da UNITINS.",
+  "description": "Plataforma web para organizar um curso de Inteligência Artificial: aulas e materiais, atividades com correção, desafios, frequência, comunicação da turma, acessibilidade e proteção de dados.",
   "url": "https://pibiexdigital.com.br/",
   "image": "https://pibiexdigital.com.br/icone-pibiex-digital.png",
   "creator": {
@@ -60,6 +63,31 @@
         filter: blur(10px);
     }
     .balance { text-wrap: balance; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    .rotulo { font-size: 11px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; color: var(--pibiex-lima-profundo); }
+    .cartao { border: 1px solid var(--pibiex-borda); border-radius: 18px; padding: 24px; background: #fff; transition: box-shadow .2s, transform .2s; }
+    .cartao:hover { box-shadow: 0 10px 30px -12px rgba(15,23,42,.25); transform: translateY(-2px); }
+    @media (prefers-reduced-motion: reduce) { .cartao { transition: none; } .cartao:hover { transform: none; } }
+    .cartao h3 { margin: 14px 0 6px; font-size: 16px; font-weight: 800; }
+    .cartao p { margin: 0; font-size: 14px; line-height: 1.6; color: #4B5563; }
+    .icone-cartao { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #EEF2FF; color: #1E3A8A; }
+    .janela { border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 30px 60px -20px rgba(2,6,23,.55), 0 0 0 1px rgba(255,255,255,.12); }
+    .janela-barra { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #E5E7EB; }
+    .janela-barra i { width: 10px; height: 10px; border-radius: 50%; background: #9CA3AF; display: block; }
+    .janela-barra span { margin-left: 10px; flex: 1; background: #fff; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #4B5563; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .janela img { display: block; width: 100%; height: auto; }
+    .aba { border: 1.5px solid #CBD5E1; background: #fff; color: #111827; border-radius: 999px; padding: 9px 18px; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+    .aba[aria-selected="true"] { background: #0B1B4A; color: #fff; border-color: #0B1B4A; }
+    a:focus-visible, button:focus-visible { outline: 3px solid #A3E635; outline-offset: 3px; }
+    .lista-ok { list-style: none; padding: 0; margin: 0; }
+    .lista-ok li { position: relative; padding-left: 26px; margin: 9px 0; font-size: 14.5px; line-height: 1.55; color: #4B5563; }
+    .lista-ok li::before { content: ""; position: absolute; left: 0; top: 7px; width: 14px; height: 8px; border-left: 3px solid var(--pibiex-lima-profundo); border-bottom: 3px solid var(--pibiex-lima-profundo); transform: rotate(-45deg) scale(.8); }
+    .lista-ok b { color: #111827; }
+    .selo { display: flex; align-items: center; gap: 12px; }
+    .selo svg { flex-shrink: 0; color: var(--pibiex-lima); }
+    .selo b { display: block; color: #fff; font-size: 14px; }
+    .selo span { display: block; color: rgba(219,234,254,.8); font-size: 12.5px; line-height: 1.4; }
     @media (prefers-reduced-motion: no-preference) {
         .flutuar { animation: flutuar 6s ease-in-out infinite; }
         @keyframes flutuar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
@@ -71,100 +99,186 @@
 <!-- ================= NAV ================= -->
 <header class="fixed top-0 inset-x-0 z-40 backdrop-blur-md bg-[#0B1B4A]/95 border-b border-white/10">
     <div class="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
-        <a href="#topo" class="flex items-center gap-3">
+        <a href="#topo" class="flex items-center gap-3" aria-label="PIBIEX Digital, topo da página">
             <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital" class="h-10 w-auto object-contain">
         </a>
-        <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-blue-100">
-            <a href="#curso" class="hover:text-white transition">O curso</a>
+        <nav class="hidden md:flex items-center gap-7 text-sm font-bold text-blue-100" aria-label="Seções da página">
+            <a href="#recursos" class="hover:text-white transition">Recursos</a>
+            <a href="#plataforma" class="hover:text-white transition">Na prática</a>
+            <a href="#confianca" class="hover:text-white transition">Confiança</a>
             <a href="#programa" class="hover:text-white transition">O programa</a>
-            <a href="#coordenacao" class="hover:text-white transition">Quem faz</a>
+            <a href="sobre.html" class="hover:text-white transition">Sobre</a>
         </nav>
-        <a href="login.html" class="bg-white text-[#1E3A8A] font-extrabold text-sm px-5 py-2.5 rounded-full hover:bg-blue-50 transition shadow-lg">
-            Entrar
-        </a>
+        <a href="login.html" class="bg-white text-[#1E3A8A] font-extrabold text-sm px-5 py-2.5 rounded-full hover:bg-blue-50 transition shadow-lg">Entrar</a>
     </div>
 </header>
 
 <!-- ================= HERO ================= -->
 <main id="topo">
-<section class="hero-bg relative overflow-hidden pt-32 pb-24 md:pt-44 md:pb-32 px-5">
+<section class="hero-bg relative overflow-hidden pt-28 pb-16 md:pt-40 md:pb-24 px-5">
     <div class="absolute -top-24 -right-24 w-96 h-96 halo pointer-events-none"></div>
-    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[560px] h-56 halo pointer-events-none opacity-60"></div>
-
-    <div class="max-w-6xl mx-auto relative grid md:grid-cols-[1.15fr_.85fr] gap-14 items-center">
+    <div class="max-w-6xl mx-auto relative grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-14 items-center">
         <div>
-            <a href="#coordenacao" class="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.06] pl-3 pr-4 py-1.5 mb-6 text-[11px] md:text-xs font-bold tracking-wide text-blue-100 hover:bg-white/10 transition">
+            <a href="#programa" class="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.06] pl-3 pr-4 py-1.5 mb-6 text-[11px] md:text-xs font-bold tracking-wide text-blue-100 hover:bg-white/10 transition">
                 <span class="w-1.5 h-1.5 rounded-full" style="background: var(--pibiex-lima);"></span>
                 Projeto independente · não é um site oficial da UNITINS
             </a>
-            <h1 class="balance text-white text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] mb-6">
-                Inteligência Artificial, direto na prática.
+            <h1 class="balance text-white text-4xl sm:text-5xl lg:text-[52px] font-black leading-[1.06] mb-6">
+                A plataforma que organiza o curso de Inteligência Artificial.
             </h1>
-            <p class="text-blue-100/85 text-base md:text-lg leading-relaxed max-w-xl mb-10">
-                O <strong class="text-white">PIBIEX Digital</strong> é a plataforma criada por <strong class="text-white">Marciel Gomes Lima Rodrigues</strong>, bolsista de TADS,
-                para apoiar o curso de extensão em
-                Inteligência Artificial: aulas por módulo, desafios semanais, laboratório de IA e acompanhamento
-                de trabalhos.
+            <p class="text-blue-100/90 text-base md:text-lg leading-relaxed max-w-xl mb-9">
+                Aulas e materiais, atividades com correção, desafios semanais, frequência e comunicação da turma em um só lugar,
+                com acessibilidade em Libras e proteção de dados desde o projeto.
             </p>
-            <div class="flex flex-wrap gap-4">
+            <div class="flex flex-wrap gap-4 mb-5">
                 <a href="login.html" class="group inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full transition transform hover:scale-105 shadow-xl" style="background: var(--pibiex-lima); color: #0B1B4A;">
-                    Sou aluno
-                    <span class="transition group-hover:translate-x-1">→</span>
+                    Sou aluno <span class="transition group-hover:translate-x-1">→</span>
                 </a>
                 <a href="login.html?perfil=professor" class="inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full border-2 border-white/30 text-white hover:bg-white/10 transition">
                     Sou professor / administrador
                 </a>
             </div>
-            <p class="text-blue-100/60 text-xs mt-6 max-w-md leading-relaxed">
-                Site independente, desenvolvido e mantido pelo bolsista. A UNITINS não é responsável por esta plataforma.
-            </p>
+            <a href="sobre.html" class="inline-flex items-center gap-1.5 text-sm font-bold text-blue-100 hover:text-white underline underline-offset-4 decoration-white/30">Conhecer a plataforma em detalhes →</a>
         </div>
 
-        <div class="relative flex justify-center md:justify-end">
+        <div class="relative">
             <div class="absolute inset-0 halo"></div>
-            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital" class="flutuar relative w-72 md:w-[26rem] h-auto object-contain drop-shadow-2xl">
+            <div class="janela relative">
+                <div class="janela-barra" aria-hidden="true"><i></i><i></i><i></i><span>pibiexdigital.com.br/aluno/atividades</span></div>
+                <img src="img/tela-atividades.png" width="1280" height="800" alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção" fetchpriority="high">
+            </div>
         </div>
     </div>
 </section>
 
-<!-- ================= O CURSO ================= -->
-<section id="curso" class="bg-white py-20 md:py-28 px-5">
+<!-- ================= FAIXA DE CONFIANÇA ================= -->
+<section class="px-5 py-8" style="background: #0B1B4A;" aria-label="Diferenciais">
+    <div class="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="selo"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><div><b>Acessível</b><span>Libras, leitura em voz alta, alto contraste e mais.</span></div></div>
+        <div class="selo"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg><div><b>Dados protegidos</b><span>Pensada para a LGPD, com direitos do titular na prática.</span></div></div>
+        <div class="selo"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><div><b>Celular e computador</b><span>Layout adaptado, rápido até em conexão fraca.</span></div></div>
+        <div class="selo"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><div><b>Sem anúncios</b><span>Nada de rastreadores nem venda de dados.</span></div></div>
+    </div>
+</section>
+
+<!-- ================= RECURSOS ================= -->
+<section id="recursos" class="bg-white py-20 md:py-28 px-5 scroll-mt-16">
     <div class="max-w-6xl mx-auto">
         <div class="max-w-2xl mb-14">
-            <p class="text-[11px] font-black uppercase tracking-[0.2em] mb-3" style="color: var(--pibiex-lima-profundo);">O que tem na plataforma</p>
-            <h2 class="text-3xl md:text-[40px] font-black balance" style="color: var(--pibiex-texto);">Tudo o que o curso precisa, em um só lugar.</h2>
+            <p class="rotulo mb-3">O que a plataforma faz</p>
+            <h2 class="text-3xl md:text-[40px] font-black balance leading-tight">Tudo o que o curso precisa, do primeiro material ao certificado.</h2>
         </div>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
-                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #EEF2FF;">📚</div>
-                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Aulas e cronograma</h3>
-                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Conteúdo organizado por módulo, com cronograma e materiais de apoio sempre à mão.</p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <article class="cartao"><div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg></div><h3>Aulas e materiais</h3><p>Cronograma por módulo e materiais (slides, PDFs, vídeos e links) abertos em um leitor próprio, sem instalar nada.</p></article>
+            <article class="cartao"><div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 14.5l2 2 3.5-4"/></svg></div><h3>Atividades com correção</h3><p>O aluno escreve a resposta na hora ou envia arquivo e link. O professor corrige com nota, horas e comentário.</p></article>
+            <article class="cartao"><div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></div><h3>Desafios e ranking</h3><p>Desafios semanais que rendem pontos, com ranking da turma e cinco níveis, de Iniciante a Mestre.</p></article>
+            <article class="cartao"><div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.4 2h11.2A1.5 1.5 0 0 0 19 19l-5-10V3"/><path d="M7.5 14h9"/></svg></div><h3>Laboratório e prompts de IA</h3><p>Problemas práticos e um banco de prompts bem estruturados para ChatGPT, Gemini, Claude, Perplexity e NotebookLM.</p></article>
+            <article class="cartao"><div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2h5"/></svg></div><h3>Frequência confiável</h3><p>Chamada aberta pelo professor, com código e tempo limite. Horas somadas por aluno e relatório pronto para o certificado.</p></article>
+            <article class="cartao"><div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></div><h3>Comunicação da turma</h3><p>Avisos que expiram, enquetes com resultado ao vivo, chat da turma, conversas privadas e galeria de projetos.</p></article>
+        </div>
+        <p class="mt-8"><a href="sobre.html#recursos" class="font-extrabold text-sm underline underline-offset-4" style="color: #1E3A8A;">Ver todos os recursos, para alunos e para professores →</a></p>
+    </div>
+</section>
+
+<!-- ================= NA PRÁTICA ================= -->
+<section id="plataforma" class="py-20 md:py-28 px-5 scroll-mt-16" style="background: #F4F6FB;">
+    <div class="max-w-6xl mx-auto">
+        <div class="max-w-2xl mb-10">
+            <p class="rotulo mb-3">Na prática</p>
+            <h2 class="text-3xl md:text-[38px] font-black balance leading-tight">Uma plataforma de verdade, não só uma página de links.</h2>
+            <p class="mt-4 text-[15px] leading-relaxed" style="color: #4B5563;">Cada perfil vê o que precisa. O aluno tem o caminho do curso na frente; o professor tem a lista do que pede atenção hoje.</p>
+        </div>
+
+        <div role="tablist" aria-label="Telas da plataforma" class="flex flex-wrap gap-3 mb-6">
+            <button type="button" role="tab" class="aba" id="t-ativ" aria-controls="p-tela" aria-selected="true" data-img="img/tela-atividades.png" data-url="pibiexdigital.com.br/aluno/atividades" data-alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção">Aluno · Atividades</button>
+            <button type="button" role="tab" class="aba" id="t-cont" aria-controls="p-tela" aria-selected="false" tabindex="-1" data-img="img/tela-conteudo.png" data-url="pibiexdigital.com.br/aluno/conteudo" data-alt="Tela de Conteúdo do aluno: módulos com slides, PDFs, vídeos e links, busca e filtro por tipo">Aluno · Conteúdo</button>
+            <button type="button" role="tab" class="aba" id="t-prof" aria-controls="p-tela" aria-selected="false" tabindex="-1" data-img="img/tela-professor.png" data-url="pibiexdigital.com.br/admin/inicio" data-alt="Painel inicial do professor: trabalhos para corrigir, desafios sem nota e próxima aula">Professor · Início</button>
+        </div>
+
+        <div class="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
+            <div id="p-tela" role="tabpanel" class="janela">
+                <div class="janela-barra" aria-hidden="true"><i></i><i></i><i></i><span id="url-tela">pibiexdigital.com.br/aluno/atividades</span></div>
+                <img id="img-tela" src="img/tela-atividades.png" width="1280" height="800" alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção" loading="lazy">
             </div>
-            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
-                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #ECFCCB;">🏆</div>
-                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Desafios semanais</h3>
-                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Desafios com prazo e ranking pra colocar a mão na massa toda semana.</p>
-            </div>
-            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
-                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #FEF3C7;">🤖</div>
-                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Laboratório de IA</h3>
-                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Prompts, ferramentas e um laboratório pra testar IA na prática, não só na teoria.</p>
-            </div>
-            <div class="rounded-2xl p-6 border" style="border-color: var(--pibiex-borda);">
-                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" style="background: #FCE7F3;">💬</div>
-                <h3 class="font-black text-[15px] mb-2" style="color: var(--pibiex-texto);">Trabalhos e turma</h3>
-                <p class="text-sm leading-relaxed" style="color: var(--pibiex-texto-suave);">Envio de trabalhos, correção do professor e chat direto com a turma.</p>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-black text-lg mb-2">Para o aluno</h3>
+                    <ul class="lista-ok">
+                        <li>Vê o que fazer e até quando, com prazo destacado.</li>
+                        <li>Escreve a resposta direto ou anexa arquivo e link.</li>
+                        <li>Acompanha nota, horas, comentário e posição no ranking.</li>
+                        <li>Registra a presença pelo celular durante a aula.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-black text-lg mb-2">Para o professor</h3>
+                    <ul class="lista-ok">
+                        <li>Tela inicial com o que precisa de atenção hoje.</li>
+                        <li>Corrige trabalhos e dá nota em uma fila única.</li>
+                        <li>Abre a chamada e acompanha os registros ao vivo.</li>
+                        <li>Enxerga a plataforma como o aluno, sem salvar nada.</li>
+                    </ul>
+                </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- ================= CONFIANÇA ================= -->
+<section id="confianca" class="bg-white py-20 md:py-28 px-5 scroll-mt-16">
+    <div class="max-w-6xl mx-auto">
+        <div class="max-w-2xl mb-12">
+            <p class="rotulo mb-3">Feita com cuidado</p>
+            <h2 class="text-3xl md:text-[38px] font-black balance leading-tight">Acessível, segura e transparente com os dados.</h2>
+            <p class="mt-4 text-[15px] leading-relaxed" style="color: #4B5563;">Grande parte dos alunos é menor de idade. Por isso acessibilidade e privacidade não são um detalhe: fazem parte do projeto.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="cartao">
+                <div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                <h3>Acessibilidade</h3>
+                <ul class="lista-ok mt-3">
+                    <li><b>Libras</b> com o VLibras, do governo federal</li>
+                    <li><b>Ouvir a página</b> em voz alta</li>
+                    <li>Alto contraste, texto maior e menos animação</li>
+                    <li>Links destacados, fonte simples e cursor grande</li>
+                    <li>Uso completo pelo teclado</li>
+                </ul>
+            </div>
+            <div class="cartao">
+                <div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg></div>
+                <h3>Privacidade e segurança</h3>
+                <ul class="lista-ok mt-3">
+                    <li>Coleta só o necessário, <b>sem anúncios</b></li>
+                    <li>Arquivos privados, com link temporário</li>
+                    <li>Cada pessoa vê apenas o que é seu</li>
+                    <li>O aluno baixa os próprios dados e pede correção ou exclusão</li>
+                    <li>Registros técnicos antigos apagados sozinhos</li>
+                </ul>
+            </div>
+            <div class="cartao">
+                <div class="icone-cartao"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 14.5l2 2 3.5-4"/></svg></div>
+                <h3>Qualidade contínua</h3>
+                <ul class="lista-ok mt-3">
+                    <li>Testes automáticos a cada mudança</li>
+                    <li>Verificação de acessibilidade e de contraste</li>
+                    <li>Auditoria de permissões do servidor</li>
+                    <li>Monitoramento do site de hora em hora</li>
+                    <li>Política de privacidade e termos públicos</li>
+                </ul>
+            </div>
+        </div>
+        <p class="mt-8 text-sm" style="color: #4B5563;">
+            Leia a <a href="privacidade.html" class="underline font-bold" style="color: #1E3A8A;">Política de Privacidade</a> e o <a href="termos.html" class="underline font-bold" style="color: #1E3A8A;">Termo de Uso</a>.
+        </p>
     </div>
 </section>
 
 <!-- ================= O PROGRAMA ================= -->
-<section id="programa" class="py-20 md:py-28 px-5" style="background: #F4F6FB;">
+<section id="programa" class="py-20 md:py-28 px-5 scroll-mt-16" style="background: #F4F6FB;">
     <div class="max-w-6xl mx-auto">
         <div class="max-w-2xl mb-12">
-            <p class="text-[11px] font-black uppercase tracking-[0.2em] mb-3" style="color: var(--pibiex-lima-profundo);">O programa</p>
+            <p class="rotulo mb-3">O programa</p>
             <h2 class="text-3xl md:text-[38px] font-black balance" style="color: var(--pibiex-texto);">Da universidade à plataforma.</h2>
         </div>
 
@@ -267,7 +381,7 @@
 <section class="hero-bg py-20 px-5">
     <div class="max-w-3xl mx-auto text-center">
         <h2 class="balance text-white text-3xl md:text-[40px] font-black mb-5">Pronto pra começar?</h2>
-        <p class="text-blue-100/80 mb-10 max-w-xl mx-auto">Acesse a plataforma com o usuário e a senha fornecidos pelo curso.</p>
+        <p class="text-blue-100/85 mb-10 max-w-xl mx-auto">Acesse com o usuário e a senha fornecidos pelo curso. Quer entender melhor como tudo funciona? <a href="sobre.html" class="underline font-bold text-white">Leia a página Sobre</a>.</p>
         <div class="flex flex-wrap justify-center gap-4">
             <a href="login.html" class="inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full transition transform hover:scale-105 shadow-xl" style="background: var(--pibiex-lima); color: #0B1B4A;">
                 Sou aluno →
@@ -288,7 +402,7 @@
             <span class="text-blue-100/70 text-xs font-bold tracking-wide">PIBIEX Digital · Site independente, não oficial da UNITINS</span>
         </div>
         <p class="text-blue-100/60 text-xs font-medium tracking-wide">
-            <a href="termos.html" class="underline hover:text-white">Termo de Uso</a> · <a href="privacidade.html" class="underline hover:text-white">Política de Privacidade</a>
+            <a href="sobre.html" class="underline hover:text-white">Sobre</a> · <a href="termos.html" class="underline hover:text-white">Termo de Uso</a> · <a href="privacidade.html" class="underline hover:text-white">Política de Privacidade</a>
         </p>
         <p class="text-blue-100/60 text-xs font-medium tracking-wide">
             Desenvolvido por <span class="font-bold text-white">MARCIEL GOMES LIMA RODRIGUES</span>
@@ -296,6 +410,26 @@
     </div>
 </footer>
 
-<script>if (window.PibiexA11y) PibiexA11y.botaoFlutuante();</script>
+<script>
+(function () {
+    var abas = [].slice.call(document.querySelectorAll('[role="tab"][data-img]'));
+    var img = document.getElementById('img-tela'), url = document.getElementById('url-tela'), painel = document.getElementById('p-tela');
+    function mostrar(i, focar) {
+        abas.forEach(function (a, k) { a.setAttribute('aria-selected', String(k === i)); a.tabIndex = k === i ? 0 : -1; });
+        img.src = abas[i].dataset.img; img.alt = abas[i].dataset.alt; url.textContent = abas[i].dataset.url;
+        painel.setAttribute('aria-labelledby', abas[i].id);
+        if (focar) abas[i].focus();
+    }
+    abas.forEach(function (a, i) {
+        a.addEventListener('click', function () { mostrar(i, false); });
+        a.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowRight') { e.preventDefault(); mostrar((i + 1) % abas.length, true); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); mostrar((i + abas.length - 1) % abas.length, true); }
+        });
+    });
+    painel.setAttribute('aria-labelledby', 't-ativ');
+})();
+if (window.PibiexA11y) PibiexA11y.botaoFlutuante();
+</script>
 </body>
 </html>

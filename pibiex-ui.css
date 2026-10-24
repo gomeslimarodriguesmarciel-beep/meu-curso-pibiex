@@ -79,8 +79,11 @@ html.a11y-texto-1 .text-\[15px\] { font-size: 16.88px; }
 html.a11y-texto-1 .text-\[15\.5px\] { font-size: 17.44px; }
 html.a11y-texto-1 .text-\[19px\] { font-size: 21.38px; }
 html.a11y-texto-1 .text-\[26px\] { font-size: 29.25px; }
+html.a11y-texto-1 .text-\[30px\] { font-size: 33.75px; }
+html.a11y-texto-1 .text-\[34px\] { font-size: 38.25px; }
 html.a11y-texto-1 .text-\[38px\] { font-size: 42.75px; }
 html.a11y-texto-1 .text-\[40px\] { font-size: 45.0px; }
+html.a11y-texto-1 .text-\[52px\] { font-size: 58.5px; }
 html.a11y-texto-2 .text-\[9\.5px\] { font-size: 14.38px; }
 html.a11y-texto-2 .text-\[10px\] { font-size: 14.38px; }
 html.a11y-texto-2 .text-\[10\.5px\] { font-size: 15.0px; }
@@ -96,8 +99,11 @@ html.a11y-texto-2 .text-\[15px\] { font-size: 18.75px; }
 html.a11y-texto-2 .text-\[15\.5px\] { font-size: 19.38px; }
 html.a11y-texto-2 .text-\[19px\] { font-size: 23.75px; }
 html.a11y-texto-2 .text-\[26px\] { font-size: 32.5px; }
+html.a11y-texto-2 .text-\[30px\] { font-size: 37.5px; }
+html.a11y-texto-2 .text-\[34px\] { font-size: 42.5px; }
 html.a11y-texto-2 .text-\[38px\] { font-size: 47.5px; }
 html.a11y-texto-2 .text-\[40px\] { font-size: 50.0px; }
+html.a11y-texto-2 .text-\[52px\] { font-size: 65.0px; }
 
 /* ---------------------------------------------------------------- alto contraste */
 html.a11y-contraste {
