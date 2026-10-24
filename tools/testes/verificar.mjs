@@ -92,6 +92,18 @@ const inline = (txt) => [...txt.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*
     verificar('todas as páginas carregam o botão de acessibilidade', p);
 }
 
+// 5b. Proteções básicas no cabeçalho de toda página (objetos, <base> e envio de formulários)
+{
+    const p = [];
+    for (const f of paginas) {
+        const t = ler(f);
+        if (/http-equiv="refresh"/.test(t)) continue; // páginas de redirecionamento
+        if (!t.includes('Content-Security-Policy')) p.push(`${rel(f)} sem política de segurança de conteúdo`);
+        if (!t.includes('name="referrer"')) p.push(`${rel(f)} sem política de referência`);
+    }
+    verificar('toda página tem as proteções básicas de cabeçalho', p);
+}
+
 // 6. Texto digitado por usuário nunca entra como HTML sem escapar nas telas do aluno
 {
     const p = [];
