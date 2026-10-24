@@ -30,9 +30,10 @@
                 voz: typeof p.voz === 'string' ? p.voz.slice(0, 200) : '',
                 // recursos extras (ver EXTRAS)
                 links: p.links === true, espaco: p.espaco === true, fonte: p.fonte === true,
-                cursor: p.cursor === true, semImagens: p.semImagens === true, libras: p.libras !== false, // já vem ligado; só desliga se a pessoa desmarcar
+                cursor: p.cursor === true, semImagens: p.semImagens === true, linha: p.linha === true, esquerda: p.esquerda === true,
+                saturacao: [0, 1, 2].includes(p.saturacao) ? p.saturacao : 0, libras: p.libras !== false, // já vem ligado; só desliga se a pessoa desmarcar
             };
-        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '', links: false, espaco: false, fonte: false, cursor: false, semImagens: false, libras: true }; }
+        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '', links: false, espaco: false, fonte: false, cursor: false, semImagens: false, linha: false, esquerda: false, saturacao: 0, libras: true }; }
     }
 
     function gravar(p) {
@@ -46,12 +47,22 @@
     // Recursos extras de leitura e navegação (cada um liga uma classe no <html>, exceto Libras).
     const EXTRAS = [
         { chave: 'links', classe: 'a11y-links', rotulo: 'Links destacados' },
-        { chave: 'espaco', classe: 'a11y-espaco', rotulo: 'Espaçamento do texto' },
-        { chave: 'fonte', classe: 'a11y-fonte', rotulo: 'Fonte simples' },
+        { chave: 'espaco', classe: 'a11y-espaco', rotulo: 'Espaço entre letras' },
+        { chave: 'linha', classe: 'a11y-altura-linha', rotulo: 'Altura da linha' },
+        { chave: 'esquerda', classe: 'a11y-esquerda', rotulo: 'Alinhar à esquerda' },
+        { chave: 'fonte', classe: 'a11y-fonte', rotulo: 'Fonte para leitura' },
         { chave: 'cursor', classe: 'a11y-cursor', rotulo: 'Cursor grande' },
         { chave: 'semImagens', classe: 'a11y-sem-img', rotulo: 'Ocultar imagens' },
         { chave: 'libras', classe: null, rotulo: 'Libras (VLibras)' },
     ];
+
+    // Fonte para leitura (Atkinson Hyperlegible, licença livre, hospedada aqui): só é baixada se a pessoa ligar.
+    function carregarFonteLeitura() {
+        if (document.getElementById('a11y-fonte-css')) return;
+        const l = document.createElement('link');
+        l.id = 'a11y-fonte-css'; l.rel = 'stylesheet'; l.href = '/fonts/atkinson.css';
+        document.head.appendChild(l);
+    }
 
     // VLibras: tradutor gratuito de texto para Libras do governo federal (vlibras.gov.br).
     // Só é baixado quando a pessoa liga; ao ligar, o navegador conversa com o servidor do governo.
@@ -85,6 +96,9 @@
         raiz.classList.toggle('a11y-texto-2', p.texto === 2);
         raiz.classList.toggle('a11y-sem-movimento', p.semMovimento === true);
         EXTRAS.forEach((x) => { if (x.classe) raiz.classList.toggle(x.classe, p[x.chave] === true); });
+        raiz.classList.toggle('a11y-sat-1', p.saturacao === 1);
+        raiz.classList.toggle('a11y-sat-2', p.saturacao === 2);
+        if (p.fonte === true) carregarFonteLeitura();
         if (p.libras === true) ligarLibras(); else esconderLibras();
         document.dispatchEvent(new CustomEvent('pibiex:a11y', { detail: { contraste, texto: p.texto, semMovimento: p.semMovimento === true } }));
     }
@@ -98,7 +112,7 @@
             apontar: p.apontar === true,
             velocidade: p.velocidade,
             voz: p.voz,
-            links: p.links, espaco: p.espaco, fonte: p.fonte, cursor: p.cursor, semImagens: p.semImagens, libras: p.libras,
+            links: p.links, espaco: p.espaco, fonte: p.fonte, cursor: p.cursor, semImagens: p.semImagens, linha: p.linha, esquerda: p.esquerda, saturacao: p.saturacao, libras: p.libras,
         };
     }
 
@@ -188,6 +202,14 @@
                         </div>
                     </div>
                     <div class="a11y-linha">
+                        <div class="texto"><p class="titulo" id="a11y-t6">Cores</p></div>
+                        <div class="a11y-segmentos" role="radiogroup" aria-labelledby="a11y-t6">
+                            <button type="button" role="radio" data-sat="0" aria-checked="false">Normal</button>
+                            <button type="button" role="radio" data-sat="1" aria-checked="false">Suaves</button>
+                            <button type="button" role="radio" data-sat="2" aria-checked="false">Cinza</button>
+                        </div>
+                    </div>
+                    <div class="a11y-linha">
                         <div class="texto"><p class="titulo" id="a11y-t3">Reduzir animações</p></div>
                         <button type="button" class="a11y-chave" role="switch" id="a11y-movimento" aria-labelledby="a11y-t3" aria-checked="false"></button>
                     </div>
@@ -208,6 +230,7 @@
         const chaveMov = el.querySelector('#a11y-movimento');
         const segmentos = [...el.querySelectorAll('[data-texto]')];
         const tilesExtras = [...el.querySelectorAll('[data-extra]')];
+        const segSat = [...el.querySelectorAll('[data-sat]')];
 
         const chaveApontar = el.querySelector('#a11y-apontar');
         const selVoz = el.querySelector('#a11y-voz');
@@ -222,10 +245,12 @@
             chaveMov.setAttribute('aria-checked', String(e.semMovimento));
             segmentos.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.texto) === e.texto)));
             tilesExtras.forEach((b) => b.setAttribute('aria-checked', String(e[b.dataset.extra] === true)));
+            segSat.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.sat) === e.saturacao)));
         }
 
         chaveContraste.onclick = () => { mudar({ contraste: !estado().contraste }); desenhar(); };
         chaveMov.onclick = () => { mudar({ semMovimento: !estado().semMovimento }); desenhar(); };
+        segSat.forEach((b) => { b.onclick = () => { mudar({ saturacao: Number(b.dataset.sat) }); desenhar(); }; });
         tilesExtras.forEach((b) => { b.onclick = () => { mudar({ [b.dataset.extra]: !estado()[b.dataset.extra] }); desenhar(); }; });
         segmentos.forEach((b) => { b.onclick = () => { mudar({ texto: Number(b.dataset.texto) }); desenhar(); }; });
         el.querySelector('#a11y-restaurar').onclick = () => {
