@@ -76,20 +76,29 @@
                 return;
             }
 
-            container.innerHTML = recursos.map(r => `
-                <${r.arquivo_caminho ? `button type="button" onclick="abrirRecurso('${escaparHtml(r.id)}')"` : `a href="${escaparHtml(urlSegura(r.url))}" target="_blank" rel="noopener"`}
-                   class="w-full text-left flex items-center gap-4 bg-white rounded-lg p-4 border hover:shadow-sm transition" style="border-color: var(--pibiex-borda);">
+            container.innerHTML = recursos.map((r) => {
+                const arquivo = !!r.arquivo_caminho;
+                const miolo = `
                     <div class="shrink-0" style="color: var(--pibiex-texto-suave);">${icone(ICONE_POR_TIPO[r.tipo] || 'link', 26)}</div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <p class="font-semibold text-[14.5px]" style="color: var(--pibiex-texto);">${escaparHtml(r.titulo)}</p>
                             <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0" style="background: var(--pibiex-papel); color: var(--pibiex-tinta);">${escaparHtml(ROTULO_TIPO[r.tipo] || r.tipo)}</span>
                         </div>
                         ${r.descricao ? `<p class="text-xs mt-0.5" style="color: var(--pibiex-texto-suave);">${escaparHtml(r.descricao)}</p>` : ''}
-                    </div>
-                    <span class="text-sm shrink-0" style="color: var(--pibiex-texto-suave);">${r.arquivo_caminho ? 'Ler agora' : 'Abrir →'}</span>
-                </${r.arquivo_caminho ? 'button' : 'a'}>
-            `).join('');
+                    </div>`;
+                const classe = 'flex items-center gap-4 bg-white rounded-lg p-4 border hover:shadow-sm transition';
+                if (!arquivo) {
+                    return `<a href="${escaparHtml(urlSegura(r.url))}" target="_blank" rel="noopener" class="${classe}" style="border-color: var(--pibiex-borda);">${miolo}
+                        <span class="text-sm shrink-0" style="color: var(--pibiex-texto-suave);">Abrir →</span></a>`;
+                }
+                const tamanho = r.arquivo_tamanho ? ` · ${(r.arquivo_tamanho / 1024 / 1024 >= 1 ? (r.arquivo_tamanho / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(r.arquivo_tamanho / 1024)) + ' KB')}` : '';
+                return `<div class="${classe}" style="border-color: var(--pibiex-borda);">
+                    <button type="button" onclick="abrirRecurso('${escaparHtml(r.id)}')" class="flex items-center gap-4 flex-1 min-w-0 text-left">${miolo}
+                        <span class="text-sm shrink-0 font-semibold" style="color: var(--pibiex-tinta);">Ler agora</span></button>
+                    ${r.permite_baixar !== false ? `<button type="button" onclick="baixarRecurso('${escaparHtml(r.id)}', this)" class="shrink-0 text-sm font-bold px-3 py-2 rounded-lg border" style="border-color: var(--pibiex-borda); color: var(--pibiex-texto);" aria-label="Baixar ${escaparHtml(r.titulo)}">Baixar${tamanho}</button>` : ''}
+                </div>`;
+            }).join('');
         }
 
         async function pedirRecurso(recursoId, baixar) {
@@ -107,6 +116,20 @@
             return data;
         }
 
+        window.baixarRecurso = async (id, botao) => {
+            const original = botao.innerHTML;
+            botao.disabled = true; botao.textContent = 'Preparando…';
+            try {
+                const r = await pedirRecurso(id, true);
+                const link = document.createElement('a');
+                link.href = r.url; link.rel = 'noopener';
+                document.body.appendChild(link); link.click(); link.remove();
+            } catch (e) {
+                if (window.PibiexA11y) PibiexA11y.aviso(e.message || 'Não foi possível baixar agora.');
+            }
+            botao.disabled = false; botao.innerHTML = original;
+        };
+
         window.abrirRecurso = (id) => {
             const r = TODOS.find((x) => x.id === id);
             if (!r) return;
@@ -121,7 +144,7 @@
         async function carregar() {
             const { data, error } = await window.supabaseClient
                 .from('recursos_extras')
-                .select('id, titulo, tipo, url, descricao, categoria, ordem, arquivo_caminho, arquivo_tamanho')
+                .select('id, titulo, tipo, url, descricao, categoria, ordem, arquivo_caminho, arquivo_tamanho, permite_baixar')
                 .order('ordem', { ascending: true });
 
             if (error) {
