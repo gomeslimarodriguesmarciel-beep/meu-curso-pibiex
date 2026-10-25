@@ -209,6 +209,42 @@ html.a11y-sem-img img, html.a11y-sem-img video, html.a11y-sem-img picture, html.
 .text-amber-600 { color: #B45309; }
 .bg-green-600, .btn-verde { background-color: #15803D; }
 .bg-green-600:hover, .hover\:bg-green-700:hover { background-color: #166534; }
+/* cabeçalho e rodapé das páginas públicas (gerados por tools/gerar-navegacao.py) */
+.site-header { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: rgba(11,27,74,.96); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,.1); }
+.site-header .interno { max-width: 72rem; margin: 0 auto; padding: 0 20px; display: flex; flex-wrap: wrap; align-items: center; column-gap: 16px; }
+.site-header .marca { order: 1; display: flex; align-items: center; height: 58px; }
+.site-header .marca img { height: 2.5rem; width: auto; object-fit: contain; }
+.site-header .entrar { order: 2; margin-left: auto; background: #fff; color: #1E3A8A; font-weight: 800; font-size: 14px; padding: 9px 20px; border-radius: 999px; box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+.site-header .entrar:hover { background: #EFF6FF; }
+.site-header nav { order: 3; width: 100%; display: flex; gap: 2px 20px; overflow-x: auto; padding: 0 0 6px; scrollbar-width: none; }
+.site-header nav::-webkit-scrollbar { display: none; }
+.site-header nav a { color: #DBEAFE; font-weight: 700; font-size: 14px; padding: 8px 2px; border-bottom: 2px solid transparent; white-space: nowrap; }
+.site-header nav a:hover { color: #fff; }
+.site-header nav a[aria-current="page"] { color: #fff; border-bottom-color: #A3E635; }
+.site-header a:focus-visible, .site-footer a:focus-visible { outline: 3px solid #A3E635; outline-offset: 3px; border-radius: 6px; }
+@media (min-width: 768px) {
+  .site-header .interno { flex-wrap: nowrap; padding: 0 32px; }
+  .site-header .marca { height: 64px; }
+  .site-header nav { order: 2; width: auto; margin: 0 auto; padding: 0; gap: 4px 28px; overflow: visible; }
+  .site-header .entrar { order: 3; margin-left: 0; }
+}
+main section[id] { scroll-margin-top: 7rem; }
+@media (min-width: 768px) { main section[id] { scroll-margin-top: 5rem; } }
+.site-footer { background: #0B1B4A; color: #DBEAFE; }
+.site-footer .interno { max-width: 72rem; margin: 0 auto; padding: 48px 20px 32px; display: grid; gap: 32px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .site-footer .interno { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .site-footer .interno { grid-template-columns: 1.4fr 1fr 1fr 1.2fr; padding: 56px 32px 36px; } }
+.site-footer .sobre-rodape img { height: 2.25rem; width: auto; margin-bottom: 12px; }
+.site-footer .sobre-rodape p { font-size: 13.5px; line-height: 1.6; color: rgba(219,234,254,.85); max-width: 22rem; margin: 0; }
+.site-footer h2 { font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: #A3E635; margin: 0 0 12px; }
+.site-footer ul { list-style: none; margin: 0; padding: 0; }
+.site-footer li { margin: 0 0 8px; }
+.site-footer nav a { color: #DBEAFE; font-size: 14px; font-weight: 600; }
+.site-footer nav a:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.site-footer .credito { border-top: 1px solid rgba(255,255,255,.12); }
+.site-footer .credito p { max-width: 72rem; margin: 0 auto; padding: 18px 20px; font-size: 12.5px; color: rgba(219,234,254,.8); }
+@media (min-width: 1024px) { .site-footer .credito p { padding: 18px 32px; } }
+html.a11y-contraste .site-header nav a, html.a11y-contraste .site-footer nav a { color: #fff; }
 .a11y-sec { margin: 0 0 4px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #475569; }
 .a11y-bloco { padding: 14px 20px 4px; }
 .a11y-bloco .a11y-linha { padding: 11px 0; }

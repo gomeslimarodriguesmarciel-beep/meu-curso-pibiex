@@ -81,40 +81,32 @@
     .pontos { display: flex; gap: 8px; }
     .pontos button { width: 11px; height: 11px; border-radius: 50%; padding: 0; border: 0; background: rgba(255,255,255,.35); }
     .pontos button[aria-current="true"] { background: var(--pibiex-lima); width: 26px; border-radius: 6px; }
-    .btn-voltar { display: inline-flex; align-items: center; gap: 8px; color: #DBEAFE; font-weight: 800; font-size: 13.5px; border: 1.5px solid rgba(255,255,255,.3); border-radius: 999px; padding: 8px 16px; }
-    .btn-voltar:hover { background: rgba(255,255,255,.1); color: #fff; }
 </style>
 </head>
 <body class="min-h-screen" style="color: var(--pibiex-texto);">
 
-<!-- ================= NAV ================= -->
-<header class="fixed top-0 inset-x-0 z-40 backdrop-blur-md bg-[#0B1B4A]/95 border-b border-white/10">
-    <div class="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
-        <a href="index.html" class="hidden sm:flex items-center gap-3" aria-label="PIBIEX Digital, página inicial">
-            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital" class="h-10 w-auto object-contain">
+<!--NAV-->
+<header class="site-header">
+    <div class="interno">
+        <a href="index.html" class="marca" aria-label="PIBIEX Digital, início">
+            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
         </a>
-        <nav class="hidden md:flex items-center gap-8 text-sm font-bold text-blue-100" aria-label="Seções desta página">
-            <a href="#proposito" class="hover:text-white transition">Propósito</a>
-            <a href="#como-funciona" class="hover:text-white transition">Como funciona</a>
-            <a href="#galeria" class="hover:text-white transition">Telas</a>
-            <a href="#recursos" class="hover:text-white transition">Recursos</a>
-            <a href="#acessibilidade" class="hover:text-white transition">Acessibilidade</a>
-            <a href="#privacidade" class="hover:text-white transition">Privacidade</a>
-            <a href="demo/" class="hover:text-white transition">Demonstração</a>
+        <nav aria-label="Principal">
+            <a href="index.html">Início</a>
+            <a href="sobre.html" aria-current="page">Sobre</a>
+            <a href="demo/">Demonstração</a>
+            <a href="transparencia.html">Transparência</a>
         </nav>
-        <div class="flex items-center gap-3">
-            <a href="index.html" class="btn-voltar"><span aria-hidden="true">←</span> Início</a>
-            <a href="login.html" class="bg-white text-[#1E3A8A] font-extrabold text-sm px-5 py-2.5 rounded-full hover:bg-blue-50 transition shadow-lg">Entrar</a>
-        </div>
+        <a href="login.html" class="entrar">Entrar</a>
     </div>
 </header>
+<!--/NAV-->
 
 <main id="topo">
 
 <!-- ================= HERO ================= -->
-<section class="hero-bg relative overflow-hidden pt-32 pb-16 md:pt-40 md:pb-20 px-5">
+<section class="hero-bg relative overflow-hidden pt-40 pb-16 md:pt-40 md:pb-20 px-5">
     <div class="max-w-4xl mx-auto relative">
-        <a href="index.html" class="btn-voltar mb-6"><span aria-hidden="true">←</span> Voltar para a página inicial</a>
         <p class="rotulo mb-4" style="color: var(--pibiex-lima);">Sobre a plataforma</p>
         <h1 class="balance text-white text-4xl sm:text-5xl font-black leading-[1.08] mb-6">
             Um só lugar para ensinar, praticar e acompanhar o curso de Inteligência Artificial.
@@ -124,6 +116,7 @@
             atividades com correção, desafios, frequência, comunicação com a turma e acompanhamento do professor,
             com acessibilidade e proteção de dados desde o projeto.
         </p>
+        <p class="text-blue-100/70 text-xs font-bold uppercase tracking-[0.16em] mb-3">Nesta página</p>
         <div class="indice flex flex-wrap gap-2">
             <a href="#proposito">Propósito</a>
             <a href="#galeria">Telas</a>
@@ -199,7 +192,7 @@
                 <button type="button" id="pausa" aria-label="Pausar a passagem automática" style="font-size:13px">❚❚</button>
             </div>
         </div>
-        <p class="mt-4 text-blue-100/70 text-xs">As capturas usam dados de exemplo; nenhum aluno real aparece. <a href="demo/" class="underline font-bold text-white">Quer testar você mesmo? Abra a demonstração.</a></p>
+        <p class="mt-4 text-blue-100/70 text-xs">As capturas usam dados de exemplo; nenhum aluno real aparece. <a href="demo/" class="underline font-bold text-white">Quer testar você mesmo? Ver a demonstração.</a></p>
     </div>
 </section>
 
@@ -416,17 +409,42 @@
 </section>
 </main>
 
-<footer class="py-8 px-5" style="background: #0B1B4A;">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5">
-            <img src="logo-pibiex-digital-branca.png" alt="" class="h-8 w-auto object-contain">
-            <span class="text-blue-100/80 text-xs font-bold tracking-wide">PIBIEX Digital · Site independente, não oficial da UNITINS</span>
+<!--RODAPE-->
+<footer class="site-footer">
+    <div class="interno">
+        <div class="sobre-rodape">
+            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+            <p>Plataforma de apoio a cursos de Inteligência Artificial, com acessibilidade e proteção de dados.</p>
         </div>
-        <p class="text-blue-100/70 text-xs font-medium tracking-wide">
-            <a href="index.html" class="underline hover:text-white">Início</a> · <a href="transparencia.html" class="underline hover:text-white">Transparência</a> · <a href="termos.html" class="underline hover:text-white">Termo de Uso</a> · <a href="privacidade.html" class="underline hover:text-white">Política de Privacidade</a>
-        </p>
+        <nav aria-label="Plataforma">
+            <h2>Plataforma</h2>
+            <ul>
+                <li><a href="index.html">Início</a></li>
+                <li><a href="sobre.html">Sobre</a></li>
+                <li><a href="demo/">Demonstração</a></li>
+                <li><a href="transparencia.html">Transparência</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Informações legais">
+            <h2>Legal</h2>
+            <ul>
+                <li><a href="termos.html">Termo de Uso</a></li>
+                <li><a href="privacidade.html">Política de Privacidade</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Acesso">
+            <h2>Acesso</h2>
+            <ul>
+                <li><a href="login.html">Sou aluno</a></li>
+                <li><a href="login.html?perfil=professor">Sou professor / administrador</a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="credito">
+        <p>Desenvolvido por <strong>Marciel Gomes Lima Rodrigues</strong> · Site independente, não oficial da UNITINS</p>
     </div>
 </footer>
+<!--/RODAPE-->
 
 <script>
 (function () {

@@ -113,6 +113,35 @@ const inline = (txt) => [...txt.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*
     verificar('toda página tem as proteções básicas de cabeçalho', p);
 }
 
+// 5c. Navegação padronizada nas páginas públicas já migradas (gerada por tools/gerar-navegacao.py)
+{
+    const p = [];
+    const migradas = ['index.html', 'sobre.html'];
+    const pega = (t, ini, fim) => (t.match(new RegExp(`<!--${ini}-->([\\s\\S]*?)<!--/${fim}-->`)) || [])[1];
+    const navs = [], rodapes = [];
+    for (const nome of migradas) {
+        const t = ler(path.join(RAIZ, nome));
+        const nav = pega(t, 'NAV', 'NAV'), rod = pega(t, 'RODAPE', 'RODAPE');
+        if (!nav) p.push(`${nome}: faltam os marcadores do cabeçalho (rode: python tools/gerar-navegacao.py)`);
+        if (!rod) p.push(`${nome}: faltam os marcadores do rodapé`);
+        if (nav && (nav.match(/aria-current="page"/g) || []).length !== 1) p.push(`${nome}: o cabeçalho deve marcar exatamente um item como página atual`);
+        if (nav) navs.push(nav.replace(/ aria-current="page"/g, ''));
+        if (rod) rodapes.push(rod);
+    }
+    if (navs.length === migradas.length && new Set(navs).size !== 1) p.push('o cabeçalho é diferente entre as páginas migradas (rode: python tools/gerar-navegacao.py)');
+    if (rodapes.length === migradas.length && new Set(rodapes).size !== 1) p.push('o rodapé é diferente entre as páginas migradas (rode: python tools/gerar-navegacao.py)');
+    // o rótulo do link para uma página é sempre o mesmo no cabeçalho/rodapé
+    const rotulos = {};
+    for (const nome of migradas) {
+        const t = ler(path.join(RAIZ, nome));
+        for (const bloco of [pega(t, 'NAV', 'NAV'), pega(t, 'RODAPE', 'RODAPE')]) {
+            for (const m of (bloco || '').matchAll(/<a\b[^>]*href="([^"#]+)"[^>]*>([^<]+)<\/a>/g)) (rotulos[m[1]] = rotulos[m[1]] || new Set()).add(m[2].trim());
+        }
+    }
+    for (const [alvo, nomes] of Object.entries(rotulos)) if (nomes.size > 1 && !/^login\.html/.test(alvo)) p.push(`o destino ${alvo} tem rótulos diferentes: ${[...nomes].join(' / ')}`);
+    verificar('cabeçalho e rodapé padronizados (index e sobre)', p);
+}
+
 // 6. Texto digitado por usuário nunca entra como HTML sem escapar nas telas do aluno
 {
     const p = [];

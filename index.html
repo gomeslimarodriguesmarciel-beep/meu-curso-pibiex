@@ -107,28 +107,26 @@
 </head>
 <body class="min-h-screen" style="color: var(--pibiex-texto);">
 
-<!-- ================= NAV ================= -->
-<header class="fixed top-0 inset-x-0 z-40 backdrop-blur-md bg-[#0B1B4A]/95 border-b border-white/10">
-    <div class="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
-        <a href="#topo" class="flex items-center gap-3" aria-label="PIBIEX Digital, topo da página">
-            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital" class="h-10 w-auto object-contain">
+<!--NAV-->
+<header class="site-header">
+    <div class="interno">
+        <a href="index.html" class="marca" aria-label="PIBIEX Digital, início">
+            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
         </a>
-        <nav class="hidden md:flex items-center gap-7 text-sm font-bold text-blue-100" aria-label="Seções da página">
-            <a href="#recursos" class="hover:text-white transition">Recursos</a>
-            <a href="#plataforma" class="hover:text-white transition">Na prática</a>
-            <a href="#confianca" class="hover:text-white transition">Confiança</a>
-            <a href="#duvidas" class="hover:text-white transition">Dúvidas</a>
-            <a href="demo/" class="hover:text-white transition">Demonstração</a>
-            <a href="#programa" class="hover:text-white transition">O programa</a>
-            <a href="sobre.html" class="hover:text-white transition">Sobre</a>
+        <nav aria-label="Principal">
+            <a href="index.html" aria-current="page">Início</a>
+            <a href="sobre.html">Sobre</a>
+            <a href="demo/">Demonstração</a>
+            <a href="transparencia.html">Transparência</a>
         </nav>
-        <a href="login.html" class="bg-white text-[#1E3A8A] font-extrabold text-sm px-5 py-2.5 rounded-full hover:bg-blue-50 transition shadow-lg">Entrar</a>
+        <a href="login.html" class="entrar">Entrar</a>
     </div>
 </header>
+<!--/NAV-->
 
 <!-- ================= HERO ================= -->
 <main id="topo">
-<section class="hero-bg relative overflow-hidden pt-28 pb-16 md:pt-40 md:pb-24 px-5">
+<section class="hero-bg relative overflow-hidden pt-36 pb-16 md:pt-40 md:pb-24 px-5">
     <div class="absolute -top-24 -right-24 w-96 h-96 halo pointer-events-none"></div>
     <div class="max-w-6xl mx-auto relative grid lg:grid-cols-[1.15fr_.85fr] gap-12 lg:gap-14 items-center">
         <div>
@@ -140,8 +138,7 @@
                 A plataforma que organiza o curso de Inteligência Artificial.
             </h1>
             <p class="text-blue-100/90 text-base md:text-lg leading-relaxed max-w-xl mb-9">
-                Aulas e materiais, atividades com correção, desafios semanais, frequência e comunicação da turma em um só lugar,
-                com acessibilidade em Libras e proteção de dados desde o projeto.
+                Para alunos e professores do curso de extensão em Inteligência Artificial de Ponte Alta do Tocantins: aulas e materiais, atividades com correção, desafios, frequência e comunicação da turma em um só lugar, com acessibilidade em Libras e proteção de dados desde o projeto.
             </p>
             <div class="flex flex-wrap gap-4 mb-5">
                 <a href="login.html" class="group inline-flex items-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full transition transform hover:scale-105 shadow-xl" style="background: var(--pibiex-lima); color: #0B1B4A;">
@@ -152,8 +149,8 @@
                 </a>
             </div>
             <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-                <a href="demo/" class="inline-flex items-center gap-2 text-sm font-extrabold text-white underline underline-offset-4 decoration-[#A3E635] decoration-2 hover:text-[#A3E635]">▶ Ver a plataforma funcionando</a>
-                <a href="sobre.html" class="inline-flex items-center gap-1.5 text-sm font-bold text-blue-100 hover:text-white underline underline-offset-4 decoration-white/30">Conhecer em detalhes →</a>
+                <a href="demo/" class="inline-flex items-center gap-2 text-sm font-extrabold text-white underline underline-offset-4 decoration-[#A3E635] decoration-2 hover:text-[#A3E635]">▶ Ver a demonstração</a>
+                <a href="sobre.html" class="inline-flex items-center gap-1.5 text-sm font-bold text-blue-100 hover:text-white underline underline-offset-4 decoration-white/30">Conhecer a plataforma →</a>
             </div>
         </div>
 
@@ -231,7 +228,7 @@
                 <h3 class="text-white text-xl md:text-2xl font-black mb-2">Veja funcionando, como aluna ou como professor.</h3>
                 <p class="text-blue-100/85 text-sm leading-relaxed max-w-xl">Uma turma de exemplo, com atividades para enviar, chamada para abrir e trabalhos para corrigir. Tudo roda no seu navegador, sem cadastro e sem enviar dados.</p>
             </div>
-            <a href="demo/" class="inline-flex items-center justify-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full shrink-0 transition transform hover:scale-105 shadow-xl" style="background: var(--pibiex-lima); color: #0B1B4A;">Abrir a demonstração →</a>
+            <a href="demo/" class="inline-flex items-center justify-center gap-2 font-extrabold text-[15px] px-7 py-4 rounded-full shrink-0 transition transform hover:scale-105 shadow-xl" style="background: var(--pibiex-lima); color: #0B1B4A;">Ver a demonstração →</a>
         </div>
         <p class="mt-6"><a href="sobre.html#galeria" class="font-extrabold text-sm underline underline-offset-4" style="color: #1E3A8A;">Ver as telas da plataforma →</a></p>
     </div>
@@ -424,21 +421,42 @@
 </section>
 </main>
 
-<!-- ================= FOOTER ================= -->
-<footer class="py-8 px-5" style="background: #0B1B4A;">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5">
-            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital" class="h-8 w-auto object-contain">
-            <span class="text-blue-100/70 text-xs font-bold tracking-wide">PIBIEX Digital · Site independente, não oficial da UNITINS</span>
+<!--RODAPE-->
+<footer class="site-footer">
+    <div class="interno">
+        <div class="sobre-rodape">
+            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+            <p>Plataforma de apoio a cursos de Inteligência Artificial, com acessibilidade e proteção de dados.</p>
         </div>
-        <p class="text-blue-100/60 text-xs font-medium tracking-wide">
-            <a href="sobre.html" class="underline hover:text-white">Sobre</a> · <a href="transparencia.html" class="underline hover:text-white">Transparência</a> · <a href="termos.html" class="underline hover:text-white">Termo de Uso</a> · <a href="privacidade.html" class="underline hover:text-white">Política de Privacidade</a>
-        </p>
-        <p class="text-blue-100/60 text-xs font-medium tracking-wide">
-            Desenvolvido por <span class="font-bold text-white">MARCIEL GOMES LIMA RODRIGUES</span>
-        </p>
+        <nav aria-label="Plataforma">
+            <h2>Plataforma</h2>
+            <ul>
+                <li><a href="index.html">Início</a></li>
+                <li><a href="sobre.html">Sobre</a></li>
+                <li><a href="demo/">Demonstração</a></li>
+                <li><a href="transparencia.html">Transparência</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Informações legais">
+            <h2>Legal</h2>
+            <ul>
+                <li><a href="termos.html">Termo de Uso</a></li>
+                <li><a href="privacidade.html">Política de Privacidade</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Acesso">
+            <h2>Acesso</h2>
+            <ul>
+                <li><a href="login.html">Sou aluno</a></li>
+                <li><a href="login.html?perfil=professor">Sou professor / administrador</a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="credito">
+        <p>Desenvolvido por <strong>Marciel Gomes Lima Rodrigues</strong> · Site independente, não oficial da UNITINS</p>
     </div>
 </footer>
+<!--/RODAPE-->
 
 <script>
 if (window.PibiexA11y) PibiexA11y.botaoFlutuante();
