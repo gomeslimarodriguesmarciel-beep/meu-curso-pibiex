@@ -190,6 +190,7 @@
         const CMP_LOGOS = { 'gemini': '/img/ia/gemini.png', 'llama': '/img/ia/llama.png', 'gpt-oss': '/img/ia/gpt-oss.png' };
         const CMP_NOMES = { 'gemini': ['Gemini', 'Google'], 'llama': ['Llama', 'Meta'], 'gpt-oss': ['gpt-oss', 'OpenAI'] };
         let cmpOcupado = false;
+        const cmpFalhas = {};
 
         function cmpCartao(ia, corpoHtml, rodape) {
             const [nome, empresa] = CMP_NOMES[ia] || [ia, ''];
@@ -233,11 +234,57 @@
             const colunas = resultados.length === 3 ? 'md:grid-cols-3' : '';
             caixa.innerHTML = (exemplo ? '<p class="text-xs mb-2" style="color: var(--pibiex-texto-suave);">Exemplo da demonstração: na plataforma real, a sua pergunta é enviada às IAs e elas respondem de verdade.</p>' : '')
                 + `<div class="grid grid-cols-1 ${colunas} gap-4">` + resultados.map((r) => {
-                    if (!r.ok) return cmpCartao(r.ia, `<p class="text-sm" style="color: #92400E; background: #FEF3C7; border-radius: 8px; padding: 10px 12px;">${escaparHtml(r.erro || 'Esta IA não respondeu agora.')}</p>`, '');
+                    if (!r.ok) {
+                        if (r.detalhe) cmpFalhas[r.ia] = r.detalhe;
+                        const botao = r.detalhe ? `<button type="button" class="cmp-avisar text-xs font-bold mt-3 px-3" data-ia="${escaparHtml(r.ia)}" style="min-height: 36px; border-radius: 10px; border: 1.5px solid #92400E; color: #92400E; background: #fff;">Avisar o professor</button><p class="cmp-avisar-msg text-xs mt-2" role="status" style="color: var(--pibiex-texto-suave);"></p>` : '';
+                        return cmpCartao(r.ia, `<p class="text-sm" style="color: #92400E; background: #FEF3C7; border-radius: 8px; padding: 10px 12px;">${escaparHtml(r.erro || 'Esta IA não respondeu agora.')}</p>${botao}`, '');
+                    }
                     const seg = typeof r.ms === 'number' ? `Respondeu em ${(r.ms / 1000).toFixed(1).replace('.', ',')} s` : '';
                     return cmpCartao(r.ia, `<div class="text-sm" style="color: var(--pibiex-texto); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55;">${cmpFormatar(r.resposta)}</div>`, seg);
                 }).join('') + '</div>';
         }
+
+        // Manda o detalhe do erro direto para o professor, no chat privado do aluno (sem texto da pergunta).
+        async function cmpAvisar(ia, botao) {
+            const msg = botao.parentElement.querySelector('.cmp-avisar-msg');
+            const dizer = (t) => { if (msg) msg.textContent = t; };
+            const detalhe = cmpFalhas[ia];
+            if (!detalhe) return;
+            botao.disabled = true;
+            dizer('Enviando…');
+            try {
+                const token = localStorage.getItem('pibiex_aluno_token');
+                const chamar = (corpo) => window.supabaseClient.functions.invoke('chat-privado', { body: { token, ...corpo } });
+                const { data: c } = await chamar({ acao: 'contatos' });
+                const equipe = ((c && c.contatos) || []).filter((x) => x.tipo === 'equipe');
+                const prof = equipe.find((x) => /admin/i.test(x.detalhe || '')) || equipe[0];
+                if (!prof) throw new Error('sem equipe');
+                const { data: conv } = await chamar({ acao: 'abrir', comTipo: 'equipe', comId: prof.id });
+                if (conv && conv.simulado) { dizer('Modo simulação: o aviso não foi enviado de verdade.'); return; }
+                if (!conv || !conv.conversaId) throw new Error('sem conversa');
+                const hora = new Date().toLocaleString('pt-BR');
+                const modo = document.getElementById('cmp-todas').checked ? 'comparando as 3 IAs' : 'perguntando a uma IA';
+                const texto = [
+                    'Aviso automático do comparador de IAs',
+                    `IA com problema: ${(CMP_NOMES[ia] || [ia])[0]}`,
+                    `Detalhe técnico: ${detalhe}`,
+                    `Quando: ${hora}`,
+                    `Modo: ${modo}`,
+                    `Tela: ${window.innerWidth} px · ${String(navigator.userAgent || '').slice(0, 110)}`,
+                    '(O texto da pergunta não é enviado.)',
+                ].join('\n');
+                const { data: env } = await chamar({ acao: 'enviar', conversaId: conv.conversaId, mensagem: texto });
+                if (!env || !env.enviada) throw new Error((env && env.erro) || 'falhou');
+                dizer('Aviso enviado ao professor. Obrigado!');
+            } catch (e) {
+                botao.disabled = false;
+                dizer('Não consegui enviar o aviso agora. Tente de novo em instantes.');
+            }
+        }
+        document.getElementById('cmp-resultado').addEventListener('click', (e) => {
+            const b = e.target.closest('.cmp-avisar');
+            if (b) cmpAvisar(b.dataset.ia, b);
+        });
 
         async function cmpAtualizarSaldo() {
             try {
