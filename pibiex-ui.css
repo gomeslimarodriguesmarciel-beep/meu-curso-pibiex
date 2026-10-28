@@ -130,9 +130,8 @@ html.a11y-contraste [style*="gradient"] [class*="text-blue-200"],
 html.a11y-contraste .hero-bg [class*="text-blue-"], html.a11y-contraste .hero-bg [class*="text-white/"],
 html.a11y-contraste footer [class*="text-blue-"], html.a11y-contraste footer [class*="text-white/"], html.a11y-contraste footer a { color: #FFFFFF !important; }
 
-/* Painel de Controle (tema escuro próprio): o cinza-azulado dos rótulos era fraco demais. */
-html body .painel-fundo { --text-muted: #909ACB; --text-secondary: #C3CAEA; }
-html.a11y-contraste body .painel-fundo { --text-muted: #E8EBFF; --text-secondary: #FFFFFF; --border: rgba(255,255,255,.55); --status-muted: #AEB6E6; }
+/* Painel de Controle (agora no tema claro, igual ao resto): alto contraste reforça texto e bordas. */
+html.a11y-contraste body .painel-fundo { --text-muted: #111827; --text-secondary: #111827; --border: #111827; --status-muted: #374151; }
 html.a11y-contraste aside { background: #0B1B4A !important; }
 html.a11y-contraste aside a { opacity: 1; }
 html.a11y-contraste aside a[aria-current="page"] { outline: 2px solid #FFFFFF; outline-offset: -2px; background: rgba(255,255,255,.16) !important; }
@@ -274,6 +273,19 @@ html.a11y-contraste .site-header nav a, html.a11y-contraste .site-footer nav a {
 .botao-sair:hover { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
 .botao-sair:focus-visible { outline: 3px solid #1E3A8A; outline-offset: 2px; }
 html.a11y-contraste .botao-sair { border-color: #111827; color: #000; }
+/* Área da equipe: mesma linguagem visual da área do aluno (botões, títulos, cartões) */
+.area-equipe .bg-gray-900 { background-color: #1E3A8A; }
+.area-equipe .bg-gray-900:hover, .area-equipe .hover\:bg-gray-800:hover { background-color: #172F70; }
+.area-equipe main h1 { color: #111827; letter-spacing: -.01em; }
+.area-equipe main h1 + p { font-size: .875rem; line-height: 1.55; color: #6B7280; }
+.area-equipe main .border-gray-100 { border-color: #E5E7EB; }
+.area-equipe main .shadow-sm { box-shadow: none; }
+.area-equipe main .rounded-2xl { border-radius: .75rem; }
+/* campo de arquivo e foco dos campos: iguais em todas as áreas */
+input[type="file"]::file-selector-button { border: 1.5px solid #CBD5E1; background: #fff; color: #111827; font: 700 13px 'Inter', system-ui, sans-serif; padding: 8px 14px; border-radius: 10px; margin-right: 12px; cursor: pointer; }
+input[type="file"]::file-selector-button:hover { background: #F1F5F9; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #1E3A8A; outline-offset: 1px; border-color: #1E3A8A; }
+html.a11y-contraste input[type="file"]::file-selector-button { border-color: #111827; }
 .a11y-sec { margin: 0 0 4px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #475569; }
 .a11y-bloco { padding: 14px 20px 4px; }
 .a11y-bloco .a11y-linha { padding: 11px 0; }
