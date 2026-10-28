@@ -139,33 +139,48 @@ function avatarComSeloHtml(nome, fotoUrl, tamanhoPx, selo) {
 // uma categoria distinta do curso).
 const GRUPOS_MENU = [
     {
-        rotulo: 'Painel',
+        rotulo: '',
         itens: [
             { id: 'inicio',     label: 'Início',         href: 'inicio.html' },
-            { id: 'cronograma', label: 'Cronograma',     href: 'cronograma.html' },
-            { id: 'conteudo',   label: 'Conteúdo',       href: 'conteudo.html' },
-            { id: 'atividades', label: 'Atividades',     href: 'atividades.html' },
-            { id: 'notas',      label: 'Bloco de notas',  href: 'notas.html' },
-            { id: 'frequencia', label: 'Minha Frequência', href: 'frequencia.html' },
-            { id: 'chat',       label: 'Chat da Turma',  href: 'chat.html' },
-            { id: 'enquetes',   label: 'Enquetes',       href: 'enquetes.html' },
         ],
     },
     {
-        rotulo: 'Recursos de IA',
+        rotulo: 'Aprender',
         itens: [
+            { id: 'cronograma',     label: 'Cronograma',        href: 'cronograma.html' },
+            { id: 'conteudo',       label: 'Conteúdo',          href: 'conteudo.html' },
             { id: 'ferramentas-ia', label: 'Ferramentas de IA', href: 'ferramentas-ia.html' },
             { id: 'prompts',        label: 'Banco de Prompts',  href: 'prompts.html' },
+            { id: 'recursos',       label: 'Recursos Extras',   href: 'recursos.html' },
+        ],
+    },
+    {
+        rotulo: 'Praticar',
+        itens: [
+            { id: 'atividades',     label: 'Atividades',        href: 'atividades.html' },
             { id: 'desafios',       label: 'Desafios Semanais', href: 'desafios.html' },
-            { id: 'galeria',        label: 'Galeria',           href: 'galeria.html' },
             { id: 'laboratorio-ia', label: 'Laboratório de IA', href: 'laboratorio-ia.html' },
+        ],
+    },
+    {
+        rotulo: 'Turma',
+        itens: [
+            { id: 'chat',     label: 'Chat da Turma', href: 'chat.html' },
+            { id: 'enquetes', label: 'Enquetes',      href: 'enquetes.html' },
+            { id: 'galeria',  label: 'Galeria',       href: 'galeria.html' },
+        ],
+    },
+    {
+        rotulo: 'Acompanhar',
+        itens: [
+            { id: 'frequencia', label: 'Minha Frequência', href: 'frequencia.html' },
+            { id: 'notas',      label: 'Bloco de notas',   href: 'notas.html' },
         ],
     },
     {
         rotulo: 'Ajuda',
         itens: [
-            { id: 'faq',      label: 'FAQ',             href: 'faq.html' },
-            { id: 'recursos', label: 'Recursos Extras', href: 'recursos.html' },
+            { id: 'faq', label: 'Perguntas Frequentes', href: 'faq.html' },
         ],
     },
 ];
@@ -217,6 +232,7 @@ const CAMINHOS_ICONE = {
     anexo: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
     enviar: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
     voltar: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    sair: '<path d="M9 4H5v16h4"/><path d="M16 8l4 4-4 4M20 12H9"/>',
     sorriso: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',
     sucesso: '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/>',
     coracao: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
@@ -256,7 +272,7 @@ function montarMenuLateral(paginaAtivaId) {
 
         return `
             <div class="mb-5">
-                <p class="px-4 mb-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400">${grupo.rotulo}</p>
+                ${grupo.rotulo ? `<p class="px-4 mb-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-400">${grupo.rotulo}</p>` : ''}
                 <div class="space-y-0.5">${itensHtml}</div>
             </div>
         `;
@@ -271,7 +287,7 @@ function montarMenuLateral(paginaAtivaId) {
                style="background: var(--pibiex-gradiente);">
             <div class="pibiex-textura-grade"></div>
             <div class="px-5 pb-6 mb-2 flex items-center justify-between gap-3 border-b border-white/10 relative">
-                <div class="flex items-center gap-3 min-w-0">
+                <a href="inicio.html" class="flex items-center gap-3 min-w-0" aria-label="PIBIEX, ir para o início">
                     <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-dourado);">
                         <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(163,230,53,.35);"></div>
                         <span class="fonte-display text-[var(--pibiex-dourado)] text-[10px] leading-none relative">PD</span>
@@ -280,10 +296,14 @@ function montarMenuLateral(paginaAtivaId) {
                         <p class="fonte-display text-white text-[15px] leading-tight truncate">PIBIEX</p>
                         <p class="text-[9.5px] font-bold uppercase tracking-[0.14em] text-[var(--pibiex-dourado)]">Inteligência Artificial</p>
                     </div>
-                </div>
+                </a>
                 <button onclick="window.fecharMenuAluno()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">${icone('fechar', 18)}</button>
             </div>
             <nav class="px-3 overflow-y-auto flex-1 relative">${gruposHtml}</nav>
+            <div class="px-3 pt-3 mt-2 border-t border-white/10 relative space-y-0.5">
+                <a href="${MODO_DEMO ? '../demo/' : '../index.html'}" class="flex items-center gap-3 pl-4 pr-3 py-2 rounded-md text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition">${icone('voltar', 16)}<span>${MODO_DEMO ? 'Voltar à demonstração' : 'Voltar ao site'}</span></a>
+                <button type="button" onclick="sairAluno()" class="w-full flex items-center gap-3 pl-4 pr-3 py-2 rounded-md text-[13px] font-semibold text-red-200 hover:text-white hover:bg-red-500/25 transition">${icone('sair', 16)}<span>${MODO_DEMO ? 'Sair da demonstração' : 'Sair da conta'}</span></button>
+            </div>
         </aside>
     `;
 }
@@ -316,6 +336,7 @@ function montarTopo(dados) {
             </div>
             <div class="flex items-center gap-3 shrink-0">
             <div id="indicador-enquete" class="min-w-0"></div>
+            <button type="button" onclick="sairAluno()" class="botao-sair" title="${MODO_DEMO ? 'Sair da demonstração' : 'Sair da conta'}">${icone('sair', 16)}<span class="hidden sm:inline">Sair</span></button>
             <div class="relative shrink-0">
                 <button onclick="window.alternarMenuContaAluno()" id="botao-conta-aluno" class="flex items-center rounded-full transition hover:opacity-80" aria-label="Minha conta">
                     ${avatarHtml(dados.nomeCompleto, dados.fotoUrl, 34)}
@@ -368,6 +389,11 @@ document.addEventListener('click', (e) => {
 });
 
 async function sairAluno() {
+    if (MODO_DEMO) {
+        try { Object.keys(sessionStorage).filter((k) => k.startsWith('demo:') || k.startsWith('pibiex_demo')).forEach((k) => sessionStorage.removeItem(k)); } catch (e) { /* ok */ }
+        window.location.href = '/demo/';
+        return;
+    }
     const token = localStorage.getItem('pibiex_aluno_token');
     if (token) {
         try { await window.supabaseClient.functions.invoke('logout-aluno', { body: { token } }); }

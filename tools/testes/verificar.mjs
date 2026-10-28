@@ -116,7 +116,8 @@ const inline = (txt) => [...txt.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*
 // 5c. Navegação padronizada nas páginas públicas já migradas (gerada por tools/gerar-navegacao.py)
 {
     const p = [];
-    const migradas = ['index.html', 'sobre.html'];
+    const migradas = ['index.html', 'sobre.html', 'demo/index.html', 'transparencia.html', 'privacidade.html', 'termos.html', 'login.html', '404.html'];
+    const comMenuAtivo = ['index.html', 'sobre.html', 'demo/index.html', 'transparencia.html'];
     const pega = (t, ini, fim) => (t.match(new RegExp(`<!--${ini}-->([\\s\\S]*?)<!--/${fim}-->`)) || [])[1];
     const navs = [], rodapes = [];
     for (const nome of migradas) {
@@ -124,12 +125,16 @@ const inline = (txt) => [...txt.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*
         const nav = pega(t, 'NAV', 'NAV'), rod = pega(t, 'RODAPE', 'RODAPE');
         if (!nav) p.push(`${nome}: faltam os marcadores do cabeçalho (rode: python tools/gerar-navegacao.py)`);
         if (!rod) p.push(`${nome}: faltam os marcadores do rodapé`);
-        if (nav && (nav.match(/aria-current="page"/g) || []).length !== 1) p.push(`${nome}: o cabeçalho deve marcar exatamente um item como página atual`);
-        if (nav) navs.push(nav.replace(/ aria-current="page"/g, ''));
+        const atuais = nav ? (nav.match(/aria-current="page"/g) || []).length : 0;
+        if (nav && comMenuAtivo.includes(nome) && atuais !== 1) p.push(`${nome}: o cabeçalho deve marcar exatamente um item como página atual`);
+        if (nav && !comMenuAtivo.includes(nome) && atuais !== 0) p.push(`${nome}: esta página não faz parte do menu, não deve marcar item atual`);
+        if (nav) navs.push(nav.replace(/ aria-current="page"/g, '').replace(/\s*<a href="\/login\.html" class="entrar">Entrar<\/a>/, ''));
         if (rod) rodapes.push(rod);
     }
     if (navs.length === migradas.length && new Set(navs).size !== 1) p.push('o cabeçalho é diferente entre as páginas migradas (rode: python tools/gerar-navegacao.py)');
     if (rodapes.length === migradas.length && new Set(rodapes).size !== 1) p.push('o rodapé é diferente entre as páginas migradas (rode: python tools/gerar-navegacao.py)');
+    // o botão Entrar existe em todas, menos no próprio login
+    for (const nome of migradas) { const nav = pega(ler(path.join(RAIZ, nome)), 'NAV', 'NAV') || ''; const tem = /class="entrar"/.test(nav); if (nome === 'login.html' ? tem : !tem) p.push(`${nome}: botão Entrar ${nome === 'login.html' ? 'não deve aparecer' : 'ausente'} no cabeçalho`); }
     // o rótulo do link para uma página é sempre o mesmo no cabeçalho/rodapé
     const rotulos = {};
     for (const nome of migradas) {
@@ -138,8 +143,42 @@ const inline = (txt) => [...txt.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*
             for (const m of (bloco || '').matchAll(/<a\b[^>]*href="([^"#]+)"[^>]*>([^<]+)<\/a>/g)) (rotulos[m[1]] = rotulos[m[1]] || new Set()).add(m[2].trim());
         }
     }
-    for (const [alvo, nomes] of Object.entries(rotulos)) if (nomes.size > 1 && !/^login\.html/.test(alvo)) p.push(`o destino ${alvo} tem rótulos diferentes: ${[...nomes].join(' / ')}`);
-    verificar('cabeçalho e rodapé padronizados (index e sobre)', p);
+    for (const [alvo, nomes] of Object.entries(rotulos)) if (nomes.size > 1 && !/^\/?login\.html/.test(alvo)) p.push(`o destino ${alvo} tem rótulos diferentes: ${[...nomes].join(' / ')}`);
+    verificar('cabeçalho e rodapé padronizados em todas as páginas públicas', p);
+}
+
+// 5d. Títulos: a aba e o título da página repetem o nome que a pessoa clicou no menu; "Sair" sempre visível; página 404
+{
+    const p = [];
+    const menuDe = (arq, nome) => {
+        const t = ler(path.join(RAIZ, arq));
+        const bloco = t.slice(t.indexOf(nome));
+        const fim = bloco.indexOf('\n];');
+        const mapa = {};
+        for (const m of bloco.slice(0, fim).matchAll(/label:\s*'([^']+)',\s*href:\s*'([^']+)'/g)) mapa[m[2]] = m[1];
+        return mapa;
+    };
+    const areas = { aluno: menuDe('aluno/shell.js', 'const GRUPOS_MENU = ['), admin: menuDe('admin/shell.js', 'const GRUPOS_MENU_EQUIPE = [') };
+    for (const area of Object.keys(areas)) {
+        for (const arq of fs.readdirSync(path.join(RAIZ, area)).filter((f) => f.endsWith('.html'))) {
+            const t = ler(path.join(RAIZ, area, arq));
+            if (/http-equiv="refresh"/.test(t)) continue;
+            const nome = arq === 'perfil.html' ? 'Meu Perfil' : areas[area][arq];
+            if (!nome) { p.push(`${area}/${arq}: não está no menu`); continue; }
+            const titulo = ((t.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '').trim();
+            if (titulo !== `${nome} · PIBIEX Digital`) p.push(`${area}/${arq}: título da aba deveria ser "${nome} · PIBIEX Digital" (está "${titulo}")`);
+            // a tela inicial usa uma saudação como título, por desenho
+            if (arq !== 'inicio.html') {
+                const h1 = ((t.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/) || [])[1] || '').replace(/<[^>]*>/g, '').trim();
+                if (h1 !== nome) p.push(`${area}/${arq}: título da página deveria ser "${nome}" (está "${h1}")`);
+            }
+        }
+    }
+    for (const arq of ['aluno/shell.js', 'admin/shell.js']) {
+        if (!/class="botao-sair"/.test(ler(path.join(RAIZ, arq)))) p.push(`${arq}: falta o botão "Sair" visível no topo`);
+    }
+    if (!fs.existsSync(path.join(RAIZ, '404.html'))) p.push('falta a página 404.html');
+    verificar('títulos iguais ao menu, botão "Sair" visível e página 404', p);
 }
 
 // 6. Texto digitado por usuário nunca entra como HTML sem escapar nas telas do aluno

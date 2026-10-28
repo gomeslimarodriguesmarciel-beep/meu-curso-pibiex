@@ -110,7 +110,7 @@ const GRUPOS_MENU_EQUIPE = [
     {
         rotulo: 'Ajuda',
         itens: [
-            { id: 'faq',         label: 'FAQ',                href: 'faq.html' },
+            { id: 'faq',         label: 'Perguntas Frequentes',                href: 'faq.html' },
             { id: 'recursos',    label: 'Recursos Extras',    href: 'recursos.html' },
         ],
     },
@@ -200,6 +200,7 @@ const CAMINHOS_ICONE = {
     anexo: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
     enviar: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
     voltar: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    sair: '<path d="M9 4H5v16h4"/><path d="M16 8l4 4-4 4M20 12H9"/>',
     olho: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
     sorriso: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',
@@ -284,7 +285,7 @@ function montarMenuLateralEquipe(paginaAtivaId) {
                style="background: var(--pibiex-gradiente);">
             <div class="pibiex-textura-grade"></div>
             <div class="px-2 pb-5 mb-2 border-b border-white/10 flex items-center justify-between relative">
-                <div class="flex items-center gap-3 min-w-0">
+                <a href="inicio.html" class="flex items-center gap-3 min-w-0" aria-label="PIBIEX Digital, ir para o início">
                     <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-acento);">
                         <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(239,68,68,.35);"></div>
                         <span class="text-[var(--pibiex-acento)] text-[10px] font-black leading-none relative">PD</span>
@@ -293,10 +294,14 @@ function montarMenuLateralEquipe(paginaAtivaId) {
                         <p class="text-white font-black text-[15px] leading-tight truncate">PIBIEX DIGITAL</p>
                         <p class="text-[var(--pibiex-acento)] text-[9.5px] font-bold uppercase tracking-wide">Painel da equipe</p>
                     </div>
-                </div>
+                </a>
                 <button onclick="window.fecharMenuEquipe()" class="md:hidden text-white/60 hover:text-white text-xl leading-none px-1 shrink-0" aria-label="Fechar menu">${icone('fechar', 18)}</button>
             </div>
             <nav class="relative" aria-label="Menu do painel">${gruposHtml}</nav>
+            <div class="pt-3 mt-auto border-t border-white/10 sticky -bottom-5 -mx-5 -mb-5 px-5 pb-5 space-y-0.5" style="background: #1E3A8A; z-index: 2;">
+                <a href="${MODO_DEMO ? '../demo/' : '../index.html'}" class="flex items-center gap-3 pl-4 pr-3 py-2 rounded-md text-[13px] font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition">${icone('voltar', 16)}<span>${MODO_DEMO ? 'Voltar à demonstração' : 'Voltar ao site'}</span></a>
+                <button type="button" onclick="sairEquipe()" class="w-full flex items-center gap-3 pl-4 pr-3 py-2 rounded-md text-[13px] font-semibold text-red-200 hover:text-white hover:bg-red-500/25 transition">${icone('sair', 16)}<span>${MODO_DEMO ? 'Sair da demonstração' : 'Sair da conta'}</span></button>
+            </div>
         </aside>
     `;
 }
@@ -331,6 +336,7 @@ function montarTopoEquipe(dados) {
                     class="shrink-0 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white hover:bg-gray-50 px-3 py-2 text-xs font-bold text-gray-800">
                     ${icone('olho', 16)}<span class="hidden lg:inline">Ver como aluno</span></button>` : ''}
             <div id="indicador-enquete" class="min-w-0"></div>
+            <button type="button" onclick="sairEquipe()" class="botao-sair" title="${MODO_DEMO ? 'Sair da demonstração' : 'Sair da conta'}">${icone('sair', 16)}<span class="hidden sm:inline">Sair</span></button>
             <div class="relative shrink-0">
                 <button onclick="window.alternarMenuContaEquipe()" id="botao-conta-equipe" class="flex items-center rounded-full transition hover:opacity-80" aria-label="Minha conta">
                     ${avatarHtml(dados.nomeCompleto, dados.fotoUrl, 36)}
@@ -529,6 +535,11 @@ document.addEventListener('click', (e) => {
 });
 
 async function sairEquipe() {
+    if (MODO_DEMO) {
+        try { Object.keys(sessionStorage).filter((k) => k.startsWith('demo:') || k.startsWith('pibiex_demo')).forEach((k) => sessionStorage.removeItem(k)); } catch (e) { /* ok */ }
+        window.location.href = '/demo/';
+        return;
+    }
     const token = localStorage.getItem('pibiex_equipe_token');
     if (token) {
         try { await window.supabaseClient.functions.invoke('logout-equipe', { body: { token } }); }

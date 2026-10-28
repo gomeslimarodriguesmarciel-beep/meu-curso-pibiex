@@ -44,7 +44,7 @@ function menuDoShell(arq, nome) {
     const t = fs.readFileSync(path.join(RAIZ, arq), 'utf8');
     const bloco = t.slice(t.indexOf(nome));
     const grupos = [];
-    for (const g of bloco.matchAll(/rotulo:\s*'([^']+)',\s*itens:\s*\[([\s\S]*?)\],\s*\}/g)) {
+    for (const g of bloco.matchAll(/rotulo:\s*'([^']*)',\s*itens:\s*\[([\s\S]*?)\],\s*\}/g)) {
         const itens = [...g[2].matchAll(/label:\s*'([^']+)',\s*href:\s*'([^']+)'/g)].map((m) => ({ rotulo: m[1], href: m[2] }));
         grupos.push({ rotulo: g[1], itens });
     }

@@ -86,7 +86,7 @@ const nossos = (lista) => lista.filter((e) => !/recaptcha|gstatic|vlibras|google
 // 1) todas as páginas abrem sem erro
 console.log('\n== Páginas abrem sem erro de JavaScript');
 const paginas = [
-    'index.html', 'demo/index.html', 'sobre.html', 'transparencia.html', 'login.html', 'privacidade.html', 'termos.html',
+    'index.html', 'demo/index.html', 'sobre.html', 'transparencia.html', 'login.html', 'privacidade.html', 'termos.html', '404.html', 'trocar-senha.html',
     ...fs.readdirSync(path.join(RAIZ, 'aluno')).filter((f) => f.endsWith('.html')).filter((f) => f !== 'trabalhos.html').map((f) => `aluno/${f}?votou=1`),
     ...fs.readdirSync(path.join(RAIZ, 'admin')).filter((f) => f.endsWith('.html')).map((f) => `admin/${f}`),
 ];
@@ -147,6 +147,30 @@ await abrir('admin/privacidade.html', 2500);
 }
 
 
+
+// Entrada e saída: o visitante não precisa adivinhar onde clicar
+await abrir('login.html', 1800);
+{
+    await avaliar(`document.getElementById('perfil-professor').click()`);
+    resultado('login: "Sou professor / administrador" abre o acesso da equipe', !!(await ate(`!document.getElementById('modal-admin').classList.contains('hidden')`, 3000)));
+    await avaliar(`document.getElementById('perfil-aluno').click()`);
+    resultado('login: "Sou aluno" volta ao acesso do aluno', !!(await ate(`document.getElementById('modal-admin').classList.contains('hidden')`, 3000)));
+}
+await abrir('aluno/atividades.html?votou=1', 2200);
+{
+    resultado('aluno: botão Sair visível no topo', !!(await avaliar(`(() => { const b = document.querySelector('.botao-sair'); return !!b && b.getBoundingClientRect().width > 0; })()`)));
+    resultado('aluno: "Voltar ao site" e "Sair da conta" no menu lateral', !!(await avaliar(`/Voltar ao site/.test(document.getElementById('sidebar-container').innerText) && /Sair da conta/.test(document.getElementById('sidebar-container').innerText)`)));
+    await avaliar(`document.querySelector('.botao-sair').click()`);
+    resultado('aluno: Sair leva à tela de login', !!(await ate(`/login\.html/.test(location.pathname)`, 5000)));
+}
+await abrir('admin/inicio.html', 2200);
+{
+    resultado('professor: botão Sair visível no topo', !!(await avaliar(`(() => { const b = document.querySelector('.botao-sair'); return !!b && b.getBoundingClientRect().width > 0; })()`)));
+    resultado('professor: "Voltar ao site" e "Sair da conta" no menu lateral', !!(await avaliar(`/Voltar ao site/.test(document.getElementById('sidebar-container').innerText) && /Sair da conta/.test(document.getElementById('sidebar-container').innerText)`)));
+}
+await abrir('404.html', 1500);
+resultado('404: oferece 4 caminhos de volta', (await avaliar(`document.querySelectorAll('a.caminho').length`)) === 4);
+
 // 3) Demonstração pública: tudo no navegador, sem falar com o Supabase
 console.log('\n== Demonstração pública (nenhuma chamada ao servidor real)');
 await cdp('Page.removeScriptToEvaluateOnNewDocument', { identifier: idScript });
@@ -192,6 +216,10 @@ for (const p of paginasProf) {
     const vazio = await avaliar(`document.querySelector('main') ? document.querySelector('main').innerText.trim().length < 40 : true`);
     resultado('demo (professor): ' + p, ruins.length === 0 && !vazio, ruins.slice(0, 2).join(' | ') || (vazio ? 'página ficou vazia' : ''));
 }
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/admin/inicio.html` });
+await esperar(2000);
+await avaliar(`document.querySelector('.botao-sair').click()`);
+resultado('demo: Sair da demonstração volta para /demo/', !!(await ate(`location.pathname === '/demo/' || location.pathname === '/demo/index.html'`, 5000)));
 resultado('demo: nenhuma chamada saiu para o Supabase', paraSupabase.length === 0, paraSupabase.slice(0, 3).join(' | '));
 
 ws.close(); navegador.kill(); servidor.close();

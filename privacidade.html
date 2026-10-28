@@ -38,19 +38,26 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <main class="flex-1 flex justify-center px-4 py-10">
+<!--NAV-->
+<header class="site-header">
+    <div class="interno">
+        <a href="/index.html" class="marca" aria-label="PIBIEX Digital, início">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+        </a>
+        <nav aria-label="Principal">
+            <a href="/index.html">Início</a>
+            <a href="/sobre.html">Sobre</a>
+            <a href="/demo/">Demonstração</a>
+            <a href="/transparencia.html">Transparência</a>
+        </nav>
+        <a href="/login.html" class="entrar">Entrar</a>
+    </div>
+</header>
+<!--/NAV-->
+
+    <main class="flex-1 flex justify-center px-4 pt-36 pb-12 md:pt-32">
         <div class="w-full max-w-2xl">
 
-            <a href="login.html" class="flex items-center gap-3 mb-5 px-1 w-fit">
-                <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-dourado);">
-                    <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(163,230,53,.35);"></div>
-                    <span class="text-[var(--pibiex-dourado)] text-[10px] font-black leading-none relative">PD</span>
-                </div>
-                <div>
-                    <p class="text-white font-black text-[15px] leading-tight">PIBIEX DIGITAL</p>
-                    <p class="text-[var(--pibiex-dourado)] text-[9.5px] font-bold uppercase tracking-[0.14em]">Política de privacidade</p>
-                </div>
-            </a>
 
             <article class="bg-white rounded-2xl shadow-2xl px-6 md:px-10 py-8 md:py-10">
 
@@ -158,21 +165,12 @@
                             <li>saber com quem os dados são compartilhados (seção 3);</li>
                             <li>pedir a portabilidade dos dados e a anonimização ou o bloqueio do que for desnecessário;</li>
                             <li>retirar o consentimento que tenha dado (por exemplo, para a foto de perfil), o que pode limitar o uso de alguns recursos;</li>
-                            <li>reclamar à Autoridade Nacional de Proteção de Dados (ANPD) se achar que seus dados não foram tratados como deveriam.</li>
                         </ul>
                         <p>Respondemos aos pedidos o quanto antes, e no máximo em 15 dias para a confirmação e o acesso completo aos dados. Para fazer um pedido, o jeito mais rápido é dentro da plataforma, em <strong style="color: var(--pibiex-texto);">Perfil → Meus dados e privacidade</strong>: ali você baixa uma cópia dos seus dados na hora e envia pedidos de correção ou exclusão, que o professor responde na mesma tela. Também pode usar o contato da seção 1.</p>
                     </div>
                 </section>
-
                 <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">9. Se algo der errado</h2>
-                    <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-                        <p>Se houver um incidente de segurança que possa trazer risco ou dano relevante aos titulares, comunicaremos as pessoas afetadas e a ANPD em prazo razoável, dizendo o que aconteceu, quais dados foram atingidos e o que está sendo feito.</p>
-                    </div>
-                </section>
-
-                <section class="clausula">
-                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">10. Mudanças nesta política</h2>
+                    <h2 class="text-[15.5px] font-black mb-3" style="color: var(--pibiex-texto);">9. Mudanças nesta política</h2>
                     <div class="text-[14px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
                         <p>Esta política pode ser atualizada quando a plataforma ou a lei mudarem. A data no topo mostra sempre a versão mais recente.</p>
                     </div>
@@ -185,6 +183,43 @@
             </p>
         </div>
     </main>
+
+<!--RODAPE-->
+<footer class="site-footer">
+    <div class="interno">
+        <div class="sobre-rodape">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+            <p>Plataforma de apoio a cursos de Inteligência Artificial, com acessibilidade e proteção de dados.</p>
+        </div>
+        <nav aria-label="Plataforma">
+            <h2>Plataforma</h2>
+            <ul>
+                <li><a href="/index.html">Início</a></li>
+                <li><a href="/sobre.html">Sobre</a></li>
+                <li><a href="/demo/">Demonstração</a></li>
+                <li><a href="/transparencia.html">Transparência</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Informações legais">
+            <h2>Legal</h2>
+            <ul>
+                <li><a href="/termos.html">Termo de Uso</a></li>
+                <li><a href="/privacidade.html">Política de Privacidade</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Acesso">
+            <h2>Acesso</h2>
+            <ul>
+                <li><a href="/login.html">Sou aluno</a></li>
+                <li><a href="/login.html?perfil=professor">Sou professor / administrador</a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="credito">
+        <p>Desenvolvido por <strong>Marciel Gomes Lima Rodrigues</strong> · Site independente, não oficial da UNITINS</p>
+    </div>
+</footer>
+<!--/RODAPE-->
 
 <script>if (window.PibiexA11y) PibiexA11y.botaoFlutuante();</script>
 </body>

@@ -19,6 +19,11 @@
 </head>
 <body class="gradient-bg min-h-screen flex items-center justify-center px-4 py-12">
 
+    <div class="absolute top-0 inset-x-0 flex items-center justify-between px-5 py-4 text-sm font-bold text-blue-100">
+        <a href="/index.html" class="inline-flex items-center gap-2 hover:text-white"><span aria-hidden="true">←</span> Voltar ao site</a>
+        <button type="button" id="sair-trocar" class="botao-sair">Sair</button>
+    </div>
+
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
         <div class="bg-blue-600 text-white text-center py-8 px-6">
             <h2 class="text-2xl font-extrabold tracking-wide">Crie sua senha definitiva</h2>
@@ -141,5 +146,11 @@
             window.location.href = dados.precisaAceitarTermos ? 'termos.html' : 'aluno/inicio.html';
         });
     </script>
+<script>
+document.getElementById('sair-trocar').addEventListener('click', function () {
+    ['pibiex_aluno_token', 'pibiex_aluno_dados', 'pibiex_equipe_token', 'pibiex_equipe_dados'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { /* ok */ } });
+    location.href = '/login.html';
+});
+</script>
 </body>
 </html>

@@ -245,6 +245,11 @@ main section[id] { scroll-margin-top: 7rem; }
 .site-footer .credito p { max-width: 72rem; margin: 0 auto; padding: 18px 20px; font-size: 12.5px; color: rgba(219,234,254,.8); }
 @media (min-width: 1024px) { .site-footer .credito p { padding: 18px 32px; } }
 html.a11y-contraste .site-header nav a, html.a11y-contraste .site-footer nav a { color: #fff; }
+/* botão "Sair" sempre visível no topo das áreas internas */
+.botao-sair { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #E5E7EB; background: #fff; color: #374151; border-radius: 999px; padding: 7px 12px; font: 700 12.5px 'Inter', system-ui, sans-serif; cursor: pointer; flex-shrink: 0; }
+.botao-sair:hover { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
+.botao-sair:focus-visible { outline: 3px solid #1E3A8A; outline-offset: 2px; }
+html.a11y-contraste .botao-sair { border-color: #111827; color: #000; }
 .a11y-sec { margin: 0 0 4px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #475569; }
 .a11y-bloco { padding: 14px 20px 4px; }
 .a11y-bloco .a11y-linha { padding: 11px 0; }

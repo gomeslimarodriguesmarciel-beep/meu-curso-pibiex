@@ -88,16 +88,16 @@
 <!--NAV-->
 <header class="site-header">
     <div class="interno">
-        <a href="index.html" class="marca" aria-label="PIBIEX Digital, início">
-            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+        <a href="/index.html" class="marca" aria-label="PIBIEX Digital, início">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
         </a>
         <nav aria-label="Principal">
-            <a href="index.html">Início</a>
-            <a href="sobre.html" aria-current="page">Sobre</a>
-            <a href="demo/">Demonstração</a>
-            <a href="transparencia.html">Transparência</a>
+            <a href="/index.html">Início</a>
+            <a href="/sobre.html" aria-current="page">Sobre</a>
+            <a href="/demo/">Demonstração</a>
+            <a href="/transparencia.html">Transparência</a>
         </nav>
-        <a href="login.html" class="entrar">Entrar</a>
+        <a href="/login.html" class="entrar">Entrar</a>
     </div>
 </header>
 <!--/NAV-->
@@ -235,46 +235,47 @@
             <button type="button" role="tab" id="aba-professor" aria-controls="painel-professor" aria-selected="false" tabindex="-1" class="aba">Para o professor e a equipe</button>
         </div>
 
-        <!-- ===== ALUNO ===== -->
+        <!-- ===== ALUNO ===== (os grupos e nomes abaixo repetem o menu da área do aluno) -->
         <div role="tabpanel" id="painel-aluno" aria-labelledby="aba-aluno" tabindex="0">
+            <h3 class="grupo-titulo">Início</h3>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div class="cartao"><h4>Início</h4><p>Resumo do que importa agora: avisos da turma (que saem sozinhos quando vencem), atalhos e as próximas aulas.</p></div>
+            </div>
+
             <h3 class="grupo-titulo">Aprender</h3>
             <div class="grid sm:grid-cols-2 gap-4">
-                <div class="cartao"><h4>Início</h4><p>Resumo do que importa agora: avisos da turma, atalhos e a próxima aula.</p></div>
                 <div class="cartao"><h4>Cronograma</h4><p>Aulas organizadas por módulo, com data, horário e destaque para a próxima.</p></div>
                 <div class="cartao"><h4>Conteúdo</h4><p>Materiais por módulo (slides, PDFs, vídeos e links) abertos em um leitor da própria plataforma, com busca e filtro por tipo. O download aparece quando o professor libera.</p></div>
-                <div class="cartao"><h4>Perguntas frequentes</h4><p>Respostas rápidas para as dúvidas mais comuns sobre o curso e a plataforma.</p></div>
+                <div class="cartao"><h4>Ferramentas de IA</h4><p>Um panorama das principais ferramentas, organizadas por categoria, com busca.</p></div>
+                <div class="cartao"><h4>Banco de Prompts</h4><p>Modelos prontos e bem estruturados (papel, objetivo, contexto, formato e regras) para ChatGPT, Gemini, Claude, Perplexity e NotebookLM, com cópia em um clique.</p></div>
+                <div class="cartao"><h4>Recursos Extras</h4><p>Vídeos, e-books, sites, artigos e arquivos recomendados pelo professor, para ler na plataforma ou baixar.</p></div>
             </div>
 
             <h3 class="grupo-titulo">Praticar</h3>
             <div class="grid sm:grid-cols-2 gap-4">
                 <div class="cartao"><h4>Atividades</h4><p>Enunciado, prazo e horas que a atividade vale. A resposta é escrita direto na página ou enviada com arquivo e link. Depois da correção, o aluno vê nota, horas e comentário do professor.</p></div>
-                <div class="cartao"><h4>Desafios semanais</h4><p>Desafios com prazo que rendem pontos. Há ranking da semana e geral, e cinco níveis, de Iniciante a Mestre.</p></div>
+                <div class="cartao"><h4>Desafios Semanais</h4><p>Desafios com prazo que rendem pontos. Há ranking da semana e geral, e cinco níveis, de Iniciante a Mestre.</p></div>
                 <div class="cartao"><h4>Laboratório de IA</h4><p>Problemas práticos e simples para resolver com ferramentas de IA, com resposta em texto, arquivo ou link.</p></div>
-                <div class="cartao"><h4>Banco de prompts</h4><p>Modelos prontos e bem estruturados (papel, objetivo, contexto, formato e regras) para ChatGPT, Gemini, Claude, Perplexity e NotebookLM, com cópia em um clique.</p></div>
-                <div class="cartao"><h4>Ferramentas de IA</h4><p>Um panorama das principais ferramentas, organizadas por categoria, com busca.</p></div>
+            </div>
+
+            <h3 class="grupo-titulo">Turma</h3>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div class="cartao"><h4>Chat da Turma</h4><p>Conversa com todos, com reações e envio de anexos, moderada pelo professor. Também há conversas privadas com colegas e com a equipe.</p></div>
+                <div class="cartao"><h4>Enquetes</h4><p>Votações da turma, com resultado em tempo real quando o professor libera.</p></div>
                 <div class="cartao"><h4>Galeria</h4><p>Espaço para publicar projetos feitos com IA, curtir e comentar os trabalhos dos colegas.</p></div>
-                <div class="cartao"><h4>Recursos extras</h4><p>Vídeos, e-books, sites, artigos e arquivos recomendados pelo professor, para ler na plataforma ou baixar.</p></div>
             </div>
 
             <h3 class="grupo-titulo">Acompanhar</h3>
             <div class="grid sm:grid-cols-2 gap-4">
-                <div class="cartao"><h4>Minha frequência</h4><p>Quando o professor abre a chamada, um aviso aparece no topo e o aluno registra a presença com o código da aula. O histórico e o total de horas ficam salvos.</p></div>
+                <div class="cartao"><h4>Minha Frequência</h4><p>Quando o professor abre a chamada, um aviso aparece no topo e o aluno registra a presença com o código da aula. O histórico e o total de horas ficam salvos.</p></div>
                 <div class="cartao"><h4>Bloco de notas</h4><p>Anotações pessoais com formatação simples (negrito, cor, tamanho). Só o próprio aluno enxerga.</p></div>
-                <div class="cartao"><h4>Enquetes</h4><p>Votações da turma, com resultado em tempo real quando o professor libera.</p></div>
             </div>
 
-            <h3 class="grupo-titulo">Conversar</h3>
+            <h3 class="grupo-titulo">Ajuda e conta</h3>
             <div class="grid sm:grid-cols-2 gap-4">
-                <div class="cartao"><h4>Chat da turma</h4><p>Conversa com todos, com reações e envio de anexos, moderada pelo professor.</p></div>
-                <div class="cartao"><h4>Conversas privadas</h4><p>Mensagens diretas com colegas da turma e com a equipe do curso.</p></div>
-                <div class="cartao"><h4>Assistente de IA</h4><p>Um assistente para tirar dúvidas durante o estudo, com limite diário de uso para todos terem acesso.</p></div>
-                <div class="cartao"><h4>Avisos</h4><p>Comunicados do professor na tela inicial. Os avisos vencidos saem sozinhos, e os anteriores continuam consultáveis.</p></div>
-            </div>
-
-            <h3 class="grupo-titulo">Minha conta</h3>
-            <div class="grid sm:grid-cols-2 gap-4">
-                <div class="cartao"><h4>Perfil</h4><p>Foto, e-mail de recuperação, data de nascimento e troca de senha.</p></div>
-                <div class="cartao"><h4>Meus dados e privacidade</h4><p>O aluno baixa uma cópia dos próprios dados e faz pedidos de correção ou exclusão ao professor, com resposta na mesma tela.</p></div>
+                <div class="cartao"><h4>Perguntas Frequentes</h4><p>Respostas rápidas para as dúvidas mais comuns sobre o curso e a plataforma. Para dúvidas de estudo, há ainda o assistente de IA, no botão flutuante, com limite diário de uso.</p></div>
+                <div class="cartao"><h4>Meu Perfil</h4><p>Foto, e-mail de recuperação, data de nascimento e troca de senha, além de <b>Meus dados e privacidade</b>: baixar uma cópia dos próprios dados e fazer pedidos de correção ou exclusão ao professor, com resposta na mesma tela.</p></div>
+                <div class="cartao"><h4>Busca rápida e saída</h4><p>Ctrl + K abre uma busca para ir direto a qualquer tela. O botão <b>Sair</b> fica sempre visível no topo e no menu lateral.</p></div>
             </div>
         </div>
 
@@ -283,7 +284,7 @@
             <h3 class="grupo-titulo">Visão geral</h3>
             <div class="grid sm:grid-cols-2 gap-4">
                 <div class="cartao"><h4>Início</h4><p>Central de atenção: quantos trabalhos esperam correção, quantos desafios estão sem nota, pedidos de privacidade em aberto e a próxima aula. Avisa quando chega um trabalho novo.</p></div>
-                <div class="cartao"><h4>Painel de controle</h4><p>Indicadores de acesso: quem está online, horários de pico, mapa de calor por dia e hora, ranking de acessos e alunos sem acessar há dias.</p></div>
+                <div class="cartao"><h4>Painel de Controle</h4><p>Indicadores de acesso: quem está online, horários de pico, mapa de calor por dia e hora, ranking de acessos e alunos sem acessar há dias.</p></div>
             </div>
 
             <h3 class="grupo-titulo">Turma</h3>
@@ -299,7 +300,7 @@
                 <div class="cartao"><h4>Cronograma</h4><p>Módulos e aulas com data e horário, que aparecem para os alunos.</p></div>
                 <div class="cartao"><h4>Conteúdo</h4><p>Envio de slides, PDFs, imagens e vídeos (até 20 MB cada) ou links, com opção de permitir ou não o download.</p></div>
                 <div class="cartao"><h4>Atividades</h4><p>Criação de atividades com prazo e limite de horas que cada uma vale.</p></div>
-                <div class="cartao"><h4>Corrigir trabalhos</h4><p>Fila de envios com a resposta do aluno, nota, horas concedidas e comentário. É possível reabrir um trabalho para nova entrega.</p></div>
+                <div class="cartao"><h4>Corrigir Trabalhos</h4><p>Fila de envios com a resposta do aluno, nota, horas concedidas e comentário. É possível reabrir um trabalho para nova entrega.</p></div>
                 <div class="cartao"><h4>Frequência</h4><p>Abre a chamada com código, duração e quem pode participar, acompanha os registros ao vivo e consulta o histórico. Resume as horas de cada aluno e gera relatório em PDF, base para o certificado.</p></div>
             </div>
 
@@ -307,14 +308,14 @@
             <div class="grid sm:grid-cols-2 gap-4">
                 <div class="cartao"><h4>Avisos</h4><p>Comunicados com opção de fixar e de definir quando expiram, para a tela do aluno não acumular.</p></div>
                 <div class="cartao"><h4>Enquetes</h4><p>Votações com vários tipos de pergunta (única, múltipla, sim ou não, escala e texto), anônimas ou identificadas, com apuração ao vivo e escolha do gráfico.</p></div>
-                <div class="cartao"><h4>Chat da turma</h4><p>Acompanhamento e moderação das conversas, e mensagens diretas com os alunos.</p></div>
+                <div class="cartao"><h4>Chat da Turma</h4><p>Acompanhamento e moderação das conversas, e mensagens diretas com os alunos.</p></div>
             </div>
 
             <h3 class="grupo-titulo">Engajamento e apoio</h3>
             <div class="grid sm:grid-cols-2 gap-4">
-                <div class="cartao"><h4>Desafios semanais</h4><p>Criação dos desafios, avaliação dos envios com pontos e comentário, e acompanhamento do ranking.</p></div>
+                <div class="cartao"><h4>Desafios Semanais</h4><p>Criação dos desafios, avaliação dos envios com pontos e comentário, e acompanhamento do ranking.</p></div>
                 <div class="cartao"><h4>Galeria</h4><p>Moderação dos projetos e comentários publicados pelos alunos.</p></div>
-                <div class="cartao"><h4>Banco de prompts, laboratório, recursos e FAQ</h4><p>Cadastro e edição dos conteúdos de apoio que o aluno consulta, sem mexer em código.</p></div>
+                <div class="cartao"><h4>Banco de Prompts, Laboratório de IA, Recursos Extras e Perguntas Frequentes</h4><p>Cadastro e edição dos conteúdos de apoio que o aluno consulta, sem mexer em código.</p></div>
             </div>
 
             <h3 class="grupo-titulo">Ferramentas do professor</h3>
@@ -413,30 +414,30 @@
 <footer class="site-footer">
     <div class="interno">
         <div class="sobre-rodape">
-            <img src="logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
             <p>Plataforma de apoio a cursos de Inteligência Artificial, com acessibilidade e proteção de dados.</p>
         </div>
         <nav aria-label="Plataforma">
             <h2>Plataforma</h2>
             <ul>
-                <li><a href="index.html">Início</a></li>
-                <li><a href="sobre.html">Sobre</a></li>
-                <li><a href="demo/">Demonstração</a></li>
-                <li><a href="transparencia.html">Transparência</a></li>
+                <li><a href="/index.html">Início</a></li>
+                <li><a href="/sobre.html">Sobre</a></li>
+                <li><a href="/demo/">Demonstração</a></li>
+                <li><a href="/transparencia.html">Transparência</a></li>
             </ul>
         </nav>
         <nav aria-label="Informações legais">
             <h2>Legal</h2>
             <ul>
-                <li><a href="termos.html">Termo de Uso</a></li>
-                <li><a href="privacidade.html">Política de Privacidade</a></li>
+                <li><a href="/termos.html">Termo de Uso</a></li>
+                <li><a href="/privacidade.html">Política de Privacidade</a></li>
             </ul>
         </nav>
         <nav aria-label="Acesso">
             <h2>Acesso</h2>
             <ul>
-                <li><a href="login.html">Sou aluno</a></li>
-                <li><a href="login.html?perfil=professor">Sou professor / administrador</a></li>
+                <li><a href="/login.html">Sou aluno</a></li>
+                <li><a href="/login.html?perfil=professor">Sou professor / administrador</a></li>
             </ul>
         </nav>
     </div>

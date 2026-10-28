@@ -37,21 +37,28 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
+<!--NAV-->
+<header class="site-header">
+    <div class="interno">
+        <a href="/index.html" class="marca" aria-label="PIBIEX Digital, início">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+        </a>
+        <nav aria-label="Principal">
+            <a href="/index.html">Início</a>
+            <a href="/sobre.html">Sobre</a>
+            <a href="/demo/">Demonstração</a>
+            <a href="/transparencia.html">Transparência</a>
+        </nav>
+        <a href="/login.html" class="entrar">Entrar</a>
+    </div>
+</header>
+<!--/NAV-->
+
     <div id="barra-progresso"></div>
 
-    <main class="flex-1 flex justify-center px-4 py-10">
+    <main class="flex-1 flex justify-center px-4 pt-36 pb-12 md:pt-32">
         <div class="w-full max-w-2xl">
 
-            <div class="flex items-center gap-3 mb-5 px-1">
-                <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center relative" style="border: 1.5px solid var(--pibiex-dourado);">
-                    <div class="absolute inset-[3px] rounded-full" style="border: 1px solid rgba(163,230,53,.35);"></div>
-                    <span class="text-[var(--pibiex-dourado)] text-[10px] font-black leading-none relative">PD</span>
-                </div>
-                <div>
-                    <p class="text-white font-black text-[15px] leading-tight">PIBIEX DIGITAL</p>
-                    <p class="text-[var(--pibiex-dourado)] text-[9.5px] font-bold uppercase tracking-[0.14em]">Termo de uso e responsabilidade</p>
-                </div>
-            </div>
 
             <article class="bg-white rounded-2xl shadow-2xl px-6 md:px-10 py-8 md:py-10">
 
@@ -156,6 +163,43 @@
             </p>
         </div>
     </main>
+
+<!--RODAPE-->
+<footer class="site-footer">
+    <div class="interno">
+        <div class="sobre-rodape">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+            <p>Plataforma de apoio a cursos de Inteligência Artificial, com acessibilidade e proteção de dados.</p>
+        </div>
+        <nav aria-label="Plataforma">
+            <h2>Plataforma</h2>
+            <ul>
+                <li><a href="/index.html">Início</a></li>
+                <li><a href="/sobre.html">Sobre</a></li>
+                <li><a href="/demo/">Demonstração</a></li>
+                <li><a href="/transparencia.html">Transparência</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Informações legais">
+            <h2>Legal</h2>
+            <ul>
+                <li><a href="/termos.html">Termo de Uso</a></li>
+                <li><a href="/privacidade.html">Política de Privacidade</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Acesso">
+            <h2>Acesso</h2>
+            <ul>
+                <li><a href="/login.html">Sou aluno</a></li>
+                <li><a href="/login.html?perfil=professor">Sou professor / administrador</a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="credito">
+        <p>Desenvolvido por <strong>Marciel Gomes Lima Rodrigues</strong> · Site independente, não oficial da UNITINS</p>
+    </div>
+</footer>
+<!--/RODAPE-->
 
     <script>
         const SUPABASE_URL = 'https://gclcsgqvunutbvpazgsg.supabase.co';

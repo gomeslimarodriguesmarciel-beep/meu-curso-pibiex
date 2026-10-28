@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Página não encontrada · PIBIEX Digital</title>
+<link rel="icon" type="image/png" href="/icone-pibiex-digital.png">
+<link rel="stylesheet" href="/tailwind.css">
+<link rel="stylesheet" href="/pibiex-ui.css">
+<script src="/acessibilidade.js"></script>
+<link rel="stylesheet" href="/fonts/inter.css">
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .hero-bg { background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 50%, #1E40AF 100%); background-size: 34px 34px, 34px 34px, 100% 100%; }
+    .caminho { display: block; background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.22); border-radius: 16px; padding: 18px 20px; color: #fff; }
+    .caminho:hover { background: rgba(255,255,255,.16); }
+    .caminho b { display: block; font-size: 16px; margin-bottom: 2px; }
+    .caminho span { font-size: 13.5px; color: rgba(219,234,254,.9); }
+    a:focus-visible { outline: 3px solid #A3E635; outline-offset: 3px; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!--NAV-->
+<header class="site-header">
+    <div class="interno">
+        <a href="/index.html" class="marca" aria-label="PIBIEX Digital, início">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+        </a>
+        <nav aria-label="Principal">
+            <a href="/index.html">Início</a>
+            <a href="/sobre.html">Sobre</a>
+            <a href="/demo/">Demonstração</a>
+            <a href="/transparencia.html">Transparência</a>
+        </nav>
+        <a href="/login.html" class="entrar">Entrar</a>
+    </div>
+</header>
+<!--/NAV-->
+
+<main class="hero-bg flex-1 flex items-center px-5 pt-40 pb-20 md:pt-44">
+    <div class="max-w-3xl mx-auto w-full">
+        <p class="text-[11px] font-black uppercase tracking-[0.2em] mb-4" style="color: #A3E635;">Erro 404</p>
+        <h1 class="text-white text-4xl sm:text-5xl font-black leading-[1.08] mb-5" style="text-wrap: balance;">Não encontramos essa página.</h1>
+        <p class="text-blue-100/90 text-base md:text-lg leading-relaxed max-w-2xl mb-10">
+            O endereço pode ter mudado ou estar digitado errado. Escolha abaixo para onde quer ir.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <a class="caminho" href="/index.html"><b>Ir para o início</b><span>A página principal da plataforma.</span></a>
+            <a class="caminho" href="/login.html"><b>Entrar</b><span>Acessar como aluno ou como professor.</span></a>
+            <a class="caminho" href="/sobre.html"><b>Conhecer a plataforma</b><span>O que ela faz e para quem.</span></a>
+            <a class="caminho" href="/demo/"><b>Ver a demonstração</b><span>Experimentar com dados de exemplo.</span></a>
+        </div>
+    </div>
+</main>
+
+<!--RODAPE-->
+<footer class="site-footer">
+    <div class="interno">
+        <div class="sobre-rodape">
+            <img src="/logo-pibiex-digital-branca.png" alt="PIBIEX Digital">
+            <p>Plataforma de apoio a cursos de Inteligência Artificial, com acessibilidade e proteção de dados.</p>
+        </div>
+        <nav aria-label="Plataforma">
+            <h2>Plataforma</h2>
+            <ul>
+                <li><a href="/index.html">Início</a></li>
+                <li><a href="/sobre.html">Sobre</a></li>
+                <li><a href="/demo/">Demonstração</a></li>
+                <li><a href="/transparencia.html">Transparência</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Informações legais">
+            <h2>Legal</h2>
+            <ul>
+                <li><a href="/termos.html">Termo de Uso</a></li>
+                <li><a href="/privacidade.html">Política de Privacidade</a></li>
+            </ul>
+        </nav>
+        <nav aria-label="Acesso">
+            <h2>Acesso</h2>
+            <ul>
+                <li><a href="/login.html">Sou aluno</a></li>
+                <li><a href="/login.html?perfil=professor">Sou professor / administrador</a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="credito">
+        <p>Desenvolvido por <strong>Marciel Gomes Lima Rodrigues</strong> · Site independente, não oficial da UNITINS</p>
+    </div>
+</footer>
+<!--/RODAPE-->
+
+<script>if (window.PibiexA11y) PibiexA11y.botaoFlutuante();</script>
+</body>
+</html>
