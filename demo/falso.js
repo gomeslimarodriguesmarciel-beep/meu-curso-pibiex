@@ -461,7 +461,7 @@ const FUNCOES = {
         return { conversaId: 'demo-conversa', resposta: hit ? hit[1] : RESPOSTA_IA_PADRAO };
     },
     'comparar-ias': (b) => {
-        if (b.acao === 'saldo') return { restantes: 15, limite: 15 };
+        if (b.acao === 'saldo') return { restantes: { 'gemini': 5, 'llama': 5, 'gpt-oss': 5 }, limite: 5 };
         const EX = {
             'gemini': 'Um prompt é a instrução que você escreve para a IA. Quanto mais claro for o pedido (quem ela deve ser, o que fazer e em que formato), melhor tende a ser a resposta.\n\nExemplo: em vez de "fale de energia", peça "explique energia solar em 5 linhas para um aluno do 9º ano".',
             'llama': 'Prompt é o texto que você manda para a IA. Pense nele como uma pergunta ou uma ordem: se for vaga, a resposta fica vaga; se tiver detalhes, a resposta fica mais útil.',
@@ -469,7 +469,7 @@ const FUNCOES = {
         };
         const NOMES = { 'gemini': ['Gemini', 'Google'], 'llama': ['Llama', 'Meta'], 'gpt-oss': ['gpt-oss', 'OpenAI'] };
         const ias = Array.isArray(b.ias) && b.ias.length ? b.ias : ['gemini'];
-        return { exemplo: true, restantes: 15, limite: 15, resultados: ias.map((ia, i) => ({ ia, nome: (NOMES[ia] || [ia])[0], empresa: (NOMES[ia] || ['', ''])[1], ok: true, resposta: EX[ia] || EX.gemini, ms: 900 + i * 350 })) };
+        return { exemplo: true, restantes: { 'gemini': 5, 'llama': 5, 'gpt-oss': 5 }, limite: 5, resultados: ias.map((ia, i) => ({ ia, nome: (NOMES[ia] || [ia])[0], empresa: (NOMES[ia] || ['', ''])[1], ok: true, resposta: EX[ia] || EX.gemini, ms: 900 + i * 350 })) };
     },
     'ver-material': (b) => ({ url: '/demo/guia-de-prompts.pdf', titulo: 'Guia rápido de prompts', nome: 'guia-de-prompts.pdf', tamanho: 11031, permiteBaixar: true, visualiza: 'pdf' }),
     // ---------- professor: cadastros e painéis

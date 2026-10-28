@@ -32,7 +32,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
                     <div class="flex items-center gap-3 mb-3">
-                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#2563EB;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;letter-spacing:-.02em;flex-shrink:0;">G</span>
+                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#fff;border:1.5px solid #E5E7EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><img src="/img/ia/gemini.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;"></span>
                         <div class="min-w-0">
                             <h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Gemini</h3>
                             <p class="text-xs" style="color: var(--pibiex-texto-suave);">Google</p>
@@ -44,7 +44,7 @@
                 </article>
                 <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
                     <div class="flex items-center gap-3 mb-3">
-                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#0B5FFF;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;letter-spacing:-.02em;flex-shrink:0;">M</span>
+                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#fff;border:1.5px solid #E5E7EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><img src="/img/ia/llama.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;"></span>
                         <div class="min-w-0">
                             <h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Llama</h3>
                             <p class="text-xs" style="color: var(--pibiex-texto-suave);">Meta</p>
@@ -56,7 +56,7 @@
                 </article>
                 <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
                     <div class="flex items-center gap-3 mb-3">
-                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:-.02em;flex-shrink:0;">AI</span>
+                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#fff;border:1.5px solid #E5E7EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><img src="/img/ia/gpt-oss.png" alt="" width="24" height="24" style="width:24px;height:24px;object-fit:contain;"></span>
                         <div class="min-w-0">
                             <h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">gpt-oss</h3>
                             <p class="text-xs" style="color: var(--pibiex-texto-suave);">OpenAI</p>
@@ -90,7 +90,8 @@
                         Comparar com as 3 IAs
                     </label>
                 </div>
-                <p class="text-xs mt-3" style="color: var(--pibiex-texto-suave);"><span id="cmp-saldo">Você tem consultas diárias limitadas.</span> Cada IA consultada usa 1 consulta: perguntar a uma gasta 1, comparar as três gasta 3.</p>
+                <div id="cmp-saldo" class="flex flex-wrap gap-2 mt-3" role="group" aria-label="Perguntas que ainda restam hoje, por IA"></div>
+                <p class="text-xs mt-2" style="color: var(--pibiex-texto-suave);">Cada IA tem um limite de perguntas por dia para cada aluno. Comparar as três usa 1 pergunta de cada. Os contadores voltam ao máximo todo dia, à meia-noite (horário de Brasília).</p>
                 <p class="text-xs mt-1" style="color: var(--pibiex-texto-suave);">Não escreva dados pessoais (nome, telefone, endereço): a pergunta é enviada às empresas dessas IAs. A plataforma não guarda o texto da pergunta nem das respostas.</p>
                 <div id="cmp-resultado" class="mt-4" aria-live="polite"></div>
             </section>
@@ -186,20 +187,15 @@
         document.getElementById('busca-ferramenta').addEventListener('input', () => renderizar());
 
         // ---------------- Pergunte às IAs (uma só ou comparando as três) ----------------
-        const CMP_MARCAS = {
-            'gemini': { sigla: 'G', cor: '#2563EB' },
-            'llama': { sigla: 'M', cor: '#0B5FFF' },
-            'gpt-oss': { sigla: 'AI', cor: '#111827' },
-        };
+        const CMP_LOGOS = { 'gemini': '/img/ia/gemini.png', 'llama': '/img/ia/llama.png', 'gpt-oss': '/img/ia/gpt-oss.png' };
         const CMP_NOMES = { 'gemini': ['Gemini', 'Google'], 'llama': ['Llama', 'Meta'], 'gpt-oss': ['gpt-oss', 'OpenAI'] };
         let cmpOcupado = false;
 
         function cmpCartao(ia, corpoHtml, rodape) {
-            const m = CMP_MARCAS[ia] || CMP_MARCAS.gemini;
             const [nome, empresa] = CMP_NOMES[ia] || [ia, ''];
             return `<article class="rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda); background: #fff;">
                 <div class="flex items-center gap-3 mb-3">
-                    <span aria-hidden="true" style="width:36px;height:36px;border-radius:10px;background:${m.cor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${m.sigla.length > 1 ? 14 : 17}px;flex-shrink:0;">${m.sigla}</span>
+                    <span aria-hidden="true" style="width:36px;height:36px;border-radius:10px;background:#fff;border:1.5px solid #E5E7EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><img src="${CMP_LOGOS[ia] || CMP_LOGOS.gemini}" alt="" width="22" height="22" style="width:22px;height:22px;object-fit:contain;"></span>
                     <div><h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(nome)}</h3><p class="text-xs" style="color: var(--pibiex-texto-suave);">${escaparHtml(empresa)}</p></div>
                 </div>
                 ${corpoHtml}
@@ -207,9 +203,29 @@
             </article>`;
         }
 
+        function cmpFormatar(texto) {
+            return escaparHtml(texto)
+                .replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(^|<br>)(\s*)[*-] /g, '$1$2• ');
+        }
+
         function cmpMostrarSaldo(restantes, limite) {
             const el = document.getElementById('cmp-saldo');
-            if (typeof restantes === 'number') el.textContent = `Você ainda tem ${restantes} de ${limite} consultas hoje.`;
+            if (!restantes || typeof restantes !== 'object') return;
+            el.innerHTML = ['gemini', 'llama', 'gpt-oss'].map((ia) => {
+                const n = Number(restantes[ia]);
+                const acabou = n <= 0;
+                const [nome] = CMP_NOMES[ia];
+                return `<span class="inline-flex items-center gap-2 text-xs font-semibold" style="border: 1.5px solid ${acabou ? '#FCD34D' : '#E5E7EB'}; background: ${acabou ? '#FEF3C7' : '#fff'}; color: ${acabou ? '#92400E' : 'var(--pibiex-texto)'}; border-radius: 999px; padding: 4px 12px 4px 6px;">
+                    <img src="${CMP_LOGOS[ia]}" alt="" width="18" height="18" style="width:18px;height:18px;object-fit:contain;">
+                    ${escaparHtml(nome)}: ${acabou ? 'acabou por hoje' : n + ' de ' + limite + ' hoje'}
+                </span>`;
+            }).join('');
+            const sel = document.getElementById('cmp-ia');
+            [...sel.options].forEach((o) => {
+                const base = o.dataset.nome || (o.dataset.nome = o.textContent);
+                o.textContent = Number(restantes[o.value]) <= 0 ? base + ' (acabou por hoje)' : base;
+            });
         }
 
         function cmpDesenhar(resultados, exemplo) {
@@ -219,7 +235,7 @@
                 + `<div class="grid grid-cols-1 ${colunas} gap-4">` + resultados.map((r) => {
                     if (!r.ok) return cmpCartao(r.ia, `<p class="text-sm" style="color: #92400E; background: #FEF3C7; border-radius: 8px; padding: 10px 12px;">${escaparHtml(r.erro || 'Esta IA não respondeu agora.')}</p>`, '');
                     const seg = typeof r.ms === 'number' ? `Respondeu em ${(r.ms / 1000).toFixed(1).replace('.', ',')} s` : '';
-                    return cmpCartao(r.ia, `<div class="text-sm" style="color: var(--pibiex-texto); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55;">${escaparHtml(r.resposta)}</div>`, seg);
+                    return cmpCartao(r.ia, `<div class="text-sm" style="color: var(--pibiex-texto); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55;">${cmpFormatar(r.resposta)}</div>`, seg);
                 }).join('') + '</div>';
         }
 
