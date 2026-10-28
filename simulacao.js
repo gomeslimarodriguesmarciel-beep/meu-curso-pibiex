@@ -77,6 +77,7 @@
         'avisos-aluno': ['listar', 'anteriores'],
         'chat-turma': ['listar', 'membros'],
         'chat-privado': ['contatos', 'conversas', 'mensagens'],
+        'comparar-ias': ['saldo', 'perguntar'],
     };
     function ehLeitura(nome, corpo) {
         const regra = LEITURAS[nome];

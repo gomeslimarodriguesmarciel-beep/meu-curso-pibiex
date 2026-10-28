@@ -40,7 +40,7 @@
                     </div>
                     <p class="text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Melhor para: textos longos e materiais variados</p>
                     <ul class="text-xs list-disc pl-4 space-y-1 mb-3" style="color: var(--pibiex-texto-suave);"><li>Lê textos grandes e entende imagens e áudio.</li><li>Boa para resumir, explicar e pesquisar.</li><li>É a IA que o assistente da plataforma usa.</li></ul>
-                    <p class="text-xs mt-auto"><span class="chip azul">Gratuito, com limite</span> <a href="https://gemini.google.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Conhecer o site oficial</a></p>
+                    <p class="text-xs mt-auto"><span class="chip azul">Gratuito, com limite</span> <a href="https://gemini.google.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Site oficial</a></p>
                 </article>
                 <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
                     <div class="flex items-center gap-3 mb-3">
@@ -52,7 +52,7 @@
                     </div>
                     <p class="text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Melhor para: liberdade e privacidade</p>
                     <ul class="text-xs list-disc pl-4 space-y-1 mb-3" style="color: var(--pibiex-texto-suave);"><li>Modelo aberto: qualquer pessoa pode baixar e usar.</li><li>Dá para rodar no próprio computador, sem enviar dados para fora.</li><li>Bom para aprender como a IA funciona por dentro.</li></ul>
-                    <p class="text-xs mt-auto"><span class="chip verde">Modelo aberto</span> <a href="https://www.llama.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Conhecer o site oficial</a></p>
+                    <p class="text-xs mt-auto"><span class="chip verde">Modelo aberto</span> <a href="https://www.llama.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Site oficial</a></p>
                 </article>
                 <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
                     <div class="flex items-center gap-3 mb-3">
@@ -64,10 +64,32 @@
                     </div>
                     <p class="text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Melhor para: raciocínio passo a passo</p>
                     <ul class="text-xs list-disc pl-4 space-y-1 mb-3" style="color: var(--pibiex-texto-suave);"><li>Mostra o caminho até a resposta, útil em lógica e matemática.</li><li>Modelo aberto da mesma empresa do ChatGPT.</li><li>Não é o ChatGPT: é uma versão aberta e mais simples.</li></ul>
-                    <p class="text-xs mt-auto"><span class="chip verde">Modelo aberto</span> <a href="https://openai.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Conhecer o site oficial</a></p>
+                    <p class="text-xs mt-auto"><span class="chip verde">Modelo aberto</span> <a href="https://openai.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Site oficial</a></p>
                 </article>
                 </div>
                 <p class="text-xs mt-3" style="color: var(--pibiex-texto-suave);">Dica: a mesma pergunta pode ter respostas bem diferentes. Compare e anote no seu <b>Bloco de notas</b> qual explicou melhor.</p>
+            </section>
+
+            <section class="mb-9 bg-white rounded-lg border p-4 md:p-5" style="border-color: var(--pibiex-borda);" aria-labelledby="titulo-perguntar">
+                <h2 id="titulo-perguntar" class="text-[11px] font-bold uppercase tracking-[0.12em] mb-1" style="color: var(--pibiex-texto-suave);">Pergunte às IAs</h2>
+                <p class="text-sm mb-4" style="color: var(--pibiex-texto-suave);">Pergunte a uma IA só ou use o modo comparativo para mandar a mesma pergunta às três e ver as respostas lado a lado.</p>
+                <label for="cmp-pergunta" class="block text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Sua pergunta</label>
+                <textarea id="cmp-pergunta" rows="3" maxlength="1500" placeholder="Ex.: Explique o que é um prompt como se eu tivesse 12 anos" class="w-full text-sm p-3 mb-3" style="border: 1.5px solid #CBD5E1; border-radius: 10px; resize: vertical;"></textarea>
+                <div class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label for="cmp-ia" class="block text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Perguntar a</label>
+                        <select id="cmp-ia" class="text-sm p-2" style="border: 1.5px solid #CBD5E1; border-radius: 10px; background: #fff; min-height: 40px;">
+                            <option value="gemini">Gemini (Google)</option>
+                            <option value="llama">Llama (Meta)</option>
+                            <option value="gpt-oss">gpt-oss (OpenAI)</option>
+                        </select>
+                    </div>
+                    <button type="button" id="cmp-um" class="text-sm font-bold px-4" style="min-height: 40px; border-radius: 10px; border: 1.5px solid #1E3A8A; color: #1E3A8A; background: #fff;">Perguntar a esta IA</button>
+                    <button type="button" id="cmp-tres" class="text-sm font-bold px-4" style="min-height: 40px; border-radius: 10px; border: 1.5px solid #1E3A8A; color: #fff; background: #1E3A8A;">Comparar as 3 IAs</button>
+                </div>
+                <p class="text-xs mt-3" style="color: var(--pibiex-texto-suave);"><span id="cmp-saldo">Você tem consultas diárias limitadas.</span> Perguntar a uma IA usa 1 consulta; comparar as três usa 3.</p>
+                <p class="text-xs mt-1" style="color: var(--pibiex-texto-suave);">Não escreva dados pessoais (nome, telefone, endereço): a pergunta é enviada às empresas dessas IAs. A plataforma não guarda o texto da pergunta nem das respostas.</p>
+                <div id="cmp-resultado" class="mt-4" aria-live="polite"></div>
             </section>
 
             <input id="busca-ferramenta" type="search" class="caixa-busca mb-4" placeholder="Buscar ferramenta pelo nome ou descrição" aria-label="Buscar ferramenta" autocomplete="off">
@@ -160,8 +182,90 @@
         }
         document.getElementById('busca-ferramenta').addEventListener('input', () => renderizar());
 
+        // ---------------- Pergunte às IAs (uma só ou comparando as três) ----------------
+        const CMP_MARCAS = {
+            'gemini': { sigla: 'G', cor: '#2563EB' },
+            'llama': { sigla: 'M', cor: '#0B5FFF' },
+            'gpt-oss': { sigla: 'AI', cor: '#111827' },
+        };
+        const CMP_NOMES = { 'gemini': ['Gemini', 'Google'], 'llama': ['Llama', 'Meta'], 'gpt-oss': ['gpt-oss', 'OpenAI'] };
+        let cmpOcupado = false;
+
+        function cmpCartao(ia, corpoHtml, rodape) {
+            const m = CMP_MARCAS[ia] || CMP_MARCAS.gemini;
+            const [nome, empresa] = CMP_NOMES[ia] || [ia, ''];
+            return `<article class="rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda); background: #fff;">
+                <div class="flex items-center gap-3 mb-3">
+                    <span aria-hidden="true" style="width:36px;height:36px;border-radius:10px;background:${m.cor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${m.sigla.length > 1 ? 14 : 17}px;flex-shrink:0;">${m.sigla}</span>
+                    <div><h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">${escaparHtml(nome)}</h3><p class="text-xs" style="color: var(--pibiex-texto-suave);">${escaparHtml(empresa)}</p></div>
+                </div>
+                ${corpoHtml}
+                ${rodape ? `<p class="text-xs mt-3" style="color: var(--pibiex-texto-suave);">${rodape}</p>` : ''}
+            </article>`;
+        }
+
+        function cmpMostrarSaldo(restantes, limite) {
+            const el = document.getElementById('cmp-saldo');
+            if (typeof restantes === 'number') el.textContent = `Você ainda tem ${restantes} de ${limite} consultas hoje.`;
+        }
+
+        function cmpDesenhar(resultados, exemplo) {
+            const caixa = document.getElementById('cmp-resultado');
+            const colunas = resultados.length === 3 ? 'md:grid-cols-3' : '';
+            caixa.innerHTML = (exemplo ? '<p class="text-xs mb-2" style="color: var(--pibiex-texto-suave);">Exemplo da demonstração: na plataforma real, a sua pergunta é enviada às IAs e elas respondem de verdade.</p>' : '')
+                + `<div class="grid grid-cols-1 ${colunas} gap-4">` + resultados.map((r) => {
+                    if (!r.ok) return cmpCartao(r.ia, `<p class="text-sm" style="color: #92400E; background: #FEF3C7; border-radius: 8px; padding: 10px 12px;">${escaparHtml(r.erro || 'Esta IA não respondeu agora.')}</p>`, '');
+                    const seg = typeof r.ms === 'number' ? `Respondeu em ${(r.ms / 1000).toFixed(1).replace('.', ',')} s` : '';
+                    return cmpCartao(r.ia, `<div class="text-sm" style="color: var(--pibiex-texto); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55;">${escaparHtml(r.resposta)}</div>`, seg);
+                }).join('') + '</div>';
+        }
+
+        async function cmpAtualizarSaldo() {
+            try {
+                const token = localStorage.getItem('pibiex_aluno_token');
+                const { data } = await window.supabaseClient.functions.invoke('comparar-ias', { body: { token, acao: 'saldo' } });
+                if (data && !data.erro) cmpMostrarSaldo(data.restantes, data.limite);
+            } catch (e) { /* o saldo é só informativo */ }
+        }
+
+        async function cmpPerguntar(ias) {
+            if (cmpOcupado) return;
+            const campo = document.getElementById('cmp-pergunta');
+            const caixa = document.getElementById('cmp-resultado');
+            const pergunta = campo.value.trim();
+            if (!pergunta) {
+                caixa.innerHTML = '<p role="alert" class="text-sm" style="color: #991B1B;">Escreva uma pergunta primeiro.</p>';
+                campo.focus();
+                return;
+            }
+            cmpOcupado = true;
+            const botoes = [document.getElementById('cmp-um'), document.getElementById('cmp-tres')];
+            botoes.forEach((b) => { b.disabled = true; b.style.opacity = '.6'; });
+            const colunas = ias.length === 3 ? 'md:grid-cols-3' : '';
+            caixa.innerHTML = `<div class="grid grid-cols-1 ${colunas} gap-4">` + ias.map((ia) => cmpCartao(ia, '<p class="text-sm" role="status" style="color: var(--pibiex-texto-suave);">Consultando…</p>', '')).join('') + '</div>';
+            try {
+                const token = localStorage.getItem('pibiex_aluno_token');
+                const { data, error } = await window.supabaseClient.functions.invoke('comparar-ias', { body: { token, acao: 'perguntar', mensagem: pergunta, ias } });
+                if (error || !data) {
+                    caixa.innerHTML = '<p role="alert" class="text-sm" style="color: #991B1B;">Não consegui consultar as IAs agora. Tente de novo em instantes.</p>';
+                } else if (data.erro) {
+                    caixa.innerHTML = `<p role="alert" class="text-sm" style="color: #991B1B;">${escaparHtml(data.erro)}</p>`;
+                } else {
+                    cmpDesenhar(data.resultados || [], data.exemplo === true);
+                    cmpMostrarSaldo(data.restantes, data.limite);
+                }
+            } catch (e) {
+                caixa.innerHTML = '<p role="alert" class="text-sm" style="color: #991B1B;">Não consegui consultar as IAs agora. Tente de novo em instantes.</p>';
+            } finally {
+                cmpOcupado = false;
+                botoes.forEach((b) => { b.disabled = false; b.style.opacity = ''; });
+            }
+        }
+        document.getElementById('cmp-um').addEventListener('click', () => cmpPerguntar([document.getElementById('cmp-ia').value]));
+        document.getElementById('cmp-tres').addEventListener('click', () => cmpPerguntar(['gemini', 'llama', 'gpt-oss']));
+
         iniciarShellAluno('ferramentas-ia').then((dados) => {
-            if (dados) carregar();
+            if (dados) { carregar(); cmpAtualizarSaldo(); }
         });
     </script>
 </body>
