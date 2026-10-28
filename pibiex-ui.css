@@ -276,8 +276,8 @@ html.a11y-contraste .botao-sair { border-color: #111827; color: #000; }
 /* Área da equipe: mesma linguagem visual da área do aluno (botões, títulos, cartões) */
 .area-equipe .bg-gray-900 { background-color: #1E3A8A; }
 .area-equipe .bg-gray-900:hover, .area-equipe .hover\:bg-gray-800:hover { background-color: #172F70; }
-.area-equipe main h1 { color: #111827; letter-spacing: -.01em; }
-.area-equipe main h1 + p { font-size: .875rem; line-height: 1.55; color: #6B7280; }
+.area-equipe main h1:not(.text-white) { color: #111827; letter-spacing: -.01em; }
+.area-equipe main h1:not(.text-white) + p { font-size: .875rem; line-height: 1.55; color: #6B7280; }
 .area-equipe main .border-gray-100 { border-color: #E5E7EB; }
 .area-equipe main .shadow-sm { box-shadow: none; }
 .area-equipe main .rounded-2xl { border-radius: .75rem; }
