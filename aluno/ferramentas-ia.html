@@ -26,6 +26,50 @@
             <h1 class="fonte-display text-2xl font-semibold mb-1" style="color: var(--pibiex-texto);">Ferramentas de IA</h1>
             <p class="text-sm mb-7" style="color: var(--pibiex-texto-suave);">Um panorama das principais ferramentas de IA usadas no curso, organizadas por categoria.</p>
 
+            <section class="mb-9" aria-labelledby="titulo-comparar">
+                <h2 id="titulo-comparar" class="text-[11px] font-bold uppercase tracking-[0.12em] mb-1" style="color: var(--pibiex-texto-suave);">Compare 3 IAs</h2>
+                <p class="text-sm mb-4" style="color: var(--pibiex-texto-suave);">Três IAs de empresas diferentes. Faça a mesma pergunta em cada uma e veja o que muda no jeito de responder.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#2563EB;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;letter-spacing:-.02em;flex-shrink:0;">G</span>
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Gemini</h3>
+                            <p class="text-xs" style="color: var(--pibiex-texto-suave);">Google</p>
+                        </div>
+                    </div>
+                    <p class="text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Melhor para: textos longos e materiais variados</p>
+                    <ul class="text-xs list-disc pl-4 space-y-1 mb-3" style="color: var(--pibiex-texto-suave);"><li>Lê textos grandes e entende imagens e áudio.</li><li>Boa para resumir, explicar e pesquisar.</li><li>É a IA que o assistente da plataforma usa.</li></ul>
+                    <p class="text-xs mt-auto"><span class="chip azul">Gratuito, com limite</span> <a href="https://gemini.google.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Conhecer o site oficial</a></p>
+                </article>
+                <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#0B5FFF;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;letter-spacing:-.02em;flex-shrink:0;">M</span>
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">Llama</h3>
+                            <p class="text-xs" style="color: var(--pibiex-texto-suave);">Meta</p>
+                        </div>
+                    </div>
+                    <p class="text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Melhor para: liberdade e privacidade</p>
+                    <ul class="text-xs list-disc pl-4 space-y-1 mb-3" style="color: var(--pibiex-texto-suave);"><li>Modelo aberto: qualquer pessoa pode baixar e usar.</li><li>Dá para rodar no próprio computador, sem enviar dados para fora.</li><li>Bom para aprender como a IA funciona por dentro.</li></ul>
+                    <p class="text-xs mt-auto"><span class="chip verde">Modelo aberto</span> <a href="https://www.llama.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Conhecer o site oficial</a></p>
+                </article>
+                <article class="bg-white rounded-lg p-4 border flex flex-col" style="border-color: var(--pibiex-borda);">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span aria-hidden="true" style="width:40px;height:40px;border-radius:10px;background:#111827;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:-.02em;flex-shrink:0;">AI</span>
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-[15px]" style="color: var(--pibiex-texto);">gpt-oss</h3>
+                            <p class="text-xs" style="color: var(--pibiex-texto-suave);">OpenAI</p>
+                        </div>
+                    </div>
+                    <p class="text-[13px] font-semibold mb-1" style="color: var(--pibiex-texto);">Melhor para: raciocínio passo a passo</p>
+                    <ul class="text-xs list-disc pl-4 space-y-1 mb-3" style="color: var(--pibiex-texto-suave);"><li>Mostra o caminho até a resposta, útil em lógica e matemática.</li><li>Modelo aberto da mesma empresa do ChatGPT.</li><li>Não é o ChatGPT: é uma versão aberta e mais simples.</li></ul>
+                    <p class="text-xs mt-auto"><span class="chip verde">Modelo aberto</span> <a href="https://openai.com/" target="_blank" rel="noopener" class="font-bold underline ml-2" style="color:#1E3A8A;">Conhecer o site oficial</a></p>
+                </article>
+                </div>
+                <p class="text-xs mt-3" style="color: var(--pibiex-texto-suave);">Dica: a mesma pergunta pode ter respostas bem diferentes. Compare e anote no seu <b>Bloco de notas</b> qual explicou melhor.</p>
+            </section>
+
             <input id="busca-ferramenta" type="search" class="caixa-busca mb-4" placeholder="Buscar ferramenta pelo nome ou descrição" aria-label="Buscar ferramenta" autocomplete="off">
             <div id="abas-ferramentas" class="mb-6"></div>
             <div id="lista-ferramentas" class="space-y-8 pt-4">
