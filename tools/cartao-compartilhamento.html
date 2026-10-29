@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <!-- Fonte do cartão de compartilhamento (1200x630) usado nas prévias de link (WhatsApp, redes).
-     Para refazer a imagem: abra esta página num navegador com 1200x630 e salve a captura em img/cartao-compartilhamento-2.jpg (JPEG, até ~150 KB: o WhatsApp descarta imagens pesadas) -->
+     Para refazer a imagem: abra esta página num navegador com 1200x630 e salve a captura em
+     img/cartao-compartilhamento-3.jpg (JPEG, até ~150 KB: o WhatsApp descarta imagens pesadas).
+     Ao trocar a imagem, use um nome novo e atualize as etiquetas og:image/twitter:image das páginas:
+     o WhatsApp guarda a prévia de cada endereço por muito tempo.
+     O Seri vem de img/mascote/seri-apontando.webp (recorte da imagem original guardada em
+     img/mascote/originais/seri-apontando-para-logo-original.jpg). O logo é o oficial (logo-pibiex-digital-branca.png). -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -8,31 +13,30 @@
 <link rel="stylesheet" href="/fonts/inter.css">
 <style>
     * { box-sizing: border-box; margin: 0; }
-    body { width: 1200px; height: 630px; font-family: 'Inter', sans-serif; color: #fff; overflow: hidden;
-        background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(135deg, #0B1B4A 0%, #1E3A8A 50%, #1E40AF 100%);
-        background-size: 40px 40px, 40px 40px, 100% 100%; position: relative; }
-    .halo { position: absolute; right: -160px; top: -200px; width: 560px; height: 560px; background: radial-gradient(closest-side, rgba(163,230,53,.38), transparent 70%); }
-    .conteudo { position: absolute; left: 80px; top: 160px; bottom: 96px; width: 640px; display: flex; flex-direction: column; justify-content: center; }
-    .selo { align-self: flex-start; font-size: 20px; font-weight: 800; letter-spacing: .02em; color: #DBEAFE; border: 2px solid rgba(255,255,255,.25); border-radius: 999px; padding: 8px 20px; margin-bottom: 34px; }
-    .selo b { color: #A3E635; }
-    h1 { font-size: 66px; line-height: 1.04; font-weight: 900; letter-spacing: -.01em; margin-bottom: 28px; }
-    p { font-size: 28px; line-height: 1.4; color: rgba(219,234,254,.92); font-weight: 500; }
-    .rodape { position: absolute; left: 80px; bottom: 46px; font-size: 24px; font-weight: 800; color: #A3E635; }
-    .logo { position: absolute; left: 80px; top: 38px; width: 270px; filter: drop-shadow(0 12px 20px rgba(0,0,0,.4)); }
-    .seri-brilho { position: absolute; right: 20px; bottom: -40px; width: 520px; height: 520px; background: radial-gradient(closest-side, rgba(255,255,255,.30), transparent 72%); }
-    .seri { position: absolute; right: 90px; bottom: 6px; height: 590px; filter: drop-shadow(0 18px 26px rgba(0,0,0,.35)); }
+    body { width: 1200px; height: 630px; font-family: 'Inter', sans-serif; overflow: hidden; position: relative;
+        background-image: linear-gradient(rgba(30,58,138,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(30,58,138,.07) 1px, transparent 1px), linear-gradient(135deg, #EAF3FF 0%, #D2E3FF 100%);
+        background-size: 40px 40px, 40px 40px, 100% 100%; }
+    .brilho { position: absolute; left: -60px; top: 60px; width: 720px; height: 720px; background: radial-gradient(closest-side, rgba(255,255,255,.85), transparent 72%); }
+    .seri { position: absolute; left: 24px; top: 10px; height: 628px; filter: drop-shadow(0 16px 22px rgba(30,58,138,.22)); }
+    .selo { position: absolute; left: 540px; top: 54px; width: 600px; padding: 30px 46px; background: #1E3A8A; border: 7px solid #fff; border-radius: 38px; box-shadow: 0 22px 44px rgba(30,58,138,.34); }
+    .selo img { display: block; width: 100%; }
+    .brilhos { position: absolute; left: 1086px; top: 22px; width: 90px; height: 70px; }
+    .brilhos i { position: absolute; width: 8px; height: 30px; border-radius: 6px; background: #A3E635; transform-origin: 50% 100%; }
+    .brilhos i:nth-child(1) { left: 6px; top: 22px; transform: rotate(-38deg); }
+    .brilhos i:nth-child(2) { left: 38px; top: 6px; transform: rotate(-4deg); height: 36px; }
+    .brilhos i:nth-child(3) { left: 70px; top: 22px; transform: rotate(34deg); }
+    h1 { position: absolute; left: 546px; top: 350px; width: 620px; font-size: 52px; line-height: 1.08; font-weight: 900; color: #0B1B4A; letter-spacing: -.01em; }
+    p { position: absolute; left: 548px; top: 476px; width: 600px; font-size: 26px; line-height: 1.35; font-weight: 600; color: #1E3A8A; }
+    .rodape { position: absolute; left: 548px; bottom: 40px; font-size: 26px; font-weight: 800; color: #3F6212; }
 </style>
 </head>
 <body>
-    <div class="halo"></div>
-    <div class="conteudo">
-        <span class="selo"><b>●</b> Curso de Inteligência Artificial</span>
-        <h1>A plataforma que organiza o curso.</h1>
-        <p>Aulas, atividades, desafios e frequência, com Libras e proteção de dados.</p>
-    </div>
-    <div class="seri-brilho"></div>
-    <img class="logo" src="/logo-pibiex-digital-branca.png" alt="">
-    <img class="seri" src="/img/mascote/seri-3d-parado-grande.webp" alt="">
+    <div class="brilho"></div>
+    <img class="seri" src="/img/mascote/seri-apontando.webp" alt="">
+    <div class="selo"><img src="/logo-pibiex-digital-branca.png" alt=""></div>
+    <div class="brilhos"><i></i><i></i><i></i></div>
+    <h1>A plataforma que organiza o curso.</h1>
+    <p>Aulas, atividades, desafios e frequência, com Libras e proteção de dados.</p>
     <div class="rodape">pibiexdigital.com.br</div>
 </body>
 </html>
