@@ -212,6 +212,34 @@ await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/index.html` })
 await esperar(5200);
 const inicio = await avaliar(`(() => { const f = document.getElementById('seri-fala'); const b = document.getElementById('botao-assistente'); return { botao: b && b.className, aberta: f && f.dataset.aberta, links: f ? [...f.querySelectorAll('a')].map(a => a.textContent.trim()) : [] }; })()`);
 resultado('seri: a página inicial tem o Seri no cantinho, com Entrar e Ver a demonstração', !!inicio && /seri-botao/.test(inicio.botao || '') && inicio.aberta === 'true' && inicio.links.includes('Entrar') && inicio.links.includes('Ver a demonstração'), JSON.stringify(inicio));
+// o Seri em destaque e falando em outras páginas públicas
+await abrir('index.html', 1500);
+resultado('seri: a página inicial tem a seção de destaque com o mascote e as curiosidades', !!(await avaliar(`!!document.querySelector('#seri [data-seri="animado"]') && document.querySelectorAll('#seri .seri-curio').length === 3`)));
+await abrir('sobre.html', 1500);
+resultado('seri: Sobre tem a seção do mascote com 4 curiosidades', !!(await avaliar(`!!document.querySelector('#seri [data-seri="animado"]') && document.querySelectorAll('#seri .seri-curio').length === 4`)));
+for (const [pag, trecho] of [['sobre.html', /Você está em Sobre/], ['demo/index.html', /como aluna/], ['transparencia.html', /serviços de fora/]]) {
+    await avaliar(`sessionStorage.removeItem('pibiex_seri_fala')`);
+    await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/${pag}` });
+    await esperar(5200);
+    const t = await avaliar(`(() => { const f = document.getElementById('seri-fala'); return f ? f.innerText : null; })()`);
+    resultado(`seri: ${pag} tem o Seri no cantinho dizendo algo da página`, !!t && trecho.test(t), String(t));
+}
+await abrir('404.html', 1500);
+resultado('seri: a página 404 mostra o Seri', !!(await avaliar(`!!document.querySelector('[data-seri="parado"] img')`)));
+
+// o assistente sabe onde fica cada coisa: respostas com [Tela](/aluno/arquivo.html) viram links, só para telas que existem
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/aluno/faq.html` });
+await esperar(2500);
+await avaliar(`document.querySelector('button[onclick="alternarPainelAssistente()"]:not([aria-label])').click()`);
+await esperar(400);
+resultado('seri: o cartão "Perguntar ao Seri" do FAQ abre o chat', !!(await avaliar(`!document.getElementById('painel-assistente').classList.contains('hidden')`)));
+await avaliar(`document.getElementById('input-assistente').value = 'onde eu envio minha atividade?'; document.getElementById('form-assistente').requestSubmit()`);
+await esperar(1800);
+const link = await avaliar(`(() => { const a = document.querySelector('#mensagens-assistente a.seri-link'); return a ? a.getAttribute('href') : null; })()`);
+resultado('seri: a resposta mostra o link para Atividades', link === '/aluno/atividades.html', String(link));
+const seguro = await avaliar(`(() => { const d = document.createElement('div'); preencherBolhaIA(d, '[a](/aluno/naoexiste.html) [b](https://exemplo.com) [c](javascript:alert(1)) [d](/aluno/notas.html)'); return { links: [...d.querySelectorAll('a')].map(a => a.getAttribute('href')), html: d.innerHTML.includes('<script') }; })()`);
+resultado('seri: links fora da lista de telas nunca viram link', !!seguro && JSON.stringify(seguro.links) === JSON.stringify(['/aluno/notas.html']) && !seguro.html, JSON.stringify(seguro));
+
 // volta ao ponto onde os testes da demonstração continuam
 await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/aluno/inicio.html` });
 await esperar(1500);

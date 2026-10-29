@@ -238,6 +238,11 @@ function privadoDe(souProf) {
 }
 
 const RESPOSTAS_IA = [
+    [/onde.*(post|envi|entreg|mand)|atividade|trabalho/i, 'Você envia suas atividades em [Atividades](/aluno/atividades.html). Abra a atividade, escreva a resposta ou anexe um arquivo ou link e envie. Depois da correção, a nota, as horas e o comentário do professor aparecem ali mesmo.'],
+    [/presen|frequ|chamada|c[óo]digo|pin/i, 'Quando o professor abre a chamada, aparece um aviso no topo da tela: é só digitar o código da aula. O histórico e o total de horas ficam em [Minha Frequência](/aluno/frequencia.html).'],
+    [/chat|colega|conversa|turma/i, 'No [Chat da Turma](/aluno/chat.html) todo mundo vê o que você escreve. Lá também dá para conversar em privado com um colega ou com a equipe.'],
+    [/desafio|ranking|ponto|n[íi]vel/i, 'Os [Desafios Semanais](/aluno/desafios.html) rendem pontos e te levam pelos níveis, de Iniciante a Mestre, com ranking da semana e geral.'],
+    [/acessib|libras|contraste|letra|ouvir/i, 'As opções de acessibilidade (Libras, alto contraste, texto maior, ouvir a página e até me deixar parado) ficam no botão redondo no canto inferior esquerdo e também em [Meu Perfil](/aluno/perfil.html).'],
     [/prompt|pedido|escrev/i, 'Um bom prompt tem 5 partes: papel (quem a IA deve ser), objetivo, contexto, formato da resposta e regras. Exemplo: "Você é um professor de história. Explique a Revolução Industrial em 5 tópicos curtos, com um exemplo do dia a dia. Use só fatos que possam ser conferidos."'],
     [/fonte|confi|erro|mentir|inventa/i, 'A IA pode errar com muita confiança. Peça as fontes, abra pelo menos duas e pergunte "em que parte você não tem certeza?". Confira nomes, datas e números.'],
     [/estudar|prova|enem|revis/i, 'Para estudar com IA: cole o seu material e peça 10 perguntas de revisão com respostas, depois tente responder sem olhar. Se errar, peça uma explicação mais simples.'],

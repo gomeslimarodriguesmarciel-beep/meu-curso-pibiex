@@ -49,7 +49,14 @@
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     .secao { scroll-margin-top: 5rem; }
     .rotulo { font-size: 11px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; color: var(--pibiex-lima-profundo); }
-    .seri-sobre-midia img, .seri-sobre-midia video { display: block; width: 100%; height: 100%; object-fit: contain; }
+    /* Seri (mascote em destaque) */
+    .seri-vitrine { position: relative; width: 200px; height: 327px; flex-shrink: 0; }
+    .seri-vitrine::before { content: ""; position: absolute; left: -20%; right: -20%; top: 8%; bottom: -3%; border-radius: 50%; background: radial-gradient(closest-side, rgba(30,58,138,.16), transparent 72%); }
+    .seri-vitrine img, .seri-vitrine video { position: relative; display: block; width: 100%; height: 100%; object-fit: contain; }
+    @media (max-width: 640px) { .seri-vitrine { width: 140px; height: 229px; } }
+    .seri-curio { background: #fff; border: 1.5px solid #E5E7EB; border-radius: 16px; padding: 16px 18px; }
+    .seri-curio b { display: block; font-size: 12px; font-weight: 900; color: #1E3A8A; margin-bottom: 4px; letter-spacing: .06em; text-transform: uppercase; }
+    .seri-curio p { margin: 0; font-size: 14px; line-height: 1.5; color: #374151; }
     .cartao { border: 1px solid var(--pibiex-borda); border-radius: 16px; padding: 20px 22px; background: #fff; }
     .cartao h3, .cartao h4 { margin: 0 0 6px; font-size: 15px; font-weight: 800; color: var(--pibiex-texto); }
     .cartao p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--pibiex-texto-suave); }
@@ -132,24 +139,43 @@
 </section>
 
 <!-- ================= SERI ================= -->
-<section id="seri" class="secao py-16 md:py-24 px-5" style="background: #F4F6FB;">
+<section id="seri" class="secao py-16 md:py-24 px-5" style="background: #EEF2FF;">
     <div class="max-w-5xl mx-auto grid md:grid-cols-[auto_1fr] gap-10 md:gap-16 items-center">
-        <div class="seri-sobre-midia mx-auto" data-seri="parado" aria-hidden="true" style="width: 168px; height: 275px;"></div>
-        <div class="space-y-4 text-[15px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
-            <p class="rotulo mb-1">Mascote</p>
-            <h2 class="balance text-3xl md:text-[34px] font-black leading-tight" style="color: var(--pibiex-texto);">Conheça o Seri, o guia da plataforma.</h2>
-            <p>
+        <div class="seri-vitrine mx-auto" data-seri="animado" aria-hidden="true"></div>
+        <div>
+            <p class="rotulo mb-3" style="color: #3F6212;">Nosso mascote</p>
+            <h2 class="balance text-3xl md:text-[38px] font-black leading-tight mb-5" style="color: var(--pibiex-texto);">Conheça o Seri, o guia da plataforma.</h2>
+            <p class="text-[16px] leading-relaxed" style="color: #374151;">
                 O Seri é uma <strong style="color: var(--pibiex-texto);">seriema</strong>, ave do cerrado do Tocantins. Ela anda pelo chão, perto de quem está aprendendo,
-                e fica sempre atenta ao que acontece ao redor. Por isso virou o guia do curso: alguém que caminha ao lado do aluno.
-            </p>
-            <p>
-                Dentro da plataforma, o Seri também é o <strong style="color: var(--pibiex-texto);">assistente de inteligência artificial</strong>: o aluno pode fazer perguntas sobre os estudos.
-                Ele usa o Gemini, do Google, e pode errar, então vale sempre conferir as respostas. Também não se escrevem dados pessoais nas conversas com ele.
-            </p>
-            <p>
-                Quem preferir pode deixá-lo parado, sem se mexer e sem falar, nas opções de acessibilidade.
+                e fica sempre atenta ao que acontece por perto. Por isso virou o guia do curso: alguém que caminha ao lado do aluno.
             </p>
         </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto mt-12">
+        <p class="rotulo mb-3" style="color: #3F6212;">Você sabia?</p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="seri-curio"><b>O nome</b><p>Seriema vem do tupi e lembra “crista levantada”, por causa das penas no alto da cabeça.</p></div>
+            <div class="seri-curio"><b>O canto</b><p>O canto da seriema é bem alto e pode ser ouvido de longe. Ela sabe se fazer ouvir!</p></div>
+            <div class="seri-curio"><b>O jeito de andar</b><p>Ela prefere andar e correr pelo chão a voar. Combina com um guia que caminha ao lado de quem aprende.</p></div>
+            <div class="seri-curio"><b>O cardápio</b><p>Come insetos e pequenos animais, inclusive cobras, e por isso é bem-vista por quem vive no campo.</p></div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto mt-12 grid md:grid-cols-2 gap-6 items-start">
+        <div>
+            <h3 class="text-lg font-black mb-3" style="color: var(--pibiex-texto);">O que o Seri faz por aqui</h3>
+            <ul class="space-y-2 text-[15px] leading-relaxed" style="color: #374151; list-style: disc; padding-left: 1.25rem;">
+                <li>Fica no cantinho da tela. <strong style="color: var(--pibiex-texto);">Aponte o mouse ou toque nele</strong> para ouvir uma dica da página em que você está.</li>
+                <li>Na <a href="/demo/" class="font-bold underline" style="color: #1E3A8A;">demonstração</a>, explica cada tela.</li>
+                <li>Na área do aluno, é o <strong style="color: var(--pibiex-texto);">assistente de inteligência artificial</strong>: tira dúvidas de estudo e diz onde fica cada coisa na plataforma.</li>
+                <li>Se preferir, dá para deixá-lo parado, sem se mexer e sem falar, nas opções de acessibilidade.</li>
+            </ul>
+        </div>
+        <p class="text-[13px] leading-relaxed" style="color: #4B5563;">
+            <strong style="color: var(--pibiex-texto);">Um aviso importante:</strong> como assistente, o Seri usa o Gemini, do Google, e pode errar.
+            Confira as respostas e não escreva dados pessoais nas conversas com ele.
+        </p>
     </div>
 </section>
 
@@ -195,12 +221,12 @@
             <div class="trilho" id="trilho" tabindex="0" aria-live="off">
                 <figure class="slide" aria-roledescription="slide" aria-label="1 de 3">
                     <div class="janela"><div class="janela-barra" aria-hidden="true"><i></i><i></i><i></i><span>pibiexdigital.com.br/aluno/atividades</span></div>
-                    <img src="img/tela-atividades.png" width="1280" height="800" alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção" loading="lazy"></div>
+                    <img src="img/tela-atividades.png" width="1280" height="800" alt="Tela de Atividades do aluno: enunciado, campo para escrever a resposta, anexar arquivo ou link e acompanhar a correção. O mascote Seri aparece no canto da tela" loading="lazy"></div>
                     <figcaption><b>Atividades</b>O aluno lê o enunciado e responde na hora, ou anexa arquivo e link. A nota, as horas e o comentário do professor aparecem na mesma tela.</figcaption>
                 </figure>
                 <figure class="slide" aria-roledescription="slide" aria-label="2 de 3">
                     <div class="janela"><div class="janela-barra" aria-hidden="true"><i></i><i></i><i></i><span>pibiexdigital.com.br/aluno/conteudo</span></div>
-                    <img src="img/tela-conteudo.png" width="1280" height="800" alt="Tela de Conteúdo do aluno: módulos com slides, PDFs, vídeos e links, busca e filtro por tipo" loading="lazy"></div>
+                    <img src="img/tela-conteudo.png" width="1280" height="800" alt="Tela de Conteúdo do aluno: módulos com slides, PDFs, vídeos e links, busca e filtro por tipo. O mascote Seri aparece no canto da tela, com uma dica sobre a página" loading="lazy"></div>
                     <figcaption><b>Conteúdo dos módulos</b>Slides, PDFs, vídeos e links organizados por módulo, com busca e filtro. O material abre em um leitor da própria plataforma.</figcaption>
                 </figure>
                 <figure class="slide" aria-roledescription="slide" aria-label="3 de 3">
@@ -536,24 +562,12 @@
 if (window.PibiexA11y) PibiexA11y.botaoFlutuante();
 </script>
 <script>
-    // O Seri no cantinho: o mesmo da área do aluno. Aqui ele só se apresenta e leva para entrar ou ver a demonstração.
-    window.addEventListener('DOMContentLoaded', function () {
-        var m = PibiexMascote.dados();
-        var seri = PibiexMascote.canto({
-            rotulo: 'Mascote da plataforma',
-            rotuloBotao: 'Conhecer o ' + m.nome + ', o mascote da plataforma',
-            aoClicar: function () { seri.alternarFala(); },
-            fala: function () {
-                return {
-                    titulo: m.saudacaoTitulo,
-                    corpo: 'Sou o mascote da plataforma e uma seriema do cerrado. Estou aqui para ajudar você a aprender.',
-                    corpoCurto: 'Sou o mascote da plataforma, uma seriema do cerrado.',
-                    aviso: 'Dentro da plataforma, sou o assistente de IA dos alunos.',
-                    acoes: [{ texto: 'Entrar', href: '/login.html' }, { texto: 'Ver a demonstração', href: '/demo/', sec: true }],
-                };
-            },
-            folgaNoFim: false,
-        });
+    // O Seri no cantinho: nesta página ele conta o que há aqui.
+    PibiexMascote.paginaPublica({
+        titulo: 'Você está em Sobre.',
+        corpo: 'Aqui eu conto para que serve a plataforma e como ela funciona. Quer me conhecer melhor? Tem uma seção só minha!',
+        corpoCurto: 'Aqui conto para que serve a plataforma. Quer me conhecer?',
+        acoes: [{ texto: 'Conhecer o Seri', href: '#seri' }, { texto: 'Ver a demonstração', href: '/demo/', sec: true }]
     });
 </script>
 </body>

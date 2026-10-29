@@ -129,7 +129,7 @@
     //   rotulo       nome da área, para leitor de tela
     //   rotuloBotao  nome do botão do Seri, para leitor de tela
     //   aoClicar()   o que acontece ao clicar no Seri
-    //   fala()       devolve { titulo, corpo, aviso, acoes:[{texto,href,sec}], dica } com o texto do recado
+    //   fala({automatico}) devolve { titulo, corpo, aviso, acoes:[{texto,href,sec}], dica } com o texto do recado
     //   bloquearFala() true quando o recado não deve aparecer (ex.: painel do chat aberto)
     //   aoAtualizar(modo) chamado sempre que o aspecto muda
     //   folgaNoFim   dá espaço no fim da página para o mascote não cobrir nada (padrão: true)
@@ -174,8 +174,8 @@
         const jaFalou = () => { try { return sessionStorage.getItem(CHAVE_FALA) === '1'; } catch (e) { return falaMostrada; } };
         const marcarFalou = () => { falaMostrada = true; try { sessionStorage.setItem(CHAVE_FALA, '1'); } catch (e) { /* vale só enquanto a página estiver aberta */ } };
 
-        function desenharFala() {
-            const f = o.fala() || {};
+        function desenharFala(automatico) {
+            const f = o.fala({ automatico: !!automatico }) || {};
             campoTexto.textContent = '';
             if (f.titulo) { const forte = document.createElement('strong'); forte.textContent = f.titulo; campoTexto.appendChild(forte); campoTexto.appendChild(document.createTextNode(' ')); }
             const telaPequena = !!(window.matchMedia && window.matchMedia('(max-width: 640px)').matches);
@@ -215,13 +215,13 @@
                 botao.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-weight:900;font-size:18px;color:#1E3A8A;">${m.nome.charAt(0)}</span>`;
             }
             if (md !== 'grande') fecharFala(false);
-            desenharFala();
+            desenharFala(false);
             o.aoAtualizar(md);
         }
 
         function abrirFala(automatico) {
             if (modo() !== 'grande' || o.bloquearFala()) return;
-            const f = desenharFala();
+            const f = desenharFala(automatico);
             clearTimeout(temporizadorFala);
             fala.dataset.aberta = 'true';
             const telaPequena = !!(window.matchMedia && window.matchMedia('(max-width: 640px)').matches);
@@ -269,13 +269,32 @@
         const falarSozinho = (tentativa) => {
             if (document.querySelector('.a11y-dica') && tentativa < 15) { setTimeout(() => falarSozinho(tentativa + 1), 1000); return; }
             if (modo() !== 'grande' || !podeAnimar()) return;
-            const f = o.fala() || {};
+            const f = o.fala({ automatico: true }) || {};
             if (!f.dica) { if (jaFalou()) return; marcarFalou(); }
             abrirFala(true);
         };
         setTimeout(() => falarSozinho(0), 3200);
 
         return { raiz, botao, fala, atualizar, abrirFala, fecharFala, alternarFala };
+    }
+
+    // Páginas públicas: o Seri só se apresenta (e leva para entrar ou ver a demonstração, se não houver outras ações).
+    // texto: { titulo, corpo, corpoCurto, aviso, acoes }
+    function paginaPublica(texto) {
+        const iniciar = () => {
+            const m = dados();
+            const t = texto || {};
+            const padrao = [{ texto: 'Entrar', href: '/login.html' }, { texto: 'Ver a demonstração', href: '/demo/', sec: true }];
+            const seri = canto({
+                rotulo: 'Mascote da plataforma',
+                rotuloBotao: `Conhecer o ${m.nome}, o mascote da plataforma`,
+                aoClicar: () => seri.alternarFala(),
+                fala: () => ({ titulo: t.titulo || m.saudacaoTitulo, corpo: t.corpo || '', corpoCurto: t.corpoCurto, aviso: t.aviso, acoes: t.acoes === undefined ? padrao : t.acoes }),
+                folgaNoFim: false,
+            });
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once: true });
+        else iniciar();
     }
 
     // Elementos com data-seri="animado" ou "parado" mostram o mascote como figura na própria página.
@@ -293,5 +312,5 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once: true });
     else iniciar();
 
-    window.PibiexMascote = { dados, modo, opcaoParado, semImagens, podeAnimar, htmlMidia, montar, canto };
+    window.PibiexMascote = { dados, modo, opcaoParado, semImagens, podeAnimar, htmlMidia, montar, canto, paginaPublica };
 })();

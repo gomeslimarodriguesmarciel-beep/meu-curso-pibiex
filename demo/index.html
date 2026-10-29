@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="/tailwind.css">
 <link rel="stylesheet" href="/pibiex-ui.css">
 <script src="/acessibilidade.js"></script>
+<script src="/mascote.js"></script>
 <link rel="stylesheet" href="/fonts/inter.css">
 <style>
     body { font-family: 'Inter', sans-serif; }
@@ -169,6 +170,13 @@
     document.getElementById('entrar-professor').addEventListener('click', function () { entrar('professor'); });
 })();
 if (window.PibiexA11y) PibiexA11y.botaoFlutuante();
+</script>
+<script>
+    PibiexMascote.paginaPublica({
+        corpo: 'Escolha entrar como aluna ou como professor. Como aluna, eu explico cada tela para você!',
+        corpoCurto: 'Entre como aluna e eu explico cada tela!',
+        acoes: []
+    });
 </script>
 </body>
 </html>

@@ -21,8 +21,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // API). Setado aqui uma vez vale pra toda página que carrega este shell.
 const MODO_DEMO = (() => { try { return sessionStorage.getItem('pibiex_demo'); } catch (e) { return null; } })();
 const OPCOES_CLIENTE = { global: { headers: { 'x-sessao-token': localStorage.getItem('pibiex_aluno_token') || '' } } };
-// Dicas do Seri na demonstração: o mascote explica cada tela (ver dicaDaPagina, mais abaixo).
-const DICAS_SERI_DEMO = {
+// Dicas do Seri para cada tela. Na demonstração aparecem sozinhas; no uso normal, quando a pessoa aponta o mouse ou toca no Seri.
+const DICAS_SERI = {
     inicio: 'Aqui é o seu começo: avisos da turma, atalhos e as próximas aulas. Dá uma olhada no menu ao lado para ver o resto.',
     cronograma: 'Aqui ficam as aulas por módulo, com data e horário. A próxima aula aparece em destaque.',
     conteudo: 'Slides, PDFs, vídeos e links de cada módulo. Eles abrem aqui mesmo, sem precisar instalar nada.',
@@ -42,7 +42,6 @@ const DICAS_SERI_DEMO = {
 };
 
 if (MODO_DEMO) {
-    window.PIBIEX_DICAS_SERI = DICAS_SERI_DEMO;
     // Demonstração: nenhuma chamada sai para o Supabase. Tudo é respondido por /demo/falso.js, no próprio navegador.
     window.__demoPronto = import('/demo/falso.js');
     OPCOES_CLIENTE.global.fetch = (url, opcoes) => window.__demoPronto.then((m) => m.fetchDemo(url, opcoes));
@@ -85,6 +84,7 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
         @keyframes pibiexDigitando { 0%, 60%, 100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
         /* Rostinho do Seri no cabeçalho e nas mensagens do chat (o canto em si vive em /mascote.js) */
         .seri-avatar-cab { width: 40px; height: 40px; border-radius: 50%; background: #EEF2FF; object-fit: cover; flex-shrink: 0; }
+        .seri-link { color: #1E3A8A; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
         .seri-avatar-msg { width: 28px; height: 28px; border-radius: 50%; background: #EEF2FF; object-fit: cover; flex-shrink: 0; }
     `;
     document.head.appendChild(estilo);
@@ -547,12 +547,10 @@ function textoSaudacaoMascote() {
     return `${m.saudacaoTitulo} ${m.saudacaoCorpo}\n${m.aviso}`;
 }
 
-// Dica do Seri para a tela atual (só existe na demonstração).
+// Dica do Seri para a tela atual.
 function dicaDaPagina() {
-    const mapa = window.PIBIEX_DICAS_SERI;
-    if (!mapa) return null;
     const pagina = (location.pathname.split('/').pop() || '').replace('.html', '');
-    return mapa[pagina] || null;
+    return DICAS_SERI[pagina] || null;
 }
 
 function montarAssistenteFlutuante() {
@@ -595,10 +593,12 @@ function montarAssistenteFlutuante() {
         rotuloBotao: `Abrir o ${m.nome}, assistente de IA`,
         aoClicar: () => alternarPainelAssistente(),
         bloquearFala: () => { const p = document.getElementById('painel-assistente'); return !!p && !p.classList.contains('hidden'); },
-        // Na demonstração o Seri explica cada tela; no uso normal, é o recado de boas-vindas.
-        fala: () => {
+        // Na demonstração o Seri explica cada tela sozinho. No uso normal, o recado que aparece sozinho (uma vez por visita)
+        // é a boas-vindas; ao apontar o mouse ou tocar nele, ele dá a dica da tela.
+        fala: (ctx) => {
             const dica = dicaDaPagina();
-            if (dica) return { titulo: m.nome + ':', corpo: dica, dica: true };
+            if (dica && MODO_DEMO) return { titulo: m.nome + ':', corpo: dica, dica: true };
+            if (dica && !(ctx && ctx.automatico)) return { titulo: m.nome + ':', corpo: dica, aviso: 'Clique em mim para conversar.' };
             return { titulo: m.saudacaoTitulo, corpo: m.saudacaoCorpo, corpoCurto: m.saudacaoCorpoCurto, aviso: m.aviso };
         },
         aoAtualizar: desenharCabecalhoAssistente,
@@ -634,6 +634,26 @@ window.alternarPainelAssistente = () => {
     }
 };
 
+// Resposta da IA: o texto aparece como veio, e [Nome da tela](/aluno/arquivo.html) vira link, mas só para telas que existem no menu.
+// Qualquer outro endereço fica como texto comum. Nada daqui vira HTML: tudo é montado com nós de texto.
+const PAGINAS_ALUNO = new Set([...GRUPOS_MENU.flatMap((g) => g.itens.map((i) => i.href)), 'perfil.html']);
+function preencherBolhaIA(bolha, texto) {
+    bolha.style.whiteSpace = 'pre-wrap';
+    const re = /\[([^\]\n]{1,60})\]\(\/aluno\/([a-z-]+\.html)\)/g;
+    let ultimo = 0, achou;
+    while ((achou = re.exec(texto))) {
+        if (!PAGINAS_ALUNO.has(achou[2])) continue;
+        bolha.appendChild(document.createTextNode(texto.slice(ultimo, achou.index)));
+        const link = document.createElement('a');
+        link.href = '/aluno/' + achou[2];
+        link.textContent = achou[1];
+        link.className = 'seri-link';
+        bolha.appendChild(link);
+        ultimo = achou.index + achou[0].length;
+    }
+    bolha.appendChild(document.createTextNode(texto.slice(ultimo)));
+}
+
 // Mensagem da IA ganha o rostinho do Seri ao lado (menos no modo "comum", sem imagens).
 function comAvatarDoMascote(bolha) {
     if (PibiexMascote.modo() === 'comum') return bolha;
@@ -655,7 +675,7 @@ function adicionarMensagemNaTela(autor, texto) {
         bolha.className = 'bg-white border rounded-lg rounded-bl-sm px-4 py-2 max-w-[85%] w-fit';
         bolha.style.borderColor = 'var(--pibiex-borda)';
     }
-    bolha.innerText = texto;
+    if (autor === 'aluno') bolha.innerText = texto; else preencherBolhaIA(bolha, texto);
     box.appendChild(autor === 'aluno' ? bolha : comAvatarDoMascote(bolha));
     box.scrollTop = box.scrollHeight;
 }
