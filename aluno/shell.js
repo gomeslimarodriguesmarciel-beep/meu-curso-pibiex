@@ -21,7 +21,28 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // API). Setado aqui uma vez vale pra toda página que carrega este shell.
 const MODO_DEMO = (() => { try { return sessionStorage.getItem('pibiex_demo'); } catch (e) { return null; } })();
 const OPCOES_CLIENTE = { global: { headers: { 'x-sessao-token': localStorage.getItem('pibiex_aluno_token') || '' } } };
+// Dicas do Seri na demonstração: o mascote explica cada tela (ver dicaDaPagina, mais abaixo).
+const DICAS_SERI_DEMO = {
+    inicio: 'Aqui é o seu começo: avisos da turma, atalhos e as próximas aulas. Dá uma olhada no menu ao lado para ver o resto.',
+    cronograma: 'Aqui ficam as aulas por módulo, com data e horário. A próxima aula aparece em destaque.',
+    conteudo: 'Slides, PDFs, vídeos e links de cada módulo. Eles abrem aqui mesmo, sem precisar instalar nada.',
+    atividades: 'Cada atividade tem prazo e vale horas. Dá para escrever a resposta na hora ou mandar arquivo e link. Que tal enviar uma?',
+    notas: 'Suas notas, horas e os comentários do professor ficam juntos aqui.',
+    frequencia: 'Quando o professor abre a chamada, você digita o código (PIN) por aqui para registrar a presença.',
+    enquetes: 'Enquetes da turma com o resultado ao vivo. Você escolhe uma opção e vê como a turma votou.',
+    chat: 'Este é o chat da turma: todo mundo vê o que você escrever aqui. Nas conversas privadas só você e a outra pessoa veem.',
+    'ferramentas-ia': 'Um panorama das ferramentas de IA. Lá embaixo tem o comparador: a mesma pergunta para três IAs, lado a lado.',
+    prompts: 'Modelos prontos de prompts bem escritos. É só copiar com um clique e adaptar.',
+    desafios: 'Desafios semanais que rendem pontos e sobem você no ranking, de Iniciante a Mestre.',
+    galeria: 'A galeria de projetos da turma. Dá para ver o que os colegas criaram e mostrar o seu também.',
+    'laboratorio-ia': 'O laboratório é para testar IA na prática, com problemas simples que vão ficando mais difíceis.',
+    faq: 'Dúvidas comuns respondidas. Se não achar a sua, é só me perguntar!',
+    recursos: 'Vídeos, e-books e sites que o professor recomenda para aprender mais.',
+    perfil: 'Seu perfil. Aqui também ficam as opções de acessibilidade, inclusive a minha: você pode me deixar parado se preferir.',
+};
+
 if (MODO_DEMO) {
+    window.PIBIEX_DICAS_SERI = DICAS_SERI_DEMO;
     // Demonstração: nenhuma chamada sai para o Supabase. Tudo é respondido por /demo/falso.js, no próprio navegador.
     window.__demoPronto = import('/demo/falso.js');
     OPCOES_CLIENTE.global.fetch = (url, opcoes) => window.__demoPronto.then((m) => m.fetchDemo(url, opcoes));
@@ -62,6 +83,9 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
         .pibiex-digitando span:nth-child(2) { animation-delay: .15s; }
         .pibiex-digitando span:nth-child(3) { animation-delay: .3s; }
         @keyframes pibiexDigitando { 0%, 60%, 100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+        /* Rostinho do Seri no cabeçalho e nas mensagens do chat (o canto em si vive em /mascote.js) */
+        .seri-avatar-cab { width: 40px; height: 40px; border-radius: 50%; background: #EEF2FF; object-fit: cover; flex-shrink: 0; }
+        .seri-avatar-msg { width: 28px; height: 28px; border-radius: 50%; background: #EEF2FF; object-fit: cover; flex-shrink: 0; }
     `;
     document.head.appendChild(estilo);
 })();
@@ -511,29 +535,37 @@ window.registrarFrequenciaAgora = async () => {
 };
 
 // ============================================================
-// 4) Assistente de IA flutuante
+// 4) Assistente de IA flutuante: o Seri
 // ============================================================
 let conversaIaAtual = null;
+let cantoSeri = null;
+
+// O Seri no cantinho (botão, recado, modos e animação) é o componente de /mascote.js, o mesmo das páginas
+// públicas. Aqui ele ganha o painel de conversa com a IA.
+function textoSaudacaoMascote() {
+    const m = PibiexMascote.dados();
+    return `${m.saudacaoTitulo} ${m.saudacaoCorpo}\n${m.aviso}`;
+}
+
+// Dica do Seri para a tela atual (só existe na demonstração).
+function dicaDaPagina() {
+    const mapa = window.PIBIEX_DICAS_SERI;
+    if (!mapa) return null;
+    const pagina = (location.pathname.split('/').pop() || '').replace('.html', '');
+    return mapa[pagina] || null;
+}
 
 function montarAssistenteFlutuante() {
     const container = document.getElementById('assistente-flutuante');
     if (!container) return;
+    const m = PibiexMascote.dados();
 
     container.outerHTML = `
-        <div id="assistente-flutuante">
-            <button id="botao-assistente" onclick="alternarPainelAssistente()" aria-label="Abrir o assistente de IA"
-                    class="fixed bottom-6 right-6 z-40 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center transition transform hover:scale-105"
-                    style="background: var(--pibiex-tinta); border: 1.5px solid var(--pibiex-dourado);">
-                <span class="w-6 h-6" style="color: var(--pibiex-dourado);">${ICONES.assistente}</span>
-            </button>
-
+        <aside id="assistente-flutuante" aria-label="Assistente de IA">
             <div id="painel-assistente" class="hidden fixed bottom-24 right-6 z-40 w-96 max-w-[90vw] h-[32rem] max-h-[70vh] bg-white rounded-lg shadow-2xl border flex flex-col overflow-hidden"
                  style="border-color: var(--pibiex-borda);">
                 <div class="text-white px-5 py-4 flex justify-between items-center" style="background: var(--pibiex-tinta);">
-                    <div>
-                        <p class="fonte-display font-semibold text-[15px]">Assistente PIBIEX</p>
-                        <p class="text-[11.5px]" style="color: var(--pibiex-dourado);">Tire dúvidas sobre IA, 24h</p>
-                    </div>
+                    <div id="assistente-titulo" class="flex items-center gap-3 min-w-0"></div>
                     <div class="flex items-center gap-3 shrink-0">
                         <button onclick="novoChatAssistente()" title="Apaga esta conversa e começa outra"
                                 class="text-[11.5px] font-semibold border rounded-full px-3 py-1 transition hover:bg-white/10"
@@ -543,7 +575,8 @@ function montarAssistenteFlutuante() {
                         <button onclick="alternarPainelAssistente()" class="text-white/70 hover:text-white" aria-label="Fechar assistente">${icone('fechar', 16)}</button>
                     </div>
                 </div>
-                <div id="mensagens-assistente" class="flex-1 overflow-y-auto p-4 space-y-3 text-[13.5px]" style="background: var(--pibiex-papel);"></div>
+                <div id="mensagens-assistente" class="flex-1 overflow-y-auto p-4 space-y-3 text-[13.5px]" style="background: var(--pibiex-papel);"
+                     role="log" aria-live="polite" aria-label="Conversa com o assistente"></div>
                 <form id="form-assistente" class="p-3 border-t flex gap-2" style="border-color: var(--pibiex-borda);">
                     <input id="input-assistente" type="text" placeholder="Digite sua dúvida..."
                            class="flex-1 border rounded-full px-4 py-2 text-[13.5px] outline-none focus:ring-1"
@@ -552,15 +585,65 @@ function montarAssistenteFlutuante() {
                             style="background: var(--pibiex-tinta);" aria-label="Enviar">${icone('enviar', 18)}</button>
                 </form>
             </div>
-        </div>
+        </aside>
     `;
 
     document.getElementById('form-assistente').addEventListener('submit', enviarMensagemAssistente);
+    cantoSeri = PibiexMascote.canto({
+        raiz: document.getElementById('assistente-flutuante'),
+        rotulo: 'Assistente de IA',
+        rotuloBotao: `Abrir o ${m.nome}, assistente de IA`,
+        aoClicar: () => alternarPainelAssistente(),
+        bloquearFala: () => { const p = document.getElementById('painel-assistente'); return !!p && !p.classList.contains('hidden'); },
+        // Na demonstração o Seri explica cada tela; no uso normal, é o recado de boas-vindas.
+        fala: () => {
+            const dica = dicaDaPagina();
+            if (dica) return { titulo: m.nome + ':', corpo: dica, dica: true };
+            return { titulo: m.saudacaoTitulo, corpo: m.saudacaoCorpo, corpoCurto: m.saudacaoCorpoCurto, aviso: m.aviso };
+        },
+        aoAtualizar: desenharCabecalhoAssistente,
+    });
+    cantoSeri.botao.setAttribute('aria-expanded', 'false');
+    cantoSeri.botao.setAttribute('aria-controls', 'painel-assistente');
+}
+
+// Cabeçalho do painel de conversa: rosto e nome do Seri (sem o rosto, para quem oculta imagens).
+function desenharCabecalhoAssistente(modo) {
+    const titulo = document.getElementById('assistente-titulo');
+    if (!titulo) return;
+    const m = PibiexMascote.dados();
+    titulo.innerHTML = (modo === 'comum' ? '' : `<img src="${m.avatar}" alt="" width="40" height="40" class="seri-avatar-cab">`)
+        + `<div class="min-w-0"><p class="fonte-display font-semibold text-[15px]">${m.nome} · assistente de IA</p>
+           <p class="text-[11.5px]" style="color: var(--pibiex-dourado);">Tire dúvidas sobre IA, 24h</p></div>`;
 }
 
 window.alternarPainelAssistente = () => {
-    document.getElementById('painel-assistente').classList.toggle('hidden');
+    const painel = document.getElementById('painel-assistente');
+    const raiz = document.getElementById('assistente-flutuante');
+    const botao = document.getElementById('botao-assistente');
+    const aberto = !painel.classList.toggle('hidden');
+    raiz.classList.toggle('painel-aberto', aberto);
+    botao.setAttribute('aria-expanded', String(aberto));
+    if (!aberto) return;
+    if (cantoSeri) cantoSeri.fecharFala(false);
+    const caixa = document.getElementById('mensagens-assistente');
+    if (caixa.children.length === 0) adicionarMensagemNaTela('ia', textoSaudacaoMascote());
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+        const entrada = document.getElementById('input-assistente');
+        if (entrada) entrada.focus();
+    }
 };
+
+// Mensagem da IA ganha o rostinho do Seri ao lado (menos no modo "comum", sem imagens).
+function comAvatarDoMascote(bolha) {
+    if (PibiexMascote.modo() === 'comum') return bolha;
+    const m = PibiexMascote.dados();
+    const linha = document.createElement('div');
+    linha.className = 'flex items-end gap-2';
+    linha.innerHTML = `<img src="${m.avatar}" alt="" width="28" height="28" class="seri-avatar-msg">`;
+    linha.appendChild(bolha);
+    return linha;
+}
 
 function adicionarMensagemNaTela(autor, texto) {
     const box = document.getElementById('mensagens-assistente');
@@ -573,7 +656,7 @@ function adicionarMensagemNaTela(autor, texto) {
         bolha.style.borderColor = 'var(--pibiex-borda)';
     }
     bolha.innerText = texto;
-    box.appendChild(bolha);
+    box.appendChild(autor === 'aluno' ? bolha : comAvatarDoMascote(bolha));
     box.scrollTop = box.scrollHeight;
 }
 
@@ -593,11 +676,14 @@ function mostrarAvisoAssistente(texto) {
 function mostrarDigitando() {
     const box = document.getElementById('mensagens-assistente');
     const bolha = document.createElement('div');
-    bolha.id = 'bolha-digitando';
     bolha.className = 'bg-white border rounded-lg rounded-bl-sm px-4 py-3 max-w-[85%] w-fit';
     bolha.style.borderColor = 'var(--pibiex-borda)';
-    bolha.innerHTML = '<span class="pibiex-digitando" style="color: var(--pibiex-texto-suave);"><span></span><span></span><span></span></span>';
-    box.appendChild(bolha);
+    bolha.innerHTML = '<span class="pibiex-digitando" style="color: var(--pibiex-texto-suave);"><span></span><span></span><span></span></span>'
+        + `<span class="text-[12px] ml-2" style="color: var(--pibiex-texto-suave);">${PibiexMascote.dados().nome} está pensando…</span>`;
+    const linhaDigitando = comAvatarDoMascote(bolha);
+    linhaDigitando.id = 'bolha-digitando';
+    bolha.removeAttribute('id');
+    box.appendChild(linhaDigitando);
     box.scrollTop = box.scrollHeight;
 }
 

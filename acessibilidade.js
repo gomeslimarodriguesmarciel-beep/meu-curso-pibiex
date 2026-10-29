@@ -52,8 +52,9 @@
                 links: p.links === true, espaco: p.espaco === true, fonte: p.fonte === true,
                 cursor: p.cursor === true, semImagens: p.semImagens === true, linha: p.linha === true, esquerda: p.esquerda === true,
                 saturacao: [0, 1, 2].includes(p.saturacao) ? p.saturacao : 0, libras: p.libras !== false, // já vem ligado; só desliga se a pessoa desmarcar
+                mascote: (p.mascote === 'parado' || p.mascote === false) ? 'parado' : 'animado', // o Seri já vem animado; 'parado' = botão redondo, sem falar
             };
-        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '', links: false, espaco: false, fonte: false, cursor: false, semImagens: false, linha: false, esquerda: false, saturacao: 0, libras: true }; }
+        } catch (e) { return { contraste: null, texto: 0, semMovimento: null, apontar: false, velocidade: 1, voz: '', links: false, espaco: false, fonte: false, cursor: false, semImagens: false, linha: false, esquerda: false, saturacao: 0, libras: true, mascote: 'animado' }; }
     }
 
     function gravar(p) {
@@ -115,6 +116,7 @@
         raiz.classList.toggle('a11y-texto-1', p.texto === 1);
         raiz.classList.toggle('a11y-texto-2', p.texto === 2);
         raiz.classList.toggle('a11y-sem-movimento', p.semMovimento === true);
+        raiz.classList.toggle('a11y-mascote-parado', p.mascote === 'parado');
         EXTRAS.forEach((x) => { if (x.classe) raiz.classList.toggle(x.classe, p[x.chave] === true); });
         raiz.classList.toggle('a11y-sat-1', p.saturacao === 1);
         raiz.classList.toggle('a11y-sat-2', p.saturacao === 2);
@@ -132,7 +134,7 @@
             apontar: p.apontar === true,
             velocidade: p.velocidade,
             voz: p.voz,
-            links: p.links, espaco: p.espaco, fonte: p.fonte, cursor: p.cursor, semImagens: p.semImagens, linha: p.linha, esquerda: p.esquerda, saturacao: p.saturacao, libras: p.libras,
+            links: p.links, espaco: p.espaco, fonte: p.fonte, cursor: p.cursor, semImagens: p.semImagens, linha: p.linha, esquerda: p.esquerda, saturacao: p.saturacao, libras: p.libras, mascote: p.mascote,
         };
     }
 
@@ -233,6 +235,14 @@
                         <div class="texto"><p class="titulo" id="a11y-t3">Reduzir animações</p></div>
                         <button type="button" class="a11y-chave" role="switch" id="a11y-movimento" aria-labelledby="a11y-t3" aria-checked="false"></button>
                     </div>
+                    <div class="a11y-linha">
+                        <div class="texto"><p class="titulo" id="a11y-t7">Seri, o assistente</p>
+                            <p class="desc">Parado: botão redondo, sem se mexer e sem falar.</p></div>
+                        <div class="a11y-segmentos" role="radiogroup" aria-labelledby="a11y-t7">
+                            <button type="button" role="radio" data-masc="animado" aria-checked="false">Animado</button>
+                            <button type="button" role="radio" data-masc="parado" aria-checked="false">Parado</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="a11y-bloco">
@@ -248,6 +258,7 @@
 
         const chaveContraste = el.querySelector('#a11y-contraste');
         const chaveMov = el.querySelector('#a11y-movimento');
+        const segMasc = [...el.querySelectorAll('[data-masc]')];
         const segmentos = [...el.querySelectorAll('[data-texto]')];
         const tilesExtras = [...el.querySelectorAll('[data-extra]')];
         const segSat = [...el.querySelectorAll('[data-sat]')];
@@ -263,6 +274,7 @@
             if (selVel.value !== String(e.velocidade)) selVel.value = String(e.velocidade);
             chaveContraste.setAttribute('aria-checked', String(e.contraste));
             chaveMov.setAttribute('aria-checked', String(e.semMovimento));
+            segMasc.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.masc === e.mascote)));
             segmentos.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.texto) === e.texto)));
             tilesExtras.forEach((b) => b.setAttribute('aria-checked', String(e[b.dataset.extra] === true)));
             segSat.forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.sat) === e.saturacao)));
@@ -270,6 +282,7 @@
 
         chaveContraste.onclick = () => { mudar({ contraste: !estado().contraste }); desenhar(); };
         chaveMov.onclick = () => { mudar({ semMovimento: !estado().semMovimento }); desenhar(); };
+        segMasc.forEach((b) => { b.onclick = () => { mudar({ mascote: b.dataset.masc }); desenhar(); }; });
         segSat.forEach((b) => { b.onclick = () => { mudar({ saturacao: Number(b.dataset.sat) }); desenhar(); }; });
         tilesExtras.forEach((b) => { b.onclick = () => { mudar({ [b.dataset.extra]: !estado()[b.dataset.extra] }); desenhar(); }; });
         segmentos.forEach((b) => { b.onclick = () => { mudar({ texto: Number(b.dataset.texto) }); desenhar(); }; });

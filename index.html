@@ -43,6 +43,7 @@
 <link rel="stylesheet" href="/tailwind.css">
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
+    <script src="/mascote.js"></script>
 <link rel="stylesheet" href="/fonts/inter.css">
 <style>
     body { font-family: 'Inter', sans-serif; }
@@ -460,6 +461,27 @@
 
 <script>
 if (window.PibiexA11y) PibiexA11y.botaoFlutuante();
+</script>
+<script>
+    // O Seri no cantinho: o mesmo da área do aluno. Aqui ele só se apresenta e leva para entrar ou ver a demonstração.
+    window.addEventListener('DOMContentLoaded', function () {
+        var m = PibiexMascote.dados();
+        var seri = PibiexMascote.canto({
+            rotulo: 'Mascote da plataforma',
+            rotuloBotao: 'Conhecer o ' + m.nome + ', o mascote da plataforma',
+            aoClicar: function () { seri.alternarFala(); },
+            fala: function () {
+                return {
+                    titulo: m.saudacaoTitulo,
+                    corpo: 'Sou o mascote da plataforma e uma seriema do cerrado. Estou aqui para ajudar você a aprender.',
+                    corpoCurto: 'Sou o mascote da plataforma, uma seriema do cerrado.',
+                    aviso: 'Dentro da plataforma, sou o assistente de IA dos alunos.',
+                    acoes: [{ texto: 'Entrar', href: '/login.html' }, { texto: 'Ver a demonstração', href: '/demo/', sec: true }],
+                };
+            },
+            folgaNoFim: false,
+        });
+    });
 </script>
 </body>
 </html>

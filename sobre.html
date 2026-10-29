@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="/tailwind.css">
 <link rel="stylesheet" href="/pibiex-ui.css">
 <script src="/acessibilidade.js"></script>
+<script src="/mascote.js"></script>
 <link rel="stylesheet" href="/fonts/inter.css">
 <style>
     body { font-family: 'Inter', sans-serif; }
@@ -48,6 +49,7 @@
     @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     .secao { scroll-margin-top: 5rem; }
     .rotulo { font-size: 11px; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; color: var(--pibiex-lima-profundo); }
+    .seri-sobre-midia img, .seri-sobre-midia video { display: block; width: 100%; height: 100%; object-fit: contain; }
     .cartao { border: 1px solid var(--pibiex-borda); border-radius: 16px; padding: 20px 22px; background: #fff; }
     .cartao h3, .cartao h4 { margin: 0 0 6px; font-size: 15px; font-weight: 800; color: var(--pibiex-texto); }
     .cartao p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--pibiex-texto-suave); }
@@ -125,6 +127,28 @@
             <a href="#acessibilidade">Acessibilidade</a>
             <a href="#privacidade">Privacidade e segurança</a>
             <a href="#por-tras">Quem faz</a>
+        </div>
+    </div>
+</section>
+
+<!-- ================= SERI ================= -->
+<section id="seri" class="secao py-16 md:py-24 px-5" style="background: #F4F6FB;">
+    <div class="max-w-5xl mx-auto grid md:grid-cols-[auto_1fr] gap-10 md:gap-16 items-center">
+        <div class="seri-sobre-midia mx-auto" data-seri="parado" aria-hidden="true" style="width: 168px; height: 275px;"></div>
+        <div class="space-y-4 text-[15px] leading-relaxed" style="color: var(--pibiex-texto-suave);">
+            <p class="rotulo mb-1">Mascote</p>
+            <h2 class="balance text-3xl md:text-[34px] font-black leading-tight" style="color: var(--pibiex-texto);">Conheça o Seri, o guia da plataforma.</h2>
+            <p>
+                O Seri é uma <strong style="color: var(--pibiex-texto);">seriema</strong>, ave do cerrado do Tocantins. Ela anda pelo chão, perto de quem está aprendendo,
+                e fica sempre atenta ao que acontece ao redor. Por isso virou o guia do curso: alguém que caminha ao lado do aluno.
+            </p>
+            <p>
+                Dentro da plataforma, o Seri também é o <strong style="color: var(--pibiex-texto);">assistente de inteligência artificial</strong>: o aluno pode fazer perguntas sobre os estudos.
+                Ele usa o Gemini, do Google, e pode errar, então vale sempre conferir as respostas. Também não se escrevem dados pessoais nas conversas com ele.
+            </p>
+            <p>
+                Quem preferir pode deixá-lo parado, sem se mexer e sem falar, nas opções de acessibilidade.
+            </p>
         </div>
     </div>
 </section>
@@ -510,6 +534,27 @@
     marcar(); iniciar();
 })();
 if (window.PibiexA11y) PibiexA11y.botaoFlutuante();
+</script>
+<script>
+    // O Seri no cantinho: o mesmo da área do aluno. Aqui ele só se apresenta e leva para entrar ou ver a demonstração.
+    window.addEventListener('DOMContentLoaded', function () {
+        var m = PibiexMascote.dados();
+        var seri = PibiexMascote.canto({
+            rotulo: 'Mascote da plataforma',
+            rotuloBotao: 'Conhecer o ' + m.nome + ', o mascote da plataforma',
+            aoClicar: function () { seri.alternarFala(); },
+            fala: function () {
+                return {
+                    titulo: m.saudacaoTitulo,
+                    corpo: 'Sou o mascote da plataforma e uma seriema do cerrado. Estou aqui para ajudar você a aprender.',
+                    corpoCurto: 'Sou o mascote da plataforma, uma seriema do cerrado.',
+                    aviso: 'Dentro da plataforma, sou o assistente de IA dos alunos.',
+                    acoes: [{ texto: 'Entrar', href: '/login.html' }, { texto: 'Ver a demonstração', href: '/demo/', sec: true }],
+                };
+            },
+            folgaNoFim: false,
+        });
+    });
 </script>
 </body>
 </html>

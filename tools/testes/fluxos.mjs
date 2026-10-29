@@ -180,6 +180,41 @@ await abrir('demo/index.html', 1500);
 await avaliar(`document.getElementById('entrar-aluno').click()`);
 await esperar(3000);
 resultado('demo: entra como aluna', /aluno\/inicio/.test(await avaliar('location.pathname')));
+
+// 3b) O Seri no cantinho (mascote da plataforma e assistente de IA)
+console.log('\n== Seri, o mascote do cantinho');
+await esperar(4500);
+const seri = await avaliar(`(() => { const b = document.getElementById('botao-assistente'), f = document.getElementById('seri-fala'); return { rotulo: b && b.getAttribute('aria-label'), classe: b && b.className, aberta: f && f.dataset.aberta, texto: f && f.innerText }; })()`);
+resultado('seri: o botão do assistente é o Seri', !!seri && /Seri/.test(seri.rotulo || '') && /seri-botao/.test(seri.classe || ''), JSON.stringify(seri));
+resultado('seri: na demonstração o recado explica a tela', !!seri && seri.aberta === 'true' && /Seri:/.test(seri.texto || ''), seri && seri.texto);
+await avaliar(`document.getElementById('botao-assistente').click()`);
+await esperar(500);
+resultado('seri: o chat abre com saudação e aviso de dados pessoais', !!(await avaliar(`/não escreva dados pessoais/.test(document.getElementById('mensagens-assistente').innerText) && /Seri/.test(document.getElementById('assistente-titulo').innerText)`)));
+// opção "Parado" (Acessibilidade): botão redondo e sem falar sozinho
+await avaliar(`localStorage.setItem('pibiex_prefs', JSON.stringify({ mascote: 'parado' }))`);
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/aluno/inicio.html` });
+await esperar(4500);
+const parado = await avaliar(`(() => { const b = document.getElementById('botao-assistente'); return { classe: b.className, aberta: document.getElementById('seri-fala').dataset.aberta, video: !!b.querySelector('video') }; })()`);
+resultado('seri: opção Parado vira botão redondo, sem animação e sem falar', !!parado && /seri-redondo/.test(parado.classe) && parado.aberta === 'false' && !parado.video, JSON.stringify(parado));
+// "Reduzir animações": o Seri fica na imagem parada
+await avaliar(`localStorage.setItem('pibiex_prefs', JSON.stringify({ semMovimento: true }))`);
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/aluno/inicio.html` });
+await esperar(3200);
+const reduz = await avaliar(`(() => { const b = document.getElementById('botao-assistente'); const i = b.querySelector('img'); return { img: i ? i.getAttribute('src') : null, video: !!b.querySelector('video'), aberta: document.getElementById('seri-fala').dataset.aberta }; })()`);
+resultado('seri: "Reduzir animações" mostra a imagem parada, sem vídeo e sem recado automático', !!reduz && /seri-3d-parado/.test(reduz.img || '') && !reduz.video && reduz.aberta === 'false', JSON.stringify(reduz));
+// o Seri animado usa vídeo (conferido só pelo elemento; o arquivo existe?)
+await avaliar(`localStorage.removeItem('pibiex_prefs')`);
+const arquivos = await avaliar(`Promise.all(['/img/mascote/seri-3d.webm', '/img/mascote/seri-3d-safari.webp', '/img/mascote/seri-3d-parado.webp', '/img/mascote/seri-3d-avatar.webp'].map(u => fetch(u).then(r => r.ok)))`);
+resultado('seri: os 4 arquivos do mascote existem', Array.isArray(arquivos) && arquivos.every(Boolean), JSON.stringify(arquivos));
+// página inicial pública: o mesmo Seri no cantinho, com Entrar e Ver a demonstração
+await avaliar(`localStorage.setItem('pibiex_a11y_dica', '1'); sessionStorage.removeItem('pibiex_seri_fala')`);
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/index.html` });
+await esperar(5200);
+const inicio = await avaliar(`(() => { const f = document.getElementById('seri-fala'); const b = document.getElementById('botao-assistente'); return { botao: b && b.className, aberta: f && f.dataset.aberta, links: f ? [...f.querySelectorAll('a')].map(a => a.textContent.trim()) : [] }; })()`);
+resultado('seri: a página inicial tem o Seri no cantinho, com Entrar e Ver a demonstração', !!inicio && /seri-botao/.test(inicio.botao || '') && inicio.aberta === 'true' && inicio.links.includes('Entrar') && inicio.links.includes('Ver a demonstração'), JSON.stringify(inicio));
+// volta ao ponto onde os testes da demonstração continuam
+await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/aluno/inicio.html` });
+await esperar(1500);
 const paginasDemo = ['aluno/atividades.html', 'aluno/conteudo.html', 'aluno/desafios.html', 'aluno/enquetes.html', 'aluno/galeria.html', 'aluno/notas.html', 'aluno/chat.html', 'aluno/frequencia.html', 'aluno/cronograma.html', 'aluno/prompts.html', 'aluno/laboratorio-ia.html', 'aluno/recursos.html', 'aluno/ferramentas-ia.html', 'aluno/faq.html', 'aluno/perfil.html'];
 for (const p of paginasDemo) {
     erros = [];

@@ -243,7 +243,7 @@ const RESPOSTAS_IA = [
     [/estudar|prova|enem|revis/i, 'Para estudar com IA: cole o seu material e peça 10 perguntas de revisão com respostas, depois tente responder sem olhar. Se errar, peça uma explicação mais simples.'],
     [/imagem|desenho|foto/i, 'Para imagens, descreva assunto, estilo, luz e cores. Faça várias tentativas e mude uma coisa de cada vez. Guarde o prompt que funcionou.'],
 ];
-const RESPOSTA_IA_PADRAO = 'Esta é uma resposta de exemplo do assistente da demonstração. Na plataforma de verdade, o assistente usa inteligência artificial para tirar dúvidas durante o estudo. Tente perguntar sobre "como escrever um bom prompt" ou "como conferir fontes".';
+const RESPOSTA_IA_PADRAO = 'Aqui quem fala é o Seri, mas na demonstração eu só sei responder alguns exemplos. Na plataforma de verdade eu uso inteligência artificial para tirar dúvidas durante o estudo. Tente me perguntar "como escrever um bom prompt" ou "como conferir fontes".';
 
 const FUNCOES = {
     // ---------- sessão e conta
