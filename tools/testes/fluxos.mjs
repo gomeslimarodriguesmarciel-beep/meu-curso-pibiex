@@ -214,9 +214,9 @@ const inicio = await avaliar(`(() => { const f = document.getElementById('seri-f
 resultado('seri: a página inicial tem o Seri no cantinho, com Entrar e Ver a demonstração', !!inicio && /seri-botao/.test(inicio.botao || '') && inicio.aberta === 'true' && inicio.links.includes('Entrar') && inicio.links.includes('Ver a demonstração'), JSON.stringify(inicio));
 // o Seri em destaque e falando em outras páginas públicas
 await abrir('index.html', 1500);
-resultado('seri: a página inicial tem a seção de destaque com o mascote e as curiosidades', !!(await avaliar(`!!document.querySelector('#seri [data-seri="animado"]') && document.querySelectorAll('#seri .seri-curio').length === 3`)));
+resultado('seri: a página inicial tem a seção de destaque com o mascote e as curiosidades', !!(await avaliar(`!!document.querySelector('#seri [data-seri="animado"]') && document.querySelectorAll('#seri .seri-curio').length === 3 && /nasci azul/.test(document.getElementById('seri').innerText)`)));
 await abrir('sobre.html', 1500);
-resultado('seri: Sobre tem a seção do mascote com 4 curiosidades', !!(await avaliar(`!!document.querySelector('#seri [data-seri="animado"]') && document.querySelectorAll('#seri .seri-curio').length === 4`)));
+resultado('seri: Sobre tem a seção do mascote com 4 curiosidades e a cor (“nasci azul”)', !!(await avaliar(`!!document.querySelector('#seri [data-seri="animado"]') && document.querySelectorAll('#seri .seri-curio').length === 5 && /nasci azul/.test(document.getElementById('seri').innerText)`)));
 for (const [pag, trecho] of [['sobre.html', /Você está em Sobre/], ['demo/index.html', /como aluna/], ['transparencia.html', /serviços de fora/]]) {
     await avaliar(`sessionStorage.removeItem('pibiex_seri_fala')`);
     await cdp('Page.navigate', { url: `http://127.0.0.1:${PORTA_SITE}/${pag}` });
