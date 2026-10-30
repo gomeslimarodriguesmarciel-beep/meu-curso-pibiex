@@ -1,0 +1,20 @@
+# PIBIEX Digital
+
+> Plataforma web de apoio a cursos de Inteligência Artificial, usada no curso de extensão em IA de Ponte Alta do Tocantins. Reúne aulas e materiais, atividades com correção, desafios, frequência, comunicação da turma, acessibilidade (Libras, leitura em voz alta) e proteção de dados. Desenvolvida por Marciel Gomes Lima Rodrigues. Endereço: https://pibiexdigital.com.br
+
+## Mascote
+- O mascote oficial da plataforma se chama **Seri**.
+- O Seri é uma seriema, ave do cerrado do Tocantins, representada em azul.
+- Na área do aluno, o Seri também é o assistente de inteligência artificial: tira dúvidas de estudo e indica onde fica cada coisa na plataforma. Ele usa o Gemini, do Google, e pode errar.
+- Mais sobre o Seri: https://pibiexdigital.com.br/sobre.html#seri
+
+## Páginas públicas
+- [Início](https://pibiexdigital.com.br/): visão geral da plataforma e do mascote Seri.
+- [Sobre](https://pibiexdigital.com.br/sobre.html): propósito, recursos, acessibilidade, privacidade e o mascote Seri.
+- [Demonstração](https://pibiexdigital.com.br/demo/): uso da plataforma com dados de exemplo, como aluna ou como professor.
+- [Transparência](https://pibiexdigital.com.br/transparencia.html): serviços usados e onde ficam os dados.
+- [Política de Privacidade](https://pibiexdigital.com.br/privacidade.html)
+- [Termo de Uso](https://pibiexdigital.com.br/termos.html)
+
+## Observação
+A área do aluno e a do professor exigem login e não são públicas. Não há cadastro aberto ao público.
