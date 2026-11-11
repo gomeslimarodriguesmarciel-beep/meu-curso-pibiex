@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/pibiex-ui.css">
     <script src="/acessibilidade.js"></script>
     <script src="/painel-listas.js"></script>
+    <script src="/leitor-material.js"></script>
+    <script src="/galeria-previa.js"></script>
     <link rel="stylesheet" href="/fonts/inter.css">
     <script src="/vendor/supabase/supabase.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -21,7 +23,7 @@
     <div class="flex-1 min-w-0">
         <div id="topo-pagina"></div>
 
-        <main class="p-4 md:p-8 max-w-4xl mx-auto">
+        <main class="p-4 md:p-8 max-w-6xl mx-auto">
             <h1 class="text-2xl font-black text-gray-800 mb-1">Galeria</h1>
             <p class="text-gray-500 mb-6">Veja os projetos publicados pelos alunos, comente como equipe e remova conteúdo inadequado.</p>
 
@@ -35,7 +37,7 @@
             </div>
             <div id="abas-galeria" class="mb-4"></div>
 
-            <div id="lista-projetos" class="space-y-3">
+            <div id="lista-projetos" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 items-start">
                 <div class="skel" role="status" aria-label="Carregando"><i></i><i></i><i></i></div>
             </div>
         </main>
@@ -87,7 +89,7 @@
 
             if (PROJETOS.length === 0) {
                 document.getElementById('abas-galeria').innerHTML = '';
-                container.innerHTML = '<div class="vazio-lista"><b>Nenhum projeto publicado ainda</b>Quando os alunos publicarem, aparece aqui para você moderar.</div>';
+                container.innerHTML = '<div class="vazio-lista" style="grid-column: 1 / -1;"><b>Nenhum projeto publicado ainda</b>Quando os alunos publicarem, aparece aqui para você moderar.</div>';
                 return;
             }
 
@@ -108,7 +110,7 @@
                 : ordem === 'comentados' ? nCom(b) - nCom(a)
                 : (b.criado_em || '').localeCompare(a.criado_em || ''));
 
-            if (!lista.length) { container.innerHTML = '<div class="vazio-lista"><b>Nenhum projeto encontrado</b>Mude a busca ou o filtro.</div>'; return; }
+            if (!lista.length) { container.innerHTML = '<div class="vazio-lista" style="grid-column: 1 / -1;"><b>Nenhum projeto encontrado</b>Mude a busca ou o filtro.</div>'; return; }
 
             container.innerHTML = lista.map((p) => {
                 const comentarios = p.comentarios || [];
@@ -124,7 +126,9 @@
                         </div>`).join('');
 
                 return `
-                    <details class="cx" data-id="${L.esc(p.id)}" ${ABERTOS.has(p.id) ? 'open' : ''}>
+                    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    ${PibiexGaleriaPrevia.html(p)}
+                    <details class="cx" data-id="${L.esc(p.id)}" style="border: 0; border-radius: 0; box-shadow: none; margin: 0;" ${ABERTOS.has(p.id) ? 'open' : ''}>
                         <summary>
                             <span class="avatar-ini" aria-hidden="true">${L.esc(L.iniciais(p.autorNome))}</span>
                             <span class="min-w-0 flex-1">
@@ -138,7 +142,6 @@
                         </summary>
                         <div class="cx-corpo">
                             ${p.descricao ? `<p class="text-sm text-gray-700 whitespace-pre-wrap">${L.esc(p.descricao)}</p>` : '<p class="text-sm text-gray-500">Sem descrição.</p>'}
-                            ${p.arquivo_url ? `<p class="mt-2"><a href="${L.esc(/^https?:\/\//i.test(p.arquivo_url) ? p.arquivo_url : '#')}" target="_blank" rel="noopener" class="text-blue-700 text-sm font-semibold hover:underline">Abrir projeto &rarr;</a></p>` : ''}
                             <div class="mt-4 pt-3 border-t border-gray-100 space-y-2">
                                 <p class="text-xs font-bold text-gray-500 uppercase">Comentários</p>
                                 ${comentariosHtml}
@@ -151,8 +154,10 @@
                                 <button onclick="excluirProjeto('${p.id}')" class="inline-flex items-center gap-1.5 text-red-700 hover:text-red-900 text-sm font-bold px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100">${icone('excluir')} Excluir projeto</button>
                             </div>
                         </div>
-                    </details>`;
+                    </details>
+                    </div>`;
             }).join('');
+            PibiexGaleriaPrevia.ativar(container, lista);
 
             container.querySelectorAll('details.cx').forEach((det) => {
                 det.addEventListener('toggle', () => { if (det.open) ABERTOS.add(det.dataset.id); else ABERTOS.delete(det.dataset.id); });

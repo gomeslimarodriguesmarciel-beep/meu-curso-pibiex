@@ -14,6 +14,8 @@ const NIVEIS = [{ min: 0, nome: 'Iniciante' }, { min: 50, nome: 'Explorador' }, 
 const agora = () => Date.now();
 const iso = (ms) => new Date(ms).toISOString();
 const hAtras = (h) => iso(agora() - h * 3600e3);
+// arquivos de exemplo da Galeria: ficam dentro do próprio site (/demo/amostras), nada vai para fora
+const amostra = (nome) => (typeof location !== 'undefined' ? location.origin : 'http://localhost') + '/demo/amostras/' + nome;
 const dia = (n) => iso(agora() + n * 86400e3);
 const dataCurta = (n) => iso(agora() + n * 86400e3).slice(0, 10);
 const uid = (p) => p + Math.random().toString(36).slice(2, 9);
@@ -111,8 +113,11 @@ function novoEstado() {
             { id: 'de5', desafio_id: 'd4', aluno_id: 'par3', alunoNome: 'Sofia Exemplo', link: 'https://exemplo.com/imagem-sofia', enviado_em: hAtras(5), pontos: null, feedback: null },
         ],
         projetos: [
-            { id: 'g1', aluno_id: 'par3', autorNome: 'Sofia Exemplo', titulo: 'Capa de livro feita com IA', descricao: 'Pedi para uma IA de imagens criar a capa de um livro de aventura. Foram 4 tentativas até acertar o prompt.', arquivo_url: null, criado_em: hAtras(30), curtidas: ['par1', 'par2'], comentarios: [{ id: 'gc1', autorNome: 'Marina Exemplo', autor_tipo: 'aluno', comentario: 'Ficou incrível! Qual foi o prompt final?', criado_em: hAtras(28) }] },
-            { id: 'g2', aluno_id: 'par2', autorNome: 'Caio Exemplo', titulo: 'Poema sobre o sertão', descricao: 'Escrevi o primeiro verso e pedi para a IA continuar no mesmo estilo.', arquivo_url: null, criado_em: hAtras(80), curtidas: ['par3'], comentarios: [] },
+            { id: 'g1', aluno_id: 'par3', autorNome: 'Sofia Exemplo', titulo: 'Capa de livro feita com IA', assunto: 'Imagens com IA', descricao: 'Pedi para uma IA de imagens criar a capa de um livro de aventura. Foram 4 tentativas até acertar o prompt.', arquivo_url: amostra('capa-livro.webp'), criado_em: hAtras(30), curtidas: ['par1', 'par2'], comentarios: [{ id: 'gc1', autorNome: 'Marina Exemplo', autor_tipo: 'aluno', comentario: 'Ficou incrível! Qual foi o prompt final?', criado_em: hAtras(28) }] },
+            { id: 'g2', aluno_id: 'par2', autorNome: 'Caio Exemplo', titulo: 'Poema sobre o sertão', assunto: 'Textos e escrita', descricao: 'Escrevi o primeiro verso e pedi para a IA continuar no mesmo estilo.', arquivo_url: null, criado_em: hAtras(80), curtidas: ['par3'], comentarios: [] },
+            { id: 'g3', aluno_id: 'par1', autorNome: 'Marina Exemplo', titulo: 'Infográfico: como a IA aprende', assunto: 'NotebookLM', descricao: 'Criei no NotebookLM a partir do material da aula. Conferi as citações antes de postar.', arquivo_url: amostra('infografico.webp'), criado_em: hAtras(20), curtidas: ['par2'], comentarios: [] },
+            { id: 'g4', aluno_id: 'par2', autorNome: 'Caio Exemplo', titulo: 'Mapa mental da aula', assunto: 'NotebookLM', descricao: 'Pedi um mapa mental ao NotebookLM e baixei como imagem.', arquivo_url: amostra('mapa-mental.webp'), criado_em: hAtras(10), curtidas: [], comentarios: [] },
+            { id: 'g5', aluno_id: 'par3', autorNome: 'Sofia Exemplo', titulo: 'Meus slides no Gamma', assunto: 'Outro', descricao: 'O Gamma montou a primeira versão e eu troquei alguns textos à mão.', arquivo_url: amostra('slides-gamma.pdf'), criado_em: hAtras(5), curtidas: ['par1', 'par2'], comentarios: [] },
         ],
         notas: [
             { id: 'n1', titulo: 'Ideias de prompt', conteudo: '<div>Sempre pedir <b>exemplos</b> antes de pedir a resposta final.</div>', atualizadoEm: hAtras(48) },
@@ -400,12 +405,12 @@ const FUNCOES = {
     // ---------- galeria
     'galeria': (b) => {
         const P = estado().projetos;
-        if (b.acao === 'listar') return { projetos: P.map((p) => ({ id: p.id, aluno_id: p.aluno_id, titulo: p.titulo, descricao: p.descricao, arquivo_url: p.arquivo_url, criado_em: p.criado_em, autorNome: p.autorNome, totalCurtidas: p.curtidas.length, euCurti: p.curtidas.includes(ME.id), comentarios: p.comentarios })) };
+        if (b.acao === 'listar') return { projetos: P.map((p) => ({ id: p.id, aluno_id: p.aluno_id, titulo: p.titulo, descricao: p.descricao, arquivo_url: p.arquivo_url, assunto: p.assunto || null, criado_em: p.criado_em, autorNome: p.autorNome, totalCurtidas: p.curtidas.length, euCurti: p.curtidas.includes(ME.id), comentarios: p.comentarios })) };
         const p = P.find((x) => x.id === b.projetoId);
         if (b.acao === 'curtir' && p && !p.curtidas.includes(ME.id)) p.curtidas.push(ME.id);
         if (b.acao === 'descurtir' && p) p.curtidas = p.curtidas.filter((x) => x !== ME.id);
         if (b.acao === 'comentar' && p) p.comentarios.push({ id: uid('gc'), autorNome: ME.nome, autor_tipo: 'aluno', comentario: String(b.comentario || '').slice(0, 500), criado_em: iso(agora()) });
-        if (b.acao === 'postar') P.unshift({ id: uid('g'), aluno_id: ME.id, autorNome: ME.nome, titulo: b.titulo, descricao: b.descricao || null, arquivo_url: b.arquivoUrl && /^https?:\/\//i.test(b.arquivoUrl) ? b.arquivoUrl : null, criado_em: iso(agora()), curtidas: [], comentarios: [] });
+        if (b.acao === 'postar') P.unshift({ id: uid('g'), aluno_id: ME.id, autorNome: ME.nome, titulo: b.titulo, descricao: b.descricao || null, arquivo_url: b.arquivoUrl && /^https?:\/\//i.test(b.arquivoUrl) ? b.arquivoUrl : null, assunto: b.assunto || null, criado_em: iso(agora()), curtidas: [], comentarios: [] });
         if (b.acao === 'gerar_url_upload') return NAO_NA_DEMO;
         return ok;
     },

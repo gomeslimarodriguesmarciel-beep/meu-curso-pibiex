@@ -148,6 +148,33 @@ await abrir('admin/privacidade.html', 2500);
 
 
 
+// Galeria: o aluno consegue abrir imagem e PDF dos colegas e filtrar por assunto
+await abrir('aluno/galeria.html?votou=1', 2500);
+{
+    const g = await avaliar(`(() => ({
+        cartoes: document.querySelectorAll('#lista-galeria > article').length,
+        previas: document.querySelectorAll('#lista-galeria .gp').length,
+        previaPdf: !!document.querySelector('#lista-galeria .gp[data-gp-tipo="pdf"]'),
+        previaImagem: !!document.querySelector('#lista-galeria .gp[data-gp-tipo="imagem"]'),
+        rotuloAcessivel: /^Abrir o projeto: /.test(document.querySelector('#lista-galeria .gp')?.getAttribute('aria-label') || ''),
+        filtroVisivel: !document.getElementById('filtro-assunto').classList.contains('hidden'),
+        opcoes: [...document.getElementById('filtro-assunto').options].map((o) => o.textContent.trim()),
+        selos: [...document.querySelectorAll('#lista-galeria .chip')].map((c) => c.textContent.trim()),
+    }))()`);
+    resultado('galeria: cada projeto com arquivo mostra a prévia no cartão (imagem e PDF)', !!g && g.cartoes === 3 && g.previas === 2 && g.previaPdf && g.previaImagem, JSON.stringify(g));
+    resultado('galeria: a prévia tem nome acessível ("Abrir o projeto: ...")', !!g && g.rotuloAcessivel, JSON.stringify(g));
+    await avaliar(`document.querySelector('#lista-galeria .gp[data-gp-tipo="pdf"]').click()`);
+    resultado('galeria: clicar na prévia abre o projeto no leitor da plataforma', !!(await ate(`!!document.getElementById('lm-raiz')`, 3000)));
+    await avaliar(`document.getElementById('lm-raiz')?.remove()`);
+    resultado('galeria: filtro por assunto lista os assuntos com a contagem', !!g && g.filtroVisivel && g.opcoes.includes('NotebookLM (1)') && g.opcoes.includes('Sem assunto (1)'), JSON.stringify(g && g.opcoes));
+    resultado('galeria: cada projeto mostra o selo do assunto', !!g && g.selos.includes('NotebookLM') && g.selos.includes('Imagens com IA'), JSON.stringify(g && g.selos));
+    await avaliar(`(() => { const s = document.getElementById('filtro-assunto'); s.value = 'NotebookLM'; s.dispatchEvent(new Event('change')); })()`);
+    const filtrado = await avaliar(`[...document.querySelectorAll('#lista-galeria > article')].length === 1 && /Mapa mental da aula/.test(document.getElementById('lista-galeria').innerText)`);
+    resultado('galeria: escolher um assunto mostra só os projetos dele', !!filtrado);
+    await avaliar(`(() => { const s = document.getElementById('filtro-assunto'); s.value = '__sem'; s.dispatchEvent(new Event('change')); })()`);
+    resultado('galeria: "Sem assunto" mostra os projetos antigos', !!(await avaliar(`/Poema com ChatGPT/.test(document.getElementById('lista-galeria').innerText) && document.querySelectorAll('#lista-galeria > article').length === 1`)));
+}
+
 // Entrada e saída: o visitante não precisa adivinhar onde clicar
 await abrir('login.html', 1800);
 {
